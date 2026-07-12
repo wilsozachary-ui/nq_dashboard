@@ -132,8 +132,8 @@
 }
 
 @keyframes tevGlowBar {
-  0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.55); }
-  25%      { box-shadow: 0 4px 20px rgba(0,0,0,0.55), 0 0 30px rgba(76,175,80,0.25); }
+  0%, 100% { box-shadow: 0 4px 20px rgba(15,17,21,0.15); }
+  25%      { box-shadow: 0 4px 20px rgba(15,17,21,0.15), 0 0 30px rgba(21,128,61,0.25); }
 }
 
 @keyframes tevPulseVal {

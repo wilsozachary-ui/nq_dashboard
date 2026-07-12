@@ -137,7 +137,7 @@
 }
 .ltk-arrow--up   { color: var(--color-green); }
 .ltk-arrow--down { color: var(--color-red); }
-.ltk-arrow--flat { color: rgba(255,255,255,0.25); font-size: 10px; }
+.ltk-arrow--flat { color: rgba(24,24,27,0.35); font-size: 10px; }
 
 /* Price numeral — the hero element (this panel's only real content now,
    so it gets to be big). */

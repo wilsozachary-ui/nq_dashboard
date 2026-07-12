@@ -16,7 +16,7 @@
 }
 
 .rpn-section + .rpn-section {
-  border-top: 1px solid rgba(255,255,255,0.07);
+  border-top: 1px solid rgba(24,24,27,0.07);
 }
 
 .rpn-section-title {
@@ -33,7 +33,7 @@
 
 .rpn-adj-label {
   font-size: 11px;
-  color: rgba(255,255,255,0.50);
+  color: rgba(24,24,27,0.50);
   flex: 1;
   min-width: 70px;
 }
@@ -44,10 +44,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(24,24,27,0.07);
+  border: 1px solid rgba(24,24,27,0.12);
   border-radius: 4px;
-  color: rgba(255,255,255,0.75);
+  color: rgba(24,24,27,0.75);
   font-size: 16px;
   font-weight: 400;
   cursor: pointer;
@@ -56,14 +56,14 @@
   transition: background 0.12s, border-color 0.12s;
   flex-shrink: 0;
 }
-.rpn-adj-btn:hover { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.22); }
+.rpn-adj-btn:hover { background: rgba(24,24,27,0.13); border-color: rgba(24,24,27,0.22); }
 .rpn-adj-btn:active { transform: scale(0.92); }
 
 .rpn-adj-val {
   font-size: 12.5px;
   font-weight: 700;
   font-family: var(--font-mono, 'Courier New', monospace);
-  color: rgba(255,255,255,0.90);
+  color: rgba(24,24,27,0.90);
   min-width: 68px;
   text-align: center;
 }
@@ -87,13 +87,13 @@
 
 .rpn-toggle-label {
   font-size: 11px;
-  color: rgba(255,255,255,0.65);
+  color: rgba(24,24,27,0.65);
   flex: 1;
 }
 
 .rpn-toggle-meta {
   font-size: 10.5px;
-  color: rgba(255,255,255,0.38);
+  color: rgba(24,24,27,0.38);
   font-family: var(--font-mono, 'Courier New', monospace);
 }
 
@@ -105,7 +105,7 @@
 }
 
 .rpn-metric {
-  background: rgba(255,255,255,0.04);
+  background: rgba(24,24,27,0.04);
   border-radius: 5px;
   padding: 6px 8px;
   display: flex;
@@ -118,14 +118,14 @@
   font-weight: 600;
   letter-spacing: 0.4px;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.30);
+  color: rgba(24,24,27,0.30);
 }
 
 .rpn-metric-val {
   font-size: 13px;
   font-weight: 700;
   font-family: var(--font-mono, 'Courier New', monospace);
-  color: rgba(255,255,255,0.82);
+  color: rgba(24,24,27,0.82);
 }
 
 .rpn-val--green { color: var(--color-green, #4caf50); }
@@ -139,18 +139,18 @@
   align-items: center;
   justify-content: space-between;
   font-size: 10.5px;
-  color: rgba(255,255,255,0.45);
+  color: rgba(24,24,27,0.45);
 }
 
 .rpn-bar-nums {
   font-family: var(--font-mono, 'Courier New', monospace);
   font-size: 10.5px;
-  color: rgba(255,255,255,0.60);
+  color: rgba(24,24,27,0.60);
 }
 
 .rpn-bar-track {
   height: 4px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(24,24,27,0.08);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -167,7 +167,7 @@
 
 /* ── Kill switch section ─────────────────────────────────────────────────── */
 .rpn-section--ks { gap: 8px; }
-.rpn-ks--active  { background: rgba(244,67,54,0.06); }
+.rpn-ks--active  { background: rgba(185,28,28,0.06); }
 
 .rpn-ks-header {
   display: flex;
@@ -196,38 +196,38 @@
 }
 
 .rpn-ks-btn--prime {
-  background: rgba(244,67,54,0.10);
-  border-color: rgba(244,67,54,0.30);
-  color: #ef9a9a;
+  background: rgba(185,28,28,0.08);
+  border-color: rgba(185,28,28,0.35);
+  color: #b91c1c;
 }
 .rpn-ks-btn--prime:hover {
-  background: rgba(244,67,54,0.18);
-  border-color: rgba(244,67,54,0.50);
+  background: rgba(185,28,28,0.14);
+  border-color: rgba(185,28,28,0.55);
 }
 
 .rpn-ks-btn--confirm {
-  background: rgba(244,67,54,0.25);
-  border-color: #f44336;
+  background: #b91c1c;
+  border-color: #b91c1c;
   color: #fff;
   animation: rpnKsConfirmPulse 0.8s ease-in-out infinite alternate;
 }
 
 @keyframes rpnKsConfirmPulse {
   from { box-shadow: none; }
-  to   { box-shadow: 0 0 14px rgba(244,67,54,0.60); }
+  to   { box-shadow: 0 0 14px rgba(185,28,28,0.55); }
 }
 
 .rpn-ks-btn--reset {
-  background: rgba(255,193,7,0.12);
-  border-color: rgba(255,193,7,0.40);
-  color: #ffc107;
+  background: rgba(180,83,9,0.08);
+  border-color: rgba(180,83,9,0.35);
+  color: #b45309;
 }
-.rpn-ks-btn--reset:hover { background: rgba(255,193,7,0.22); }
+.rpn-ks-btn--reset:hover { background: rgba(180,83,9,0.16); }
 
 .rpn-ks-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .rpn-ks-warning {
   font-size: 10px;
-  color: rgba(255,193,7,0.80);
+  color: #b45309;
   text-align: center;
 }

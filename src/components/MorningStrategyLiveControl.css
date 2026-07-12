@@ -182,7 +182,7 @@
   font-weight: var(--fw-semibold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
+  color: rgba(24,24,27,0.5);
 }
 
 /* ── Prices block ────────────────────────────────────────────────────────── */

@@ -1,5 +1,10 @@
+.set-tab {
+  align-items: center;
+}
+
 .set-card {
   max-width: 420px;
+  width: 100%;
 }
 
 .set-email {
@@ -58,7 +63,7 @@
   border-radius: var(--radius-md);
   border: none;
   background: var(--color-brand);
-  color: #17130a;
+  color: #ffffff;
   cursor: pointer;
 }
 .set-btn:hover:not(:disabled) { filter: brightness(1.08); }

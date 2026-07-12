@@ -1,14 +1,24 @@
 /* ── BotLogConsole — prefix: blc- ──────────────────────────────────────────── */
 
-/* Panel */
+/* Panel — deliberately kept as a dark terminal surface (VS Code dark+
+   inspired token colours below) even though the rest of the dashboard is
+   light: a log console reads better with a conventional dark monospace
+   background, and it isolates every var(--color-*) this file uses so the
+   light-theme globals never leak in here. */
 .blc-panel {
   display: flex;
   flex-direction: column;
   min-height: 260px;
-  background: var(--color-surface);
+  background: #1c1d23;
   border-radius: 10px;
   overflow: hidden;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  --color-border: rgba(255,255,255,0.08);
+  --color-text-muted: #9aa0ac;
+  --color-text-primary: #e5e5e5;
+  --color-green: #4caf50;
+  --color-amber: #f59e0b;
+  --color-red: #e53935;
 }
 
 .blc-panel--collapsed { min-height: unset; }

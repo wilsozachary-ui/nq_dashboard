@@ -9,7 +9,7 @@
   background: rgba(100,181,246,0.05);
   border-bottom: 1px solid rgba(100,181,246,0.12);
   font-size: 11px;
-  color: rgba(255,255,255,0.45);
+  color: rgba(24,24,27,0.45);
 }
 
 .orb-banner-icon { font-size: 13px; color: #64b5f6; }
@@ -37,14 +37,14 @@
 
 .orb-range-lbl {
   font-size: 11px;
-  color: rgba(255,255,255,0.45);
+  color: rgba(24,24,27,0.45);
 }
 
 .orb-range-val {
   font-size: 13px;
   font-weight: 700;
   font-family: var(--font-mono, 'Courier New', monospace);
-  color: rgba(255,255,255,0.85);
+  color: rgba(24,24,27,0.85);
 }
 
 .orb-val--up   { color: var(--color-green, #4caf50); }

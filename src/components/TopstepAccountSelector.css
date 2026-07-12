@@ -167,7 +167,7 @@
 .tsa-check--on {
   background: var(--color-green);
   border-color: var(--color-green);
-  color: #0d0d0d;
+  color: #ffffff;
 }
 
 .tsa-item:hover .tsa-check:not(.tsa-check--on) {

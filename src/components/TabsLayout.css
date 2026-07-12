@@ -15,8 +15,8 @@
   align-items: stretch;
   width: 220px;
   flex-shrink: 0;
-  background: rgba(5, 8, 13, 0.97);
-  border-right: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255, 255, 255, 0.97);
+  border-right: 1px solid var(--color-border);
   padding: 12px 8px;
   gap: 2px;
   position: sticky;
@@ -35,7 +35,7 @@
   gap: 9px;
   padding: 8px 10px 16px;
   margin-bottom: 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
@@ -51,11 +51,11 @@
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.01em;
-  color: rgba(255,255,255,0.9);
+  color: var(--color-text-primary);
 }
 
 .sidebar-brand-word-accent {
-  color: var(--color-brand, #f4f4f5);
+  color: var(--color-text-muted);
 }
 
 /* ── Individual nav button ────────────────────────────────────────────────── */
@@ -69,7 +69,7 @@
   border: none;
   border-left: 3px solid transparent;
   border-radius: 4px;
-  color: rgba(255,255,255,0.40);
+  color: var(--color-text-muted);
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
@@ -82,14 +82,14 @@
 }
 
 .sidebar-tab:hover {
-  color: rgba(255,255,255,0.72);
-  background: rgba(255,255,255,0.04);
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
 }
 
 .sidebar-tab--active {
-  color: var(--color-green, #4caf50);
-  border-left-color: var(--color-green, #4caf50);
-  background: rgba(76,175,80,0.08);
+  color: var(--color-green);
+  border-left-color: var(--color-green);
+  background: var(--color-green-bg);
 }
 
 .sidebar-tab-icon {
@@ -111,7 +111,7 @@
 .sidebar-divider {
   height: 1px;
   margin: 10px 6px;
-  background: rgba(255,255,255,0.08);
+  background: var(--color-border);
   flex-shrink: 0;
 }
 
@@ -120,13 +120,13 @@
 .sidebar-tab--admin {
   margin-top: auto;
   padding-top: 13px;
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid var(--color-border);
 }
 .sidebar-tab--admin:hover {
-  color: var(--color-brand, #f4f4f5);
+  color: var(--color-brand);
 }
 .sidebar-tab--admin .sidebar-tab-icon {
-  color: var(--color-brand, #f4f4f5);
+  color: var(--color-brand);
 }
 
 .sidebar-tab-badge {
@@ -134,9 +134,9 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.6px;
-  color: #64b5f6;
-  background: rgba(100,181,246,0.12);
-  border: 1px solid rgba(100,181,246,0.28);
+  color: var(--color-blue);
+  background: rgba(29,78,216,0.10);
+  border: 1px solid rgba(29,78,216,0.25);
   border-radius: 3px;
   padding: 1px 5px;
   flex-shrink: 0;
@@ -150,12 +150,12 @@
   overflow-x: hidden;
   position: relative;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.08) transparent;
+  scrollbar-color: var(--color-border-strong) transparent;
 }
 
 .main-content::-webkit-scrollbar       { width: 6px; }
 .main-content::-webkit-scrollbar-track { background: transparent; }
-.main-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 3px; }
+.main-content::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 3px; }
 
 /* ── Tab panels — CSS show/hide preserves WS connections ─────────────────── */
 .tbl-panel {
@@ -176,9 +176,9 @@
   align-items: center;
   gap: 14px;
   padding: 14px 22px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.008));
-  border-bottom: 1px solid var(--color-border-strong, rgba(255,255,255,0.15));
-  box-shadow: 0 2px 6px rgba(0,0,0,0.22);
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border-strong);
+  box-shadow: 0 2px 6px rgba(15,17,21,0.05);
   flex-wrap: wrap;
 }
 
@@ -187,7 +187,7 @@
 .tab-title {
   font-size: var(--text-title, 1.125rem);
   font-weight: var(--fw-bold, 700);
-  color: var(--color-text-primary, #e5e5e5);
+  color: var(--color-text-primary);
   white-space: nowrap;
   letter-spacing: 0.01em;
 }

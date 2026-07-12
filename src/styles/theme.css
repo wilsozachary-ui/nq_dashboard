@@ -2,46 +2,49 @@
    NQ Dashboard — Design Token System
    Import once in index.css; consume everywhere with var(--token).
    Never hard-code colours, spacing, shadows, or radii in component CSS.
+   Light theme (flipped from dark 2026-07-12, matching the portal) — token
+   NAMES kept identical to the dark version so every component that consumes
+   var(--token) needed zero changes; only the values here changed.
 ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
   /* ── Backgrounds ──────────────────────────────────────────────────────── */
-  --color-bg-primary:   #0d0d0d;          /* outermost page layer            */
-  --color-bg-secondary: #111114;          /* deep panels (MonthlyPnL, Sidebar)*/
-  --color-bg-surface:   #16171d;          /* standard card surfaces           */
-  --color-bg-raised:    #1c1d23;          /* dropdowns, inputs, popovers      */
-  --color-bg-hover:     rgba(255,255,255,0.04);
-  --color-bg-active:    rgba(255,255,255,0.07);
+  --color-bg-primary:   #f7f7f8;          /* outermost page layer            */
+  --color-bg-secondary: #ffffff;          /* deep panels (MonthlyPnL, Sidebar)*/
+  --color-bg-surface:   #ffffff;          /* standard card surfaces           */
+  --color-bg-raised:    #f4f4f5;          /* dropdowns, inputs, popovers      */
+  --color-bg-hover:     rgba(24,24,27,0.035);
+  --color-bg-active:    rgba(24,24,27,0.06);
 
   /* ── Borders ──────────────────────────────────────────────────────────── */
-  --color-border-subtle: rgba(255,255,255,0.05);
-  --color-border:        rgba(255,255,255,0.08);
-  --color-border-strong: rgba(255,255,255,0.15);
-  --color-border-focus:  rgba(66,133,244,0.55);
+  --color-border-subtle: #f0f0f1;
+  --color-border:        #e4e4e7;
+  --color-border-strong: #d4d4d8;
+  --color-border-focus:  rgba(24,24,27,0.4);
 
   /* ── Text ─────────────────────────────────────────────────────────────── */
-  --color-text-primary:   #e5e5e5;
-  --color-text-secondary: #bdbdbd;
-  --color-text-muted:     #6b7280;
-  --color-text-dim:       #374151;
+  --color-text-primary:   #18181b;
+  --color-text-secondary: #3f3f46;
+  --color-text-muted:     #71717a;
+  --color-text-dim:       #a1a1aa;
 
   /* ── Semantic accents ─────────────────────────────────────────────────── */
-  --color-green:       #4caf50;
-  --color-green-dim:   #2e7d32;
-  --color-green-bg:    #18351f;
-  --color-green-text:  #81c784;
-  --color-red:         #e53935;
-  --color-red-dim:     #c62828;
-  --color-red-bg:      #38120f;
-  --color-red-text:    #ef9a9a;
-  --color-blue:        #4da3ff;
-  --color-amber:       #f59e0b;
+  --color-green:       #15803d;
+  --color-green-dim:   #166534;
+  --color-green-bg:    #ecfdf3;
+  --color-green-text:  #15803d;
+  --color-red:         #b91c1c;
+  --color-red-dim:     #991b1b;
+  --color-red-bg:      #fef2f2;
+  --color-red-text:    #b91c1c;
+  --color-blue:        #1d4ed8;
+  --color-amber:       #b45309;
 
   /* ── Brand (black/gray/white, matching the chrome-on-black NQ Cloud mark —
      kept separate from --color-amber, which stays reserved for warning/alert
      states throughout the trading UI) ──────────────────────────────────── */
-  --color-brand:       #f4f4f5;
-  --color-brand-dim:   #a1a1aa;
+  --color-brand:       #18181b;
+  --color-brand-dim:   #71717a;
 
   /* ── Spacing scale ────────────────────────────────────────────────────── */
   --space-xs:  4px;
@@ -56,14 +59,14 @@
   --radius-lg: 12px;
 
   /* ── Shadows ──────────────────────────────────────────────────────────── */
-  --shadow-sm:    0 1px 3px rgba(0,0,0,0.40);
-  --shadow-md:    0 3px 8px rgba(0,0,0,0.35);
-  --shadow-lg:    0 8px 24px rgba(0,0,0,0.40);
-  --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.04);
-  --shadow-card:  var(--shadow-sm), var(--shadow-md), var(--shadow-inset);
-  --shadow-glow-green: 0 0 10px rgba(76,175,80,0.25);
-  --shadow-glow-red:   0 0 10px rgba(229,57,53,0.25);
-  --shadow-glow-blue:  0 0 12px rgba(77,163,255,0.30);
+  --shadow-sm:    0 1px 2px rgba(15,17,21,0.05);
+  --shadow-md:    0 3px 8px rgba(15,17,21,0.06);
+  --shadow-lg:    0 10px 24px rgba(15,17,21,0.10);
+  --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.6);
+  --shadow-card:  var(--shadow-sm), var(--shadow-md);
+  --shadow-glow-green: 0 0 10px rgba(21,128,61,0.20);
+  --shadow-glow-red:   0 0 10px rgba(185,28,28,0.20);
+  --shadow-glow-blue:  0 0 12px rgba(29,78,216,0.20);
 
   /* ── Typography ───────────────────────────────────────────────────────── */
   --font-sans:   "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;

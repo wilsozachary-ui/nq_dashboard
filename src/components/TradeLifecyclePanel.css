@@ -50,7 +50,7 @@
   color: var(--color-text-muted);
   font-size: var(--text-sm);
   background: var(--color-bg-raised);
-  border: 1px dashed rgba(255,255,255,0.10);
+  border: 1px dashed rgba(24,24,27,0.15);
   border-radius: var(--radius-md);
 }
 
@@ -112,7 +112,7 @@
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--color-border-subtle);
-  background: rgba(0,0,0,0.2);
+  background: rgba(15,17,21,0.03);
   flex-wrap: wrap;
 }
 
@@ -126,7 +126,7 @@
 
 .tlp-side-badge--long  { color: var(--color-green-text); background: rgba(76,175,80,0.12); }
 .tlp-side-badge--short { color: var(--color-red-text);   background: rgba(229,57,53,0.12); }
-.tlp-side-badge--unknown { color: var(--color-text-muted); background: rgba(255,255,255,0.05); }
+.tlp-side-badge--unknown { color: var(--color-text-muted); background: rgba(24,24,27,0.06); }
 
 .tlp-trade-time-range,
 .tlp-trade-prices {
@@ -168,7 +168,7 @@
 }
 
 .tlp-event:last-child { border-bottom: none; }
-.tlp-event:hover { background: rgba(255,255,255,0.02); }
+.tlp-event:hover { background: rgba(24,24,27,0.025); }
 
 .tlp-event-time {
   font-size: var(--text-xs);

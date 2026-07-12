@@ -1,5 +1,10 @@
+.sub-tab {
+  align-items: center;
+}
+
 .sub-card {
   max-width: 480px;
+  width: 100%;
 }
 
 .sub-status-row {
@@ -29,9 +34,9 @@
   background: currentColor;
 }
 
-.sub-badge-green { background: var(--color-green-bg); color: var(--color-green-text); border-color: rgba(76,175,80,0.3); }
-.sub-badge-amber { background: rgba(245,158,11,0.12); color: var(--color-amber); border-color: rgba(245,158,11,0.3); }
-.sub-badge-gold  { background: rgba(244,244,245,0.12); color: var(--color-brand); border-color: rgba(244,244,245,0.3); }
+.sub-badge-green { background: var(--color-green-bg); color: var(--color-green-text); border-color: rgba(21,128,61,0.25); }
+.sub-badge-amber { background: rgba(180,83,9,0.10); color: var(--color-amber); border-color: rgba(180,83,9,0.3); }
+.sub-badge-gold  { background: rgba(24,24,27,0.06); color: var(--color-brand); border-color: rgba(24,24,27,0.2); }
 
 .sub-detail {
   margin: 0;
@@ -58,7 +63,7 @@
 
 .sub-btn-primary {
   background: var(--color-brand);
-  color: #17130a;
+  color: #ffffff;
 }
 .sub-btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
 
