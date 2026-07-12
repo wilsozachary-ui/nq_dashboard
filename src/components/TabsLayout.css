@@ -76,6 +76,21 @@
   text-overflow: ellipsis;
 }
 
+/* Admin link -- pushed to the bottom, separated by a divider, and given its
+   own accent color so it never reads as just another cockpit section. */
+.sidebar-tab--admin {
+  margin-top: auto;
+  padding-top: 13px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  text-decoration: none;
+}
+.sidebar-tab--admin:hover {
+  color: var(--color-amber, #f59e0b);
+}
+.sidebar-tab--admin .sidebar-tab-icon {
+  color: var(--color-amber, #f59e0b);
+}
+
 .sidebar-tab-badge {
   margin-left: auto;
   font-size: 9px;

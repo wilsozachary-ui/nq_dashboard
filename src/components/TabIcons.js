@@ -84,3 +84,12 @@ export function IconHelp() {
     </svg>
   );
 }
+
+export function IconAdmin() {
+  return (
+    <svg {...BASE_PROPS}>
+      <path d="M9 2.2l5.5 2v4.1c0 3.5-2.3 6.2-5.5 7.5-3.2-1.3-5.5-4-5.5-7.5V4.2z" />
+      <path d="M6.6 9l1.7 1.7 3.1-3.5" />
+    </svg>
+  );
+}

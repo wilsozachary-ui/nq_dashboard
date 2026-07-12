@@ -1,5 +1,5 @@
 import { useState, createContext, useContext } from 'react';
-import { IconTrend, IconLink, IconPulse, IconCalendar, IconInsights, IconChecklist, IconHelp } from './TabIcons';
+import { IconTrend, IconLink, IconPulse, IconCalendar, IconInsights, IconChecklist, IconHelp, IconAdmin } from './TabIcons';
 import './TabsLayout.css';
 
 // ── Tab registry ──────────────────────────────────────────────────────────────
@@ -17,6 +17,21 @@ export const TABS = [
   { id: 'checklist', label: 'Pre-Flight',        icon: IconChecklist, badge: null   },
   { id: 'help',      label: 'Get Started',       icon: IconHelp,      badge: null   },
 ];
+
+// Not a normal in-app tab -- this container has no concept of users/roles at
+// all (every customer runs the identical bundled build), so visibility is
+// gated entirely by NQ_IS_ADMIN_INSTANCE, an env var only ever set on the
+// owner's own container at provision time (see nq_control_plane's
+// provisioning/service.py). It's a real cross-origin link to the SaaS
+// control plane's admin page, not a local tab switch -- rendered as <a>,
+// not <button>, and opens in a new tab so the running bot view stays open.
+export const ADMIN_TAB = {
+  id: 'admin',
+  label: 'Admin',
+  icon: IconAdmin,
+  badge: null,
+  href: 'https://nq-cloud.com/admin',
+};
 
 export const TabContext = createContext({ activeTab: 'morning', setActiveTab: () => {} });
 export const useTabContext = () => useContext(TabContext);
@@ -38,8 +53,9 @@ export function TabPanel({ tabId, children, className = '' }) {
 }
 
 // ── TabsLayout — shell with left-side vertical navigation ────────────────────
-export default function TabsLayout({ children }) {
+export default function TabsLayout({ children, isAdminInstance = false }) {
   const [activeTab, setActiveTab] = useState('morning');
+  const AdminIcon = ADMIN_TAB.icon;
 
   return (
     <TabContext.Provider value={{ activeTab, setActiveTab }}>
@@ -60,6 +76,17 @@ export default function TabsLayout({ children }) {
               {t.badge && <span className="sidebar-tab-badge">{t.badge}</span>}
             </button>
           ))}
+          {isAdminInstance && (
+            <a
+              href={ADMIN_TAB.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sidebar-tab sidebar-tab--admin"
+            >
+              <span className="sidebar-tab-icon" aria-hidden="true"><AdminIcon /></span>
+              <span className="sidebar-tab-label">{ADMIN_TAB.label}</span>
+            </a>
+          )}
         </nav>
 
         <div className="main-content">

@@ -29,6 +29,18 @@ if (window.cockpitLiveMode) console.log('[Cockpit] Running in FULL LIVE MODE');
 function App() {
   const [isLive, setIsLive] = useState(false);
   const [integration, setIntegration] = useState(() => getCockpitStatus());
+  const [isAdminInstance, setIsAdminInstance] = useState(false);
+
+  useEffect(() => {
+    // One-time check, not part of the live WS/telemetry integration above --
+    // this container has no user/role concept at all, so visibility of the
+    // Admin link is gated purely by whether NQ_IS_ADMIN_INSTANCE was set on
+    // this specific container at provision time (see nq_control_plane).
+    fetch('/health')
+      .then(res => res.json())
+      .then(data => setIsAdminInstance(Boolean(data.is_admin_instance)))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const cockpit = initializeCockpit();
@@ -73,7 +85,7 @@ function App() {
           <TradeExecutionVisualizer />
 
           {/* Tab-based cockpit — CSS show/hide keeps WS connections alive on all tabs */}
-          <TabsLayout>
+          <TabsLayout isAdminInstance={isAdminInstance}>
             <TabPanel tabId="morning"><MorningStrategyTab /></TabPanel>
             <TabPanel tabId="tradovate"><TradovateStrategyTab /></TabPanel>
             <TabPanel tabId="health"><SystemHealthTab /></TabPanel>
