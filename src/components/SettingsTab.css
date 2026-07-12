@@ -1,0 +1,65 @@
+.set-card {
+  max-width: 420px;
+}
+
+.set-email {
+  margin: -6px 0 var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.set-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.set-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-secondary);
+}
+
+.set-input {
+  font: inherit;
+  font-size: var(--text-body);
+  color: var(--color-text-primary);
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+}
+.set-input:focus-visible {
+  outline: none;
+  border-color: var(--color-border-focus);
+}
+
+.set-error {
+  margin: 0;
+  color: var(--color-red-text);
+  font-size: var(--text-sm);
+}
+
+.set-success {
+  margin: 0;
+  color: var(--color-green-text);
+  font-size: var(--text-sm);
+}
+
+.set-btn {
+  align-self: flex-start;
+  font: inherit;
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-sm);
+  padding: 9px 18px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--color-amber);
+  color: #17130a;
+  cursor: pointer;
+}
+.set-btn:hover:not(:disabled) { filter: brightness(1.08); }
+.set-btn:disabled { opacity: 0.6; cursor: not-allowed; }

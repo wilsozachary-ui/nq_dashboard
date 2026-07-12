@@ -27,7 +27,7 @@ export default function MorningStrategyTab() {
 
       {/* Top bar: firm title + market overview + account selector */}
       <div className="tab-topbar">
-        <span className="tab-title">Topstep Morning Strategy</span>
+        <span className="tab-title">Morning Strategy</span>
         <MarketOverviewStrip symbol="NQ" />
         <TopstepAccountSelector strategy="morning" />
       </div>

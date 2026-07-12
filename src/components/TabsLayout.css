@@ -28,6 +28,36 @@
   -webkit-backdrop-filter: blur(10px);
 }
 
+/* ── Brand header ─────────────────────────────────────────────────────────── */
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px 16px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+
+.sidebar-brand-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.sidebar-brand-word {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(255,255,255,0.9);
+}
+
+.sidebar-brand-word-accent {
+  color: var(--color-amber, #f59e0b);
+}
+
 /* ── Individual nav button ────────────────────────────────────────────────── */
 .sidebar-tab {
   display: flex;
@@ -76,13 +106,21 @@
   text-overflow: ellipsis;
 }
 
-/* Admin link -- pushed to the bottom, separated by a divider, and given its
-   own accent color so it never reads as just another cockpit section. */
+/* Separates the trading tabs (Topstep, System Health, etc.) from the
+   account-management tabs (Subscription, Settings, Admin) below. */
+.sidebar-divider {
+  height: 1px;
+  margin: 10px 6px;
+  background: rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+
+/* Admin tab -- pushed to the very bottom, own divider, own accent color so
+   it never reads as just another cockpit section. */
 .sidebar-tab--admin {
   margin-top: auto;
   padding-top: 13px;
   border-top: 1px solid rgba(255,255,255,0.08);
-  text-decoration: none;
 }
 .sidebar-tab--admin:hover {
   color: var(--color-amber, #f59e0b);
@@ -171,11 +209,13 @@
 }
 
 @media (max-width: 900px) {
-  .sidebar-tab-label { display: none; }
-  .sidebar           { width: 56px; padding: 12px 6px; }
-  .sidebar-tab       { justify-content: center; padding: 11px 0; gap: 0; }
-  .sidebar-tab-badge { display: none; }
-  .tab-two-col       { grid-template-columns: 1fr; }
+  .sidebar-tab-label  { display: none; }
+  .sidebar            { width: 56px; padding: 12px 6px; }
+  .sidebar-tab        { justify-content: center; padding: 11px 0; gap: 0; }
+  .sidebar-tab-badge  { display: none; }
+  .tab-two-col        { grid-template-columns: 1fr; }
+  .sidebar-brand-word { display: none; }
+  .sidebar-brand      { justify-content: center; padding: 8px 0 16px; }
 }
 
 @media (max-width: 600px) {

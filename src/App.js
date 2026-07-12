@@ -21,6 +21,10 @@ import TradeRecapTab from './components/TradeRecapTab';
 import AiInsightsTab from './components/AiInsightsTab';
 import ChecklistTab from './components/ChecklistTab';
 import GetStartedTab from './components/GetStartedTab';
+import SubscriptionTab from './components/SubscriptionTab';
+import SettingsTab from './components/SettingsTab';
+import AdminTab from './components/AdminTab';
+import { getDashboardConfig } from './services/controlPlaneApi';
 
 // Force full live mode — all WS + REST feeds are required.
 window.cockpitLiveMode = true;
@@ -34,12 +38,9 @@ function App() {
   useEffect(() => {
     // One-time check, not part of the live WS/telemetry integration above --
     // this container has no user/role concept at all, so visibility of the
-    // Admin link is gated purely by whether NQ_IS_ADMIN_INSTANCE was set on
+    // Admin tab is gated purely by whether NQ_IS_ADMIN_INSTANCE was set on
     // this specific container at provision time (see nq_control_plane).
-    fetch('/health')
-      .then(res => res.json())
-      .then(data => setIsAdminInstance(Boolean(data.is_admin_instance)))
-      .catch(() => {});
+    getDashboardConfig().then(config => setIsAdminInstance(Boolean(config.is_admin_instance)));
   }, []);
 
   useEffect(() => {
@@ -93,6 +94,9 @@ function App() {
             <TabPanel tabId="insights"><AiInsightsTab /></TabPanel>
             <TabPanel tabId="checklist"><ChecklistTab /></TabPanel>
             <TabPanel tabId="help"><GetStartedTab /></TabPanel>
+            <TabPanel tabId="subscription"><SubscriptionTab /></TabPanel>
+            <TabPanel tabId="settings"><SettingsTab /></TabPanel>
+            {isAdminInstance && <TabPanel tabId="admin"><AdminTab /></TabPanel>}
           </TabsLayout>
 
         </div>

@@ -85,6 +85,25 @@ export function IconHelp() {
   );
 }
 
+export function IconSubscription() {
+  return (
+    <svg {...BASE_PROPS}>
+      <rect x="1.8" y="4.2" width="14.4" height="9.6" rx="1.6" />
+      <path d="M1.8 7.4h14.4" />
+      <path d="M4.4 11h3" />
+    </svg>
+  );
+}
+
+export function IconSettings() {
+  return (
+    <svg {...BASE_PROPS}>
+      <circle cx="9" cy="9" r="2.4" />
+      <path d="M9 2.6v1.7M9 14.7v1.7M15.4 9h-1.7M4.3 9H2.6M13.5 4.5l-1.2 1.2M6.7 12.3l-1.2 1.2M13.5 13.5l-1.2-1.2M6.7 5.7 5.5 4.5" />
+    </svg>
+  );
+}
+
 export function IconAdmin() {
   return (
     <svg {...BASE_PROPS}>
