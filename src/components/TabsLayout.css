@@ -55,7 +55,7 @@
 }
 
 .sidebar-brand-word-accent {
-  color: var(--color-amber, #f59e0b);
+  color: var(--color-brand, #f4f4f5);
 }
 
 /* ── Individual nav button ────────────────────────────────────────────────── */
@@ -123,10 +123,10 @@
   border-top: 1px solid rgba(255,255,255,0.08);
 }
 .sidebar-tab--admin:hover {
-  color: var(--color-amber, #f59e0b);
+  color: var(--color-brand, #f4f4f5);
 }
 .sidebar-tab--admin .sidebar-tab-icon {
-  color: var(--color-amber, #f59e0b);
+  color: var(--color-brand, #f4f4f5);
 }
 
 .sidebar-tab-badge {

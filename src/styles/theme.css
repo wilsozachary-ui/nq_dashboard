@@ -37,6 +37,12 @@
   --color-blue:        #4da3ff;
   --color-amber:       #f59e0b;
 
+  /* ── Brand (black/gray/white, matching the chrome-on-black NQ Cloud mark —
+     kept separate from --color-amber, which stays reserved for warning/alert
+     states throughout the trading UI) ──────────────────────────────────── */
+  --color-brand:       #f4f4f5;
+  --color-brand-dim:   #a1a1aa;
+
   /* ── Spacing scale ────────────────────────────────────────────────────── */
   --space-xs:  4px;
   --space-sm:  8px;
