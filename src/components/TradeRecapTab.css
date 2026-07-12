@@ -1,0 +1,57 @@
+/* ── TradeRecapTab — prefix: trt- ────────────────────────────────────────── */
+
+.trt-tab { display: flex; flex-direction: column; }
+
+/* ── Filter bar ──────────────────────────────────────────────────────────── */
+.trt-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.015);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-wrap: wrap;
+}
+
+.trt-filter-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  white-space: nowrap;
+}
+
+.trt-filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.trt-pill {
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.50);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+
+.trt-pill:hover { background: rgba(255,255,255,0.09); color: rgba(255,255,255,0.80); }
+
+.trt-pill--active {
+  background: rgba(76,175,80,0.12);
+  border-color: rgba(76,175,80,0.35);
+  color: var(--color-green, #4caf50);
+}
+
+.trt-filter-note {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: rgba(255,255,255,0.30);
+}
+.trt-filter-note strong { color: rgba(255,255,255,0.55); font-weight: 500; }

@@ -1,0 +1,36 @@
+/* ── MarketOverviewStrip — prefix: mos- ──────────────────────────────────── */
+
+.mos-strip {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 36px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.mos-strip::-webkit-scrollbar { display: none; }
+
+/* ── Symbol tag ──────────────────────────────────────────────────────────── */
+.mos-hero {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 14px 0 0;
+  flex-shrink: 0;
+}
+
+.mos-sym {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-green, #4caf50);
+  background: rgba(76,175,80,0.10);
+  border: 1px solid rgba(76,175,80,0.3);
+  border-radius: var(--radius-sm, 4px);
+  padding: 3px 9px;
+}

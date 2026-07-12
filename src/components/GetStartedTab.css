@@ -1,0 +1,118 @@
+/* ── GetStartedTab — prefix: gst- ─────────────────────────────────────────── */
+
+.gst-tab {
+  max-width: 860px;
+}
+
+.gst-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gst-intro {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  margin: 0 0 4px;
+}
+
+.gst-subhead {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-top: 8px;
+}
+
+.gst-tabs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gst-tab-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 12px;
+  padding: 8px 10px;
+  background: var(--color-bg-raised);
+  border-radius: var(--radius-sm);
+}
+
+.gst-tab-name {
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+}
+
+.gst-tab-desc {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--lh-base);
+}
+
+.gst-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--lh-base);
+}
+
+.gst-steps li::marker {
+  color: var(--color-green);
+  font-weight: var(--fw-bold);
+}
+
+.gst-faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gst-faq-item {
+  border-bottom: 1px solid var(--color-border-subtle);
+  padding: 10px 2px;
+}
+
+.gst-faq-item:last-child {
+  border-bottom: none;
+}
+
+.gst-faq-q {
+  cursor: pointer;
+  font-size: var(--text-body);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-primary);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gst-faq-q::-webkit-details-marker {
+  display: none;
+}
+
+.gst-faq-q::before {
+  content: '▸';
+  color: var(--color-text-muted);
+  font-size: 11px;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.gst-faq-item[open] .gst-faq-q::before {
+  transform: rotate(90deg);
+}
+
+.gst-faq-a {
+  margin: 8px 0 0 19px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--lh-base);
+  max-width: 700px;
+}

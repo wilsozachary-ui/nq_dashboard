@@ -1,0 +1,98 @@
+/* ── PracticeBotStatus — prefix: pbs- ────────────────────────────────────── */
+
+.pbs-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.pbs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pbs-title { font-size: var(--text-sm); }
+
+.pbs-status-pill {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.pbs-status-pill--ok   { background: rgba(76,175,80,0.15); color: var(--color-green); }
+.pbs-status-pill--err  { background: rgba(229,57,53,0.15); color: var(--color-red); }
+.pbs-status-pill--mock { background: rgba(77,163,255,0.15); color: var(--color-blue); }
+
+/* ── Metrics row -- 3 real metrics (API / heartbeat / reconnects); keep
+   this column count in sync with PracticeBotStatus.js's <Metric> count or
+   the row ends up lopsided with dead empty space. ───────────────────── */
+.pbs-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xs);
+}
+
+.pbs-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--color-bg-raised);
+  border-radius: var(--radius-sm);
+  padding: 6px var(--space-xs);
+  gap: 3px;
+}
+
+.pbs-metric-lbl {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: var(--fw-semibold);
+}
+
+.pbs-metric-val {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-bold);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+.pbs-metric-val--warn { color: var(--color-amber); }
+
+/* ── Status flags ────────────────────────────────────────────────────────── */
+.pbs-flags {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xs);
+}
+
+.pbs-flag {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 5px var(--space-sm);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.pbs-flag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pbs-flag--ok  .pbs-flag-dot { background: var(--color-green); box-shadow: 0 0 5px rgba(76,175,80,0.5); }
+.pbs-flag--off .pbs-flag-dot { background: var(--color-border-strong); }
+.pbs-flag--off               { opacity: 0.55; }
+
+.pbs-flag-lbl {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}

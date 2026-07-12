@@ -1,0 +1,59 @@
+/* An actually-open position is the single most important thing on this
+   tab -- give the whole card a quiet colored presence (mirroring
+   MorningStrategyLiveControl's --armed treatment) so it reads as "live"
+   at a glance instead of looking identical to the flat/idle state. */
+.pop-panel--long {
+  border-color: rgba(76,175,80,0.35);
+  box-shadow: var(--shadow-card), 0 0 0 1px rgba(76,175,80,0.10);
+}
+
+.pop-panel--short {
+  border-color: rgba(229,57,53,0.35);
+  box-shadow: var(--shadow-card), 0 0 0 1px rgba(229,57,53,0.10);
+}
+
+.bracket {
+  margin-top: var(--space-md);
+}
+
+.bracket-track {
+  position: relative;
+  display: flex;
+  height: 6px;
+  border-radius: var(--radius-sm);
+  overflow: visible;
+  background-color: var(--color-bg-raised);
+  box-shadow: var(--shadow-sm);
+}
+
+.bracket-segment { height: 100%; }
+
+.bracket-segment.bracket-risk {
+  background-color: var(--color-red-dim);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.bracket-segment.bracket-reward {
+  background-color: var(--color-green-dim);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.bracket-marker {
+  position: absolute;
+  top: -4px;
+  width: 2px;
+  height: 14px;
+  background-color: var(--color-text-primary);
+  border-radius: 1px;
+  transform: translateX(-1px);
+  box-shadow: 0 0 4px rgba(229, 229, 229, 0.45);
+}
+
+.bracket-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-xs);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.03em;
+}

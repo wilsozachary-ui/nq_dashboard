@@ -1,0 +1,26 @@
+/* ── ChecklistTab — prefix: clt- ─────────────────────────────────────────── */
+
+.clt-tab {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Override the checklist's fixed/modal positioning when rendered inside a tab.
+   The checklist uses fixed/absolute positioning; this container centres it.
+   NOTE: SessionStartChecklist internal CSS manages its own display state. */
+.clt-tab .blc-overlay {
+  position: static !important;
+  background: none !important;
+  padding: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+}
+
+.clt-tab .blc-modal {
+  position: static !important;
+  transform: none !important;
+  max-width: 720px !important;
+  width: 100% !important;
+}

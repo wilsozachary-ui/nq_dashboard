@@ -1,0 +1,45 @@
+/* ── OrbControls — prefix: orb-ctrl- ──────────────────────────────────────── */
+
+.orb-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.orb-controls-title { margin: 0; font-size: 13px; }
+
+.orb-controls-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.orb-ctrl-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.orb-ctrl-btn:hover { background: rgba(255,255,255,0.06); }
+
+.orb-ctrl-btn--stop {
+  border-color: rgba(245,158,11,0.35);
+  color: var(--color-amber);
+}
+.orb-ctrl-btn--stop:hover { background: rgba(245,158,11,0.08); }
+
+.orb-ctrl-btn--flatten {
+  border-color: rgba(229,57,53,0.35);
+  color: var(--color-red);
+}
+.orb-ctrl-btn--flatten:hover { background: rgba(229,57,53,0.08); }
+
+.orb-controls-status {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}

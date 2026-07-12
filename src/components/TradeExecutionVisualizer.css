@@ -1,0 +1,222 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   TradeExecutionVisualizer.css
+   Two roles:
+   1. Overlay notification — floats fixed top-right below StrategyControlBar
+   2. Global body[data-tev] rules — micro-animation flashes on component roots
+   Prefix: tev-
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   OVERLAY
+══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes tevSlideIn {
+  from { transform: translateX(calc(100% + 20px)); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes tevFadeOut {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(12px); }
+}
+
+.tev-overlay {
+  position: fixed;
+  top: 72px;           /* 56px bar + 16px gap */
+  right: 16px;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.09em;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  /* slide in for 200ms, hold until 1100ms, fade out over 400ms */
+  animation:
+    tevSlideIn 0.18s var(--ease-out) both,
+    tevFadeOut 0.35s ease-in 1.15s forwards;
+}
+
+.tev-overlay-icon {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Color variants */
+.tev-overlay--green {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.5);
+  color: var(--color-green);
+  box-shadow: 0 4px 20px rgba(76, 175, 80, 0.2), 0 0 0 1px rgba(76, 175, 80, 0.08);
+}
+
+.tev-overlay--amber {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: var(--color-amber);
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.18);
+}
+
+.tev-overlay--blue {
+  background: rgba(77, 163, 255, 0.15);
+  border-color: rgba(77, 163, 255, 0.5);
+  color: var(--color-blue);
+  box-shadow: 0 4px 20px rgba(77, 163, 255, 0.18);
+}
+
+.tev-overlay--purple {
+  background: rgba(167, 105, 255, 0.15);
+  border-color: rgba(167, 105, 255, 0.5);
+  color: #a769ff;
+  box-shadow: 0 4px 20px rgba(167, 105, 255, 0.18);
+}
+
+.tev-overlay--orange {
+  background: rgba(251, 146, 60, 0.15);
+  border-color: rgba(251, 146, 60, 0.5);
+  color: #fb923c;
+  box-shadow: 0 4px 20px rgba(251, 146, 60, 0.18);
+}
+
+.tev-overlay--red {
+  background: rgba(229, 57, 53, 0.15);
+  border-color: rgba(229, 57, 53, 0.5);
+  color: var(--color-red);
+  box-shadow: 0 4px 20px rgba(229, 57, 53, 0.2);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BODY-LEVEL MICRO-ANIMATIONS  (body[data-tev="..."])
+   Targets: .tp-panel, .scb-bar, .scb-trail-btn, .act-root, .ssc-root
+══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Shared keyframes ────────────────────────────────────────────────────── */
+@keyframes tevFlashGreen  {
+  0%, 100% { box-shadow: var(--shadow-card, none); }
+  30%      { box-shadow: var(--shadow-card, none), 0 0 0 2px rgba(76,175,80,0.7), 0 0 28px rgba(76,175,80,0.35); }
+}
+
+@keyframes tevFlashAmber  {
+  0%, 100% { box-shadow: var(--shadow-card, none); }
+  30%      { box-shadow: var(--shadow-card, none), 0 0 0 2px rgba(245,158,11,0.7), 0 0 24px rgba(245,158,11,0.3); }
+}
+
+@keyframes tevFlashBlue   {
+  0%, 100% { box-shadow: var(--shadow-card, none); }
+  30%      { box-shadow: var(--shadow-card, none), 0 0 0 2px rgba(77,163,255,0.7), 0 0 24px rgba(77,163,255,0.3); }
+}
+
+@keyframes tevFlashPurple {
+  0%, 100% { box-shadow: none; }
+  30%      { box-shadow: 0 0 0 2px rgba(167,105,255,0.7), 0 0 20px rgba(167,105,255,0.35); }
+}
+
+@keyframes tevFlashOrange {
+  0%, 100% { box-shadow: var(--shadow-card, none); }
+  30%      { box-shadow: var(--shadow-card, none), 0 0 0 2px rgba(251,146,60,0.7), 0 0 24px rgba(251,146,60,0.3); }
+}
+
+@keyframes tevFlashRed    {
+  0%, 100% { box-shadow: var(--shadow-card, none); }
+  30%      { box-shadow: var(--shadow-card, none), 0 0 0 2px rgba(229,57,53,0.7), 0 0 28px rgba(229,57,53,0.3); }
+}
+
+@keyframes tevGlowBar {
+  0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.55); }
+  25%      { box-shadow: 0 4px 20px rgba(0,0,0,0.55), 0 0 30px rgba(76,175,80,0.25); }
+}
+
+@keyframes tevPulseVal {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* ── trade_opened: green flash on ActivityDashboard + glow on bar ────────── */
+body[data-tev="trade_opened"] .act-root {
+  animation: tevFlashGreen 300ms ease-out;
+}
+
+body[data-tev="trade_opened"] .scb-bar {
+  animation: tevGlowBar 300ms ease-out;
+}
+
+body[data-tev="trade_opened"] .tp-panel {
+  animation: tevFlashGreen 300ms ease-out;
+}
+
+/* ── stop_loss_moved: amber flash on TradeParameterPanel + pulse SL value ── */
+body[data-tev="stop_loss_moved"] .tp-panel {
+  animation: tevFlashAmber 250ms ease-out;
+}
+
+body[data-tev="stop_loss_moved"] .tp-val {
+  animation: tevPulseVal 250ms ease-out;
+  color: var(--color-amber);
+}
+
+body[data-tev="stop_loss_moved"] .scb-param-val {
+  animation: tevPulseVal 250ms ease-out;
+}
+
+/* ── take_profit_moved: blue flash on TradeParameterPanel + pulse TP value ─ */
+body[data-tev="take_profit_moved"] .tp-panel {
+  animation: tevFlashBlue 250ms ease-out;
+}
+
+body[data-tev="take_profit_moved"] .tp-val {
+  animation: tevPulseVal 250ms ease-out;
+  color: var(--color-blue);
+}
+
+/* ── trailing_stop_activated: purple flash on trailing toggle ─────────────── */
+body[data-tev="trailing_stop_activated"] .scb-trail-btn {
+  animation: tevFlashPurple 300ms ease-out;
+}
+
+body[data-tev="trailing_stop_activated"] .tp-toggle {
+  animation: tevFlashPurple 300ms ease-out;
+}
+
+/* ── partial_exit: orange flash on ActivityDashboard ─────────────────────── */
+body[data-tev="partial_exit"] .act-root {
+  animation: tevFlashOrange 250ms ease-out;
+}
+
+body[data-tev="partial_exit"] .ssc-root {
+  animation: tevFlashOrange 250ms ease-out;
+}
+
+/* ── trade_closed: red flash on ActivityDashboard + control bar ──────────── */
+body[data-tev="trade_closed"] .act-root {
+  animation: tevFlashRed 300ms ease-out;
+}
+
+body[data-tev="trade_closed"] .tp-panel {
+  animation: tevFlashRed 300ms ease-out;
+}
+
+body[data-tev="trade_closed"] .scb-bar {
+  animation: tevFlashRed 300ms ease-out;
+}
+
+/* ── Responsive: smaller overlay on mobile ──────────────────────────────── */
+@media (max-width: 600px) {
+  .tev-overlay {
+    top: 64px;
+    right: 8px;
+    font-size: 10px;
+    padding: 5px 10px;
+    gap: 6px;
+  }
+}

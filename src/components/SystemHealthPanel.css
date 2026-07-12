@@ -1,0 +1,59 @@
+/* ── SystemHealthPanel — prefix: shp- ─────────────────────────────────────── */
+
+.shp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.shp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shp-section-label {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.shp-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 4px 0;
+}
+
+.shp-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--color-text-dim);
+}
+
+.shp-dot--ok      { background: var(--color-green); box-shadow: 0 0 6px rgba(76,175,80,0.5); }
+.shp-dot--bad     { background: var(--color-red);   box-shadow: 0 0 6px rgba(229,57,53,0.5); }
+.shp-dot--warn    { background: var(--color-amber); }
+.shp-dot--unknown { background: var(--color-text-dim); }
+
+.shp-label {
+  flex: 1;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary, rgba(255,255,255,0.75));
+}
+
+.shp-detail {
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  color: var(--color-text-muted);
+  text-align: right;
+}
+
+.shp-detail--ok   { color: var(--color-green-text); }
+.shp-detail--bad  { color: var(--color-red-text); }
+.shp-detail--warn { color: var(--color-amber); }

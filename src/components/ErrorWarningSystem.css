@@ -1,0 +1,384 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ErrorWarningSystem.css
+   Prefix: ews-
+   Three tiers: Toast (bottom-right) · Banner (top strip) · Critical (modal)
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TOAST STACK  —  fixed bottom-right
+══════════════════════════════════════════════════════════════════════════ */
+
+.ews-toast-stack {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 800;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  pointer-events: none;
+  max-width: 380px;
+  width: calc(100vw - 40px);
+}
+
+/* ── Toast shell ──────────────────────────────────────────────────────── */
+
+@keyframes ewsToastIn {
+  from { transform: translateX(calc(100% + 24px)); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes ewsToastOut {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(calc(100% + 24px)); opacity: 0; }
+}
+
+.ews-toast {
+  pointer-events: all;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px 10px 14px;
+  border-radius: 8px;
+  border: 1px solid;
+  background: rgba(12, 13, 18, 0.97);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  animation: ewsToastIn 0.2s var(--ease-out) both;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.ews-toast--fade {
+  animation: ewsToastOut 0.3s ease-in forwards;
+}
+
+/* Error — amber/red neon border */
+.ews-toast--error {
+  border-color: rgba(245, 158, 11, 0.55);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(245, 158, 11, 0.08), inset 0 0 20px rgba(245, 158, 11, 0.04);
+}
+
+/* Warning — yellow */
+.ews-toast--warning {
+  border-color: rgba(245, 158, 11, 0.45);
+}
+
+/* Critical — red */
+.ews-toast--critical {
+  border-color: rgba(229, 57, 53, 0.55);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(229, 57, 53, 0.08);
+}
+
+/* Info — blue */
+.ews-toast--info {
+  border-color: rgba(77, 163, 255, 0.35);
+}
+
+/* ── Toast icon ───────────────────────────────────────────────────────── */
+
+.ews-toast-icon {
+  font-size: 13px;
+  line-height: 1.4;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ews-toast--error   .ews-toast-icon { color: var(--color-amber); }
+.ews-toast--warning .ews-toast-icon { color: var(--color-amber); }
+.ews-toast--critical .ews-toast-icon { color: var(--color-red); }
+.ews-toast--info    .ews-toast-icon { color: var(--color-blue); }
+
+/* ── Toast body ───────────────────────────────────────────────────────── */
+
+.ews-toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ews-toast-msg {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.ews-toast-type {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: var(--fw-semi);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.ews-toast--error   .ews-toast-type { color: rgba(245, 158, 11, 0.6); }
+.ews-toast--critical .ews-toast-type { color: rgba(229, 57, 53, 0.6); }
+.ews-toast--info    .ews-toast-type { color: rgba(77, 163, 255, 0.6); }
+
+/* ── Toast dismiss button ─────────────────────────────────────────────── */
+
+.ews-toast-close {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--color-muted);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 1px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.ews-toast-close:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WARNING BANNER STACK  —  sticky, stacks directly below price strip
+══════════════════════════════════════════════════════════════════════════ */
+
+.ews-banner-stack {
+  position: sticky;
+  top: 100px;          /* 56px scb + 44px price strip */
+  z-index: 175;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Banner shell ─────────────────────────────────────────────────────── */
+
+@keyframes ewsBannerIn {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.ews-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: var(--fw-semi);
+  letter-spacing: 0.03em;
+  animation: ewsBannerIn 0.22s var(--ease-out) both;
+  border-bottom: 1px solid transparent;
+}
+
+/* Warning — yellow */
+.ews-banner--warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: var(--color-amber);
+}
+
+/* Elevated risk — orange */
+.ews-banner--elevated {
+  background: rgba(249, 115, 22, 0.1);
+  border-color: rgba(249, 115, 22, 0.3);
+  color: #f97316;
+}
+
+/* Critical level in banner (rare — use modal instead) */
+.ews-banner--critical {
+  background: rgba(229, 57, 53, 0.1);
+  border-color: rgba(229, 57, 53, 0.3);
+  color: var(--color-red);
+}
+
+.ews-banner-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.ews-banner-msg {
+  flex: 1;
+  font-weight: var(--fw-bold);
+}
+
+.ews-banner-type {
+  font-size: 10px;
+  font-weight: var(--fw-semi);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.ews-banner-close {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, background 0.15s ease;
+  padding: 0;
+  margin-left: 8px;
+}
+
+.ews-banner-close:hover { opacity: 1; background: rgba(255, 255, 255, 0.06); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CRITICAL ALERT MODAL
+══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes ewsModalIn {
+  from { transform: scale(0.94) translateY(8px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.ews-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.80);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.ews-modal {
+  background: #0c0d12;
+  border: 1px solid rgba(229, 57, 53, 0.55);
+  border-radius: 12px;
+  padding: 36px 40px 32px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow:
+    0 0 60px rgba(229, 57, 53, 0.22),
+    0 0 0 1px rgba(229, 57, 53, 0.08),
+    0 24px 64px rgba(0, 0, 0, 0.7);
+  text-align: center;
+  animation: ewsModalIn 0.25s var(--ease-out) both;
+}
+
+.ews-modal-icon {
+  font-size: 36px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 12px rgba(229, 57, 53, 0.6));
+}
+
+.ews-modal-title {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.06em;
+  color: var(--color-red);
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  text-shadow: 0 0 20px rgba(229, 57, 53, 0.4);
+}
+
+.ews-modal-msg {
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.6;
+  margin: 0 0 8px;
+}
+
+.ews-modal-detail {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-muted);
+  margin: 0 0 20px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+}
+
+.ews-modal-meta {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-muted);
+  letter-spacing: 0.06em;
+  margin-bottom: 24px;
+  opacity: 0.6;
+}
+
+/* Acknowledge button */
+.ews-modal-ack {
+  width: 100%;
+  padding: 13px 24px;
+  border-radius: 8px;
+  border: 1px solid rgba(229, 57, 53, 0.45);
+  background: rgba(229, 57, 53, 0.12);
+  color: var(--color-red);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ews-modal-ack:hover {
+  background: rgba(229, 57, 53, 0.2);
+  border-color: rgba(229, 57, 53, 0.7);
+  box-shadow: 0 0 20px rgba(229, 57, 53, 0.2);
+}
+
+.ews-modal-ack:focus-visible {
+  outline: 2px solid rgba(229, 57, 53, 0.6);
+  outline-offset: 2px;
+}
+
+.ews-modal-ack:active {
+  transform: scale(0.99);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+  .ews-toast-stack {
+    bottom: 12px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+  }
+
+  .ews-banner {
+    padding: 7px 12px;
+    font-size: 11px;
+  }
+
+  .ews-banner-type { display: none; }
+
+  .ews-modal {
+    padding: 24px 20px 20px;
+  }
+
+  .ews-modal-title { font-size: 15px; }
+  .ews-modal-ack   { font-size: 11px; }
+}

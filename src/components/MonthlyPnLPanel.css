@@ -1,0 +1,538 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   MonthlyPnLPanel — dark cockpit theme
+   Color tokens used throughout:
+     Surface 0 (panel bg):    #111114
+     Surface 1 (cell bg):     #1c1d22
+     Surface 2 (hover/input): rgba(255,255,255,0.04)
+     Border subtle:           rgba(255,255,255,0.06)
+     Border default:          rgba(255,255,255,0.10)
+     Border active:           rgba(66,133,244,0.45)
+     Text primary:            #e5e5e5
+     Text secondary:          #6b7280
+     Text dim:                #374151
+     Green accent:            #4caf50
+     Red accent:              #e53935
+     Tile profit bg:          #18351f
+     Tile loss bg:            #38120f
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Panel card override ─────────────────────────────────────────────────── */
+.mpnl-panel {
+  background-color: #111114;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  padding: 18px;
+}
+
+/* Scoped color overrides so this panel's green/red differ from global defaults */
+.mpnl-panel .value-positive { color: #4caf50; }
+.mpnl-panel .value-negative { color: #e53935; }
+.mpnl-neutral               { color: #6b7280; }
+
+/* ── Top header ──────────────────────────────────────────────────────────── */
+.mpnl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+/* ── Month navigation ────────────────────────────────────────────────────── */
+.mpnl-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.mpnl-nav-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 6px;
+  color: #6b7280;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 0.15s ease,
+    border-color     0.15s ease,
+    color            0.15s ease,
+    box-shadow       0.15s ease,
+    transform        0.12s ease;
+}
+
+.mpnl-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #e5e5e5;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.05),
+    0 0 12px rgba(255, 255, 255, 0.07);
+  transform: scale(1.10);
+}
+
+.mpnl-nav-btn:active {
+  transform: scale(0.94);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: none;
+}
+
+.mpnl-month-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e5e5e5;
+  min-width: 145px;
+  text-align: center;
+  letter-spacing: 0.015em;
+}
+
+/* ── Monthly P/L total ───────────────────────────────────────────────────── */
+.mpnl-monthly-total {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: right;
+  animation: mpnlAppear 0.28s ease both;
+}
+
+@keyframes mpnlAppear {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Strategy filter row ──────────────────────────────────────────────────── */
+.mpnl-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mpnl-filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: rgba(255, 255, 255, 0.04);
+  /* Custom chevron */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 6px;
+  color: #9ca3af;
+  font-size: 0.78rem;
+  padding: 6px 30px 6px 12px;
+  min-width: 165px;
+  cursor: pointer;
+  outline: none;
+  transition:
+    background-color 0.15s ease,
+    border-color     0.15s ease,
+    color            0.15s ease,
+    box-shadow       0.15s ease;
+}
+
+.mpnl-filter-select:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.20);
+  color: #e5e5e5;
+}
+
+.mpnl-filter-select:focus {
+  border-color: rgba(66, 133, 244, 0.55);
+  color: #e5e5e5;
+  box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.14);
+}
+
+.mpnl-filter-select option {
+  background-color: #1f2028;
+  color: #e5e5e5;
+}
+
+/* ── Fade transition ─────────────────────────────────────────────────────── */
+.mpnl-body {
+  /* opacity state only; children do layout */
+}
+
+.mpnl-fade-out {
+  opacity: 0;
+  transition: opacity 0.20s ease;
+  pointer-events: none;
+}
+
+.mpnl-fade-in {
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+/* ── Horizontal-scroll wrapper ───────────────────────────────────────────── */
+.mpnl-grid-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* hairline scrollbar on Webkit */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.10) transparent;
+}
+
+.mpnl-grid-wrapper::-webkit-scrollbar        { height: 3px; }
+.mpnl-grid-wrapper::-webkit-scrollbar-track  { background: transparent; }
+.mpnl-grid-wrapper::-webkit-scrollbar-thumb  {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+}
+
+/* ── Day-of-week column headers ──────────────────────────────────────────── */
+.mpnl-grid-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr) 108px;
+  gap: 4px;
+  margin-bottom: 4px;
+  min-width: 520px;
+}
+
+.mpnl-col-header {
+  text-align: center;
+  font-size: 0.64rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  padding: 2px 0 5px;
+}
+
+.mpnl-col-header--week {
+  padding-left: 12px;
+  text-align: left;
+  color: #2d3240;
+}
+
+/* ── Week rows ───────────────────────────────────────────────────────────── */
+.mpnl-week-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr) 108px;
+  gap: 4px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  min-width: 520px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.mpnl-week-row:hover {
+  border-color: rgba(255, 255, 255, 0.07);
+  background-color: rgba(255, 255, 255, 0.018);
+}
+
+.mpnl-week-row--selected {
+  border-color: rgba(66, 133, 244, 0.40) !important;
+  background-color: rgba(66, 133, 244, 0.06) !important;
+}
+
+/* ── Day cells ───────────────────────────────────────────────────────────── */
+.mpnl-day-cell {
+  height: 72px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 5px;
+  overflow: hidden;
+  background-color: #1c1d22;
+  transition: border-color 0.15s ease;
+}
+
+.mpnl-day-cell--empty {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.mpnl-day-cell:not(.mpnl-day-cell--empty) {
+  cursor: pointer;
+}
+
+.mpnl-day-cell--selected {
+  border-color: rgba(66, 133, 244, 0.55) !important;
+  box-shadow: inset 0 0 0 1px rgba(66, 133, 244, 0.55);
+}
+
+/* Lift cell border on row hover */
+.mpnl-week-row:hover .mpnl-day-cell:not(.mpnl-day-cell--empty) {
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+/* ── Day tiles ───────────────────────────────────────────────────────────── */
+.mpnl-tile {
+  width: 100%;
+  height: 100%;
+  padding: 5px 7px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background-color: #1c1d22;
+  transition: filter 0.15s ease;
+}
+
+.mpnl-tile--profit {
+  background-color: #18351f;
+  border-left: 2px solid #2e7d32;
+}
+
+.mpnl-tile--loss {
+  background-color: #38120f;
+  border-left: 2px solid #c62828;
+}
+
+.mpnl-tile--profit:hover,
+.mpnl-tile--loss:hover {
+  filter: brightness(1.30);
+}
+
+/* ── Day number ─────────────────────────────────────────────────────────── */
+.mpnl-day-num {
+  font-size: 0.60rem;
+  color: #2d3240;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.mpnl-tile--profit .mpnl-day-num,
+.mpnl-tile--loss   .mpnl-day-num {
+  color: rgba(229, 231, 235, 0.40);
+}
+
+/* ── Tile P/L value ──────────────────────────────────────────────────────── */
+.mpnl-tile-pnl {
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: auto;
+}
+
+.mpnl-tile--profit .mpnl-tile-pnl { color: #81c784; }
+.mpnl-tile--loss   .mpnl-tile-pnl { color: #ef9a9a; }
+
+/* ── Tile trade count ────────────────────────────────────────────────────── */
+.mpnl-tile-trades {
+  font-size: 0.60rem;
+  color: rgba(229, 231, 235, 0.35);
+  line-height: 1;
+  margin-top: 2px;
+}
+
+/* ── Weekly summary sidebar cell ─────────────────────────────────────────── */
+.mpnl-week-cell {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 4px 0 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 3px;
+  min-height: 72px;
+  transition:
+    border-left-color 0.15s ease,
+    border-left-width 0.15s ease,
+    padding-left      0.15s ease;
+}
+
+/* Accent left-border on row hover */
+.mpnl-week-row:hover .mpnl-week-cell {
+  border-left-color: rgba(255, 255, 255, 0.16);
+  border-left-width: 2px;
+  padding-left: 11px;
+}
+
+/* Stronger blue accent when row is selected */
+.mpnl-week-row--selected .mpnl-week-cell {
+  border-left-color: rgba(66, 133, 244, 0.55) !important;
+  border-left-width: 2px !important;
+  padding-left: 11px !important;
+}
+
+.mpnl-week-num {
+  font-size: 0.59rem;
+  color: #374151;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.mpnl-week-pnl {
+  font-size: 0.80rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.mpnl-week-trade-ct {
+  font-size: 0.62rem;
+  color: #374151;
+  line-height: 1;
+}
+
+/* ── Bottom selected-week bar ────────────────────────────────────────────── */
+.mpnl-bottom-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background-color: rgba(255, 255, 255, 0.025);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0 0 6px 6px;
+}
+
+.mpnl-bottom-label {
+  font-size: 0.80rem;
+  font-weight: 600;
+  color: #6b7280;
+  flex-shrink: 0;
+  min-width: 52px;
+}
+
+.mpnl-bottom-pnl {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.mpnl-bottom-trades {
+  font-size: 0.75rem;
+  color: #374151;
+}
+
+/* ── Loading / error status bar ─────────────────────────────────────────── */
+.mpnl-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 5px;
+  font-size: 0.76rem;
+  animation: mpnlAppear 0.2s ease both;
+}
+
+.mpnl-status-bar--loading {
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: #6b7280;
+}
+
+.mpnl-status-bar--error {
+  background-color: rgba(198, 40, 40, 0.10);
+  border: 1px solid rgba(198, 40, 40, 0.25);
+  color: #ef9a9a;
+  justify-content: space-between;
+}
+
+.mpnl-status-text {
+  flex: 1;
+  letter-spacing: 0.01em;
+}
+
+/* ── CSS spinner ─────────────────────────────────────────────────────────── */
+.mpnl-spinner {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.10);
+  border-top-color: #6b7280;
+  border-radius: 50%;
+  animation: mpnlSpin 0.7s linear infinite;
+}
+
+@keyframes mpnlSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Retry button ────────────────────────────────────────────────────────── */
+.mpnl-retry-btn {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  background: rgba(198, 40, 40, 0.20);
+  border: 1px solid rgba(198, 40, 40, 0.40);
+  border-radius: 4px;
+  color: #ef9a9a;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s;
+}
+
+.mpnl-retry-btn:hover {
+  background: rgba(198, 40, 40, 0.32);
+  border-color: rgba(198, 40, 40, 0.60);
+}
+
+/* ── Calendar grid: dim while loading ───────────────────────────────────── */
+.mpnl-grid--busy {
+  opacity: 0.30;
+  pointer-events: none;
+  transition: opacity 0.20s ease;
+}
+
+/* ── Disabled nav / filter while loading ─────────────────────────────────── */
+.mpnl-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.mpnl-filter-select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Monthly total placeholder (during load) ─────────────────────────────── */
+.mpnl-total-placeholder {
+  color: #374151;
+  font-weight: 600;
+}
+
+/* ── Skeleton loading state (first load before calendar data arrives) ────── */
+.mpnl-skeleton-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Visually hides the real grid while skeleton is showing (avoids layout shift) */
+.mpnl-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Responsive — narrow screens ─────────────────────────────────────────── */
+@media (max-width: 680px) {
+  /* Center the header stack vertically */
+  .mpnl-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mpnl-monthly-total {
+    text-align: center;
+    font-size: 1rem;
+  }
+
+  .mpnl-nav {
+    justify-content: center;
+  }
+
+  /* Calendar scrolls horizontally; sidebar stays within the row and scrolls with it */
+  .mpnl-grid-wrapper {
+    padding-bottom: 6px; /* room for the scrollbar */
+  }
+}

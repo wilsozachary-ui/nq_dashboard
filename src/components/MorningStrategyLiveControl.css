@@ -1,0 +1,289 @@
+/* ── MorningStrategyLiveControl / MorningStrategyPracticeBotControl ──────────
+   Shared prefix: mstb- (Morning Strategy Test Bot) ────────────────────────── */
+
+.mstb-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  border-top: 2px solid transparent;
+  transition: border-color var(--dur-base) var(--ease-in-out),
+              box-shadow    var(--dur-base) var(--ease-in-out);
+}
+
+/* Armed = live, waiting to fire -- give the whole card a quiet amber
+   presence so it reads as "primed" at a glance, not just the button. */
+.mstb-panel--armed {
+  border-top-color: rgba(245,158,11,0.55);
+  box-shadow: var(--shadow-card), 0 0 0 1px rgba(245,158,11,0.10);
+}
+
+/* Active = a real position is open right now -- the single most important
+   state this panel can be in, so it gets the strongest visual presence
+   (green, not amber) rather than looking the same as merely "armed". */
+.mstb-panel--active {
+  border-top-color: rgba(76,175,80,0.65);
+  box-shadow: var(--shadow-card), 0 0 0 1px rgba(76,175,80,0.14);
+}
+
+.mstb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ── Status pill -- prominent, color-coded, fixed footprint so it never
+   shifts layout as status text changes length ─────────────────────────── */
+.mstb-status-pill {
+  min-width: 84px;
+  text-align: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  transition: background-color var(--dur-base) var(--ease-out),
+              border-color     var(--dur-base) var(--ease-out),
+              color            var(--dur-base) var(--ease-out);
+}
+
+.mstb-status--off        { background: rgba(148,163,184,0.10); border-color: rgba(148,163,184,0.25); color: var(--color-text-muted); }
+.mstb-status--armed      { background: rgba(77,163,255,0.12);  border-color: rgba(77,163,255,0.38);  color: var(--color-blue); }
+.mstb-status--active     { background: rgba(76,175,80,0.12);   border-color: rgba(76,175,80,0.35);   color: var(--color-green); }
+.mstb-status--closed-tp  { background: rgba(76,175,80,0.12);   border-color: rgba(76,175,80,0.35);   color: var(--color-green); }
+.mstb-status--closed-sl  { background: rgba(229,57,53,0.12);   border-color: rgba(229,57,53,0.35);   color: var(--color-red); }
+
+/* ── Power toggle -- the one control per panel. OFF = muted/outlined,
+   ON = filled and colored by what "on" currently means (armed = amber,
+   waiting/active = green), so state is legible without extra buttons. ─── */
+.mstb-power {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 12px var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-raised);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--dur-fast) var(--ease-out),
+              border-color     var(--dur-fast) var(--ease-out),
+              box-shadow       var(--dur-fast) var(--ease-out),
+              transform        60ms            linear;
+}
+.mstb-power:hover:not(:disabled) { background: var(--color-bg-active); }
+.mstb-power:active:not(:disabled) { transform: scale(0.995); }
+.mstb-power:focus-visible { outline: 2px solid var(--color-border-focus); outline-offset: 2px; }
+.mstb-power:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.mstb-power-track {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-strong);
+  transition: background-color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+}
+
+.mstb-power-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-text-dim);
+  transition: transform var(--dur-base) var(--ease-out), background-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+
+.mstb-power-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mstb-power-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-title);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.04em;
+  color: var(--color-text-primary);
+}
+
+.mstb-power-sub {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ON while armed-and-waiting or actively running -- treat both as "live",
+   amber signals the higher-stakes armed/counting-down moment specifically
+   via .mstb-panel--armed on the card; the switch itself just goes green. */
+.mstb-power--on {
+  border-color: rgba(76,175,80,0.5);
+  background: rgba(76,175,80,0.10);
+}
+.mstb-power--on:hover:not(:disabled) { background: rgba(229,57,53,0.08); border-color: rgba(229,57,53,0.45); }
+
+.mstb-power--on .mstb-power-track { background: rgba(76,175,80,0.35); border-color: var(--color-green); }
+.mstb-power--on .mstb-power-knob { transform: translateX(20px); background: var(--color-green); box-shadow: 0 0 6px rgba(76,175,80,0.6); }
+.mstb-power--on:hover:not(:disabled) .mstb-power-track { background: rgba(229,57,53,0.30); border-color: var(--color-red); }
+.mstb-power--on:hover:not(:disabled) .mstb-power-knob { background: var(--color-red); box-shadow: 0 0 6px rgba(229,57,53,0.5); }
+
+.mstb-panel--armed .mstb-power--on {
+  border-color: rgba(245,158,11,0.55);
+  background: rgba(245,158,11,0.12);
+  animation: mstbArmedPulse 2.4s ease-in-out infinite;
+}
+.mstb-panel--armed .mstb-power--on .mstb-power-track { background: rgba(245,158,11,0.30); border-color: var(--color-amber); }
+.mstb-panel--armed .mstb-power--on .mstb-power-knob { background: var(--color-amber); box-shadow: 0 0 6px rgba(245,158,11,0.6); }
+
+.mstb-power--busy { cursor: wait; }
+
+@keyframes mstbArmedPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.25); }
+  50%      { box-shadow: 0 0 0 4px rgba(245,158,11,0.06); }
+}
+
+/* Flatten -- a real but rare, secondary action: a small text link, never
+   competing visually with the one power switch above it. */
+.mstb-flatten-link {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.mstb-flatten-link:hover:not(:disabled) { color: var(--color-red); }
+.mstb-flatten-link:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Section label -- matches ORB tab's small-caps muted convention ──────── */
+.mstb-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mstb-section-label {
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+
+/* ── Prices block ────────────────────────────────────────────────────────── */
+.mstb-prices {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-sm);
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.mstb-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+.mstb-price-lbl {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mstb-price-val {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.mstb-price-val--up   { color: var(--color-green); }
+.mstb-price-val--down { color: var(--color-red); }
+
+/* ── PnL row ──────────────────────────────────────────────────────────────── */
+.mstb-pnl-row {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.mstb-pnl-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 6px;
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+
+.mstb-pnl-lbl {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+}
+
+.mstb-pnl-val {
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.mstb-pnl-val--up   { color: var(--color-green); }
+.mstb-pnl-val--down { color: var(--color-red); }
+
+/* ── Status message -- color-coded by outcome, not just a flat note ──────── */
+.mstb-message {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  padding: 6px var(--space-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+}
+
+.mstb-message--success { background: rgba(76,175,80,0.10);  border-color: rgba(76,175,80,0.3);  color: var(--color-green); }
+.mstb-message--error   { background: rgba(229,57,53,0.10);  border-color: rgba(229,57,53,0.3);  color: var(--color-red); }
+.mstb-message--info    { background: var(--color-bg-raised); border-color: var(--color-border-subtle); color: var(--color-text-secondary); }
+
+/* ── Shared inline spinner ───────────────────────────────────────────────── */
+.mstb-spinner {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: mstbSpin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes mstbSpin { to { transform: rotate(360deg); } }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 680px) {
+  .mstb-power-main { font-size: var(--text-body); }
+}

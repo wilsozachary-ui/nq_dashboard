@@ -1,0 +1,188 @@
+/* ── LiveTicker — prefix: ltk- ────────────────────────────────────────────── */
+
+/* ── Panel ───────────────────────────────────────────────────────────────── */
+.ltk-panel {
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+
+.ltk-panel--live {
+  border-color: rgba(76,175,80,0.22);
+  box-shadow: var(--shadow-card), 0 0 20px rgba(76,175,80,0.06);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.ltk-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ltk-header-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ltk-icon {
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.ltk-title { margin: 0; font-size: 13px; }
+
+.ltk-live-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-green);
+  letter-spacing: 0.5px;
+  animation: ltkLivePulse 2s ease-in-out infinite;
+}
+
+@keyframes ltkLivePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+/* WS status */
+.ltk-ws {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.ltk-ws-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+}
+
+.ltk-ws--connected  .ltk-ws-dot { background: var(--color-green); }
+.ltk-ws--mock       .ltk-ws-dot { background: #64b5f6; }
+.ltk-ws--connecting .ltk-ws-dot { background: var(--color-amber); animation: ltkBlink 1s step-start infinite; }
+
+@keyframes ltkBlink { 50% { opacity: 0; } }
+
+/* ── Price section ───────────────────────────────────────────────────────── */
+.ltk-price-section {
+  padding: 14px 14px 8px;
+  display: flex;
+  align-items: center;
+}
+
+.ltk-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  transition: filter 0.05s;
+}
+
+/* Pulse flash when a new tick arrives */
+.ltk-price-row--pulse-up {
+  animation: ltkFlashUp 0.26s ease-out;
+}
+.ltk-price-row--pulse-down {
+  animation: ltkFlashDown 0.26s ease-out;
+}
+.ltk-price-row--pulse-flat {
+  animation: ltkFlashFlat 0.26s ease-out;
+}
+
+@keyframes ltkFlashUp {
+  0%   { filter: brightness(1.0); }
+  35%  { filter: brightness(1.9) drop-shadow(0 0 6px rgba(76,175,80,0.7)); }
+  100% { filter: brightness(1.0); }
+}
+@keyframes ltkFlashDown {
+  0%   { filter: brightness(1.0); }
+  35%  { filter: brightness(1.9) drop-shadow(0 0 6px rgba(229,57,53,0.7)); }
+  100% { filter: brightness(1.0); }
+}
+@keyframes ltkFlashFlat {
+  0%   { filter: brightness(1.0); }
+  35%  { filter: brightness(1.4); }
+  100% { filter: brightness(1.0); }
+}
+
+/* Live mode: stronger glow */
+.ltk-price-row--live.ltk-price-row--pulse-up {
+  animation: ltkFlashUpLive 0.26s ease-out;
+}
+.ltk-price-row--live.ltk-price-row--pulse-down {
+  animation: ltkFlashDownLive 0.26s ease-out;
+}
+
+@keyframes ltkFlashUpLive {
+  0%   { filter: brightness(1.0); }
+  35%  { filter: brightness(2.2) drop-shadow(0 0 12px rgba(76,175,80,0.9)); }
+  100% { filter: brightness(1.0); }
+}
+@keyframes ltkFlashDownLive {
+  0%   { filter: brightness(1.0); }
+  35%  { filter: brightness(2.2) drop-shadow(0 0 12px rgba(229,57,53,0.9)); }
+  100% { filter: brightness(1.0); }
+}
+
+/* Direction arrow */
+.ltk-arrow {
+  font-size: 13px;
+  line-height: 1;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.ltk-arrow--up   { color: var(--color-green); }
+.ltk-arrow--down { color: var(--color-red); }
+.ltk-arrow--flat { color: rgba(255,255,255,0.25); font-size: 10px; }
+
+/* Price numeral — the hero element (this panel's only real content now,
+   so it gets to be big). */
+.nq-price-large {
+  font-size: 216px;
+  font-weight: 700;
+  text-align: center;
+  margin: 18px 0;
+  font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace);
+  letter-spacing: -0.5px;
+  line-height: 1;
+  transition: color 0.05s linear;
+}
+.nq-price-large--up   { color: var(--color-green); }
+.nq-price-large--down { color: var(--color-red); }
+.nq-price-large--flat { color: var(--color-text-primary); }
+
+/* Tick delta */
+.ltk-delta {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-mono, monospace);
+  opacity: 0.8;
+  align-self: center;
+  transition: color 0.15s;
+}
+.ltk-delta--up   { color: var(--color-green); }
+.ltk-delta--down { color: var(--color-red); }
+
+/* ── Market-open global overrides ────────────────────────────────────────── */
+.mkt-open-active .ltk-panel {
+  border-color: rgba(76,175,80,0.18);
+}
+.mkt-open-active .nq-price-large--up {
+  text-shadow: 0 0 16px rgba(76,175,80,0.55);
+}
+.mkt-open-active .nq-price-large--down {
+  text-shadow: 0 0 16px rgba(229,57,53,0.45);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .nq-price-large { font-size: 52px; }
+}
+
+@media (max-width: 700px) {
+  .nq-price-large { font-size: 42px; }
+}

@@ -1,0 +1,65 @@
+/* Inter + JetBrains Mono are self-hosted via @fontsource, imported in index.js
+   (not here) so webpack bundles the actual font files into the build --
+   no CDN dependency, no silent fallback to system fonts when offline. */
+
+/* Design token system — all CSS custom properties */
+@import "./styles/theme.css";
+
+/* ── Box-sizing reset ────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ── Base document ───────────────────────────────────────────────────────── */
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--lh-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+code,
+pre {
+  font-family: var(--font-mono);
+}
+
+/* Inherit font into all interactive elements */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* Remove UA focus outline and replace with custom */
+:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* ── Scrollbars — applied globally so every scrollable panel matches,
+   not just the handful of components that previously set this locally ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.14) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.14);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.24);
+}

@@ -1,0 +1,150 @@
+/* ── ActivityPanel — prefix: ap- ──────────────────────────────────────────── */
+
+.ap-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.ap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.ap-title { margin: 0; font-size: 13px; }
+
+.ap-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ap-count {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.ap-clear-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 3px 9px;
+  transition: all 0.15s;
+}
+.ap-clear-btn:hover { background: rgba(255,255,255,0.06); color: var(--color-text-primary); }
+
+/* ── Feed list ───────────────────────────────────────────────────────────── */
+.ap-feed {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 140px;
+  max-height: 320px;
+  padding: 4px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.08) transparent;
+}
+.ap-feed::-webkit-scrollbar       { width: 4px; }
+.ap-feed::-webkit-scrollbar-track { background: transparent; }
+.ap-feed::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 2px; }
+
+.ap-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+/* ── Row ─────────────────────────────────────────────────────────────────── */
+.ap-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px;
+  font-size: 11px;
+  font-family: var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace);
+  border-left: 2px solid transparent;
+  transition: background 0.1s;
+  animation: apSlideIn 0.25s ease-out;
+}
+.ap-row:hover { background: rgba(255,255,255,0.03); }
+
+@keyframes apSlideIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.ap-time {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  flex-shrink: 0;
+  letter-spacing: 0.2px;
+}
+
+.ap-detail {
+  color: var(--color-text-muted);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+.ap-detail b { color: var(--color-text-secondary, rgba(255,255,255,0.75)); font-weight: 600; }
+.ap-detail-sub { opacity: 0.7; font-style: italic; }
+
+.ap-price {
+  color: var(--color-text-secondary, rgba(255,255,255,0.7));
+  min-width: 64px;
+  flex-shrink: 0;
+}
+
+.ap-pnl {
+  font-weight: 700;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.ap-pnl--pos { color: var(--color-green); }
+.ap-pnl--neg { color: var(--color-red); }
+
+/* ── Tag + row classification (entries / exits / trail adjustments) ──────── */
+.ap-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  min-width: 82px;
+  flex-shrink: 0;
+}
+
+.ap-entry.ap-row { border-left-color: var(--color-green); background: rgba(76,175,80,0.05); }
+.ap-tag.ap-entry { color: var(--color-green); }
+
+.ap-exit.ap-row { border-left-color: var(--color-red); background: rgba(229,57,53,0.05); }
+.ap-tag.ap-exit { color: var(--color-red); }
+
+.ap-trail.ap-row { border-left-color: var(--color-amber); background: rgba(245,158,11,0.05); }
+.ap-tag.ap-trail { color: var(--color-amber); }
+
+/* ── Scroll-to-bottom ────────────────────────────────────────────────────── */
+.ap-scroll-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
+  background: rgba(10,14,20,0.90);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 3px 10px;
+  transition: all 0.15s;
+}
+.ap-scroll-btn:hover { background: rgba(255,255,255,0.07); color: var(--color-text-primary); }

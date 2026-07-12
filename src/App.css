@@ -1,0 +1,200 @@
+/* ── App shell ───────────────────────────────────────────────────────────── */
+.App {
+  min-height: 100vh;
+  background-color: var(--color-bg-primary);
+}
+
+/* ── Activity dashboard section (full-width row below main grid) ─────────── */
+.activity-section {
+  max-width: 1680px;
+  margin: 0 auto;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── 3-column cockpit grid ───────────────────────────────────────────────── */
+.dashboard {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 2fr) minmax(0, 1.2fr);
+  gap: var(--space-lg);
+  align-items: start;
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.column-left {
+  width: 210px;
+  flex-shrink: 0;
+}
+
+/* ── Base card ───────────────────────────────────────────────────────────── */
+.card {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-card);
+  transition: border-color var(--dur-base) var(--ease-in-out);
+}
+
+/* ── Panel heading ───────────────────────────────────────────────────────── */
+.panel-title {
+  margin: 0 0 var(--space-md) 0;
+  font-size: var(--text-title);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-primary);
+  letter-spacing: -0.01em;
+  line-height: var(--lh-tight);
+}
+
+.panel-placeholder {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* ── Label / value rows ──────────────────────────────────────────────────── */
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px var(--space-xs);
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-fast) var(--ease-out);
+  margin: 0 calc(-1 * var(--space-xs));
+}
+
+.info-row:last-of-type {
+  border-bottom: none;
+}
+
+.info-row:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.info-label {
+  color: var(--color-text-muted);
+  font-weight: var(--fw-normal);
+}
+
+.info-value {
+  color: var(--color-text-primary);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+/* ── Global semantic colour classes ─────────────────────────────────────── */
+.value-positive { color: var(--color-green); }
+.value-negative { color: var(--color-red);   }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Responsive cockpit layout
+   Wide  (>1100px) — 3 columns: sidebar | centre | right
+   Medium (680–1100px) — 2 columns: [sidebar+health span full row] + centre + right
+   Mobile (<680px)  — 1 column: stacked
+───────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .dashboard {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .column-left {
+    width: auto;
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+  }
+
+  .column-left > * {
+    flex: 1 1 180px;
+    min-width: 160px;
+  }
+}
+
+/* ── Market Open Mode — global cockpit overrides ─────────────────────────── */
+
+/* ActivityDashboard: LIVE badge (hidden by default, shown when active) */
+.act-live-badge {
+  display: none;
+}
+
+.mkt-open-active .act-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(76, 175, 80, 0.12);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+  color: var(--color-green);
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  font-family: var(--font-mono);
+  letter-spacing: 0.07em;
+  animation: scbPulseGreen 2s ease-in-out infinite;
+}
+
+/* TradeParameterPanel: subtle live glow */
+.mkt-open-active .tp-panel {
+  box-shadow: var(--shadow-card), 0 0 24px rgba(76, 175, 80, 0.05);
+}
+
+.mkt-open-active .tp-val {
+  transition: color 0.15s ease-out, text-shadow 0.15s ease-out;
+}
+
+/* Session checklist: dimmed when market closed after hours */
+.mkt-open-active .ssc-root {
+  border-top-color: rgba(76, 175, 80, 0.2);
+}
+
+
+/* StrategyPerformanceSnapshot: brighter accents + Session PnL glow in live mode */
+.mkt-open-active .sps-panel {
+  box-shadow: var(--shadow-card), 0 0 28px rgba(76, 175, 80, 0.07);
+}
+
+.mkt-open-active .sps-metric-val--green {
+  text-shadow: 0 0 8px rgba(76, 175, 80, 0.35);
+}
+
+.mkt-open-active .sps-pnl-row--green {
+  box-shadow: 0 0 24px rgba(76, 175, 80, 0.1);
+  border-color: rgba(76, 175, 80, 0.3);
+}
+
+.mkt-open-active .sps-pnl-row--green .sps-pnl-val {
+  text-shadow: 0 0 16px rgba(76, 175, 80, 0.5);
+}
+
+@media (max-width: 680px) {
+  .dashboard {
+    grid-template-columns: 1fr;
+    padding: var(--space-sm);
+    gap: var(--space-sm);
+  }
+
+  .column-left {
+    flex-direction: column;
+  }
+
+  .card {
+    border-radius: var(--radius-sm);
+    padding: var(--space-md);
+  }
+
+  .panel-title {
+    font-size: var(--text-body);
+  }
+}
