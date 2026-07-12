@@ -56,6 +56,12 @@ export function useWebSocket(options = {}) {
 
   const clientRef = useRef(null);
 
+  // clientOptions is deliberately omitted from the deps array below: it's a
+  // fresh object every render (rest-destructured from `options` above), so
+  // including it would defeat the memo entirely and reintroduce the
+  // reference-churn this exists to avoid. Tracking its primitive fields
+  // individually is the actual fix, not the one eslint suggests.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const stableClientOptions = useMemo(() => clientOptions, [
     clientOptions.url,
     clientOptions.reconnect,
