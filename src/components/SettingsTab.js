@@ -12,8 +12,18 @@ export default function SettingsTab() {
   const [pwSuccess, setPwSuccess] = useState(false);
   const [pwBusy, setPwBusy] = useState(false);
 
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [webhookLoading, setWebhookLoading] = useState(true);
+  const [webhookError, setWebhookError] = useState(null);
+  const [webhookSuccess, setWebhookSuccess] = useState(false);
+  const [webhookBusy, setWebhookBusy] = useState(false);
+
   useEffect(() => {
     cpGet('/me').then(me => setEmail(me.email)).catch(() => {});
+    cpGet('/credentials')
+      .then(res => setWebhookUrl(res.discord_webhook_url || ''))
+      .catch(() => {})
+      .finally(() => setWebhookLoading(false));
   }, []);
 
   async function handleChangePassword(e) {
@@ -35,6 +45,21 @@ export default function SettingsTab() {
       setPwError(err.message);
     } finally {
       setPwBusy(false);
+    }
+  }
+
+  async function handleSaveWebhook(e) {
+    e.preventDefault();
+    setWebhookError(null);
+    setWebhookSuccess(false);
+    setWebhookBusy(true);
+    try {
+      await cpPost('/credentials/discord-webhook', { discord_webhook_url: webhookUrl.trim() || null });
+      setWebhookSuccess(true);
+    } catch (err) {
+      setWebhookError(err.message);
+    } finally {
+      setWebhookBusy(false);
     }
   }
 
@@ -90,7 +115,28 @@ export default function SettingsTab() {
 
       <div className="card set-card">
         <div className="panel-title">Alerts</div>
-        <p className="panel-placeholder">Discord and email trade alerts — coming soon.</p>
+
+        <form onSubmit={handleSaveWebhook} className="set-form">
+          <label className="set-label">
+            Discord webhook URL
+            <input
+              type="url"
+              className="set-input"
+              value={webhookUrl}
+              onChange={e => { setWebhookUrl(e.target.value); setWebhookSuccess(false); }}
+              placeholder="https://discord.com/api/webhooks/..."
+              autoComplete="off"
+              disabled={webhookLoading}
+            />
+          </label>
+          {webhookError && <p className="set-error">{webhookError}</p>}
+          {webhookSuccess && <p className="set-success">Discord webhook updated.</p>}
+          <button type="submit" className="set-btn" disabled={webhookBusy || webhookLoading}>
+            {webhookBusy ? 'Saving…' : 'Save webhook'}
+          </button>
+        </form>
+
+        <p className="panel-placeholder">Email trade alerts — coming soon.</p>
       </div>
     </div>
   );
