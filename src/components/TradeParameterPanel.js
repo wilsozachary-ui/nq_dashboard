@@ -38,6 +38,38 @@ const DEFAULTS = {
   profitLockRetainPct:  50,
 };
 
+// ── User-saved defaults ("Make Default" button) ──────────────────────────────
+// There's no backend "staged config" for these (see handleApply's comment
+// below), so the customer's own preferred baseline is persisted client-side
+// and layered on top of the hardcoded DEFAULTS wherever this file already
+// falls back to DEFAULTS -- initial load, a partial backend response, a
+// strategy switch, an inbound WS message missing a field.
+const USER_DEFAULTS_KEY = 'nq:tradeParamDefaults';
+
+function loadUserDefaults() {
+  try {
+    const raw = localStorage.getItem(USER_DEFAULTS_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveUserDefaults(p) {
+  try {
+    localStorage.setItem(USER_DEFAULTS_KEY, JSON.stringify(p));
+  } catch {
+    // Storage disabled/full -- the button will just not persist across
+    // reloads this session; not worth surfacing as an error.
+  }
+}
+
+function effectiveDefaults() {
+  const stored = loadUserDefaults();
+  return stored ? { ...DEFAULTS, ...stored } : DEFAULTS;
+}
+
 // ── Format helpers ────────────────────────────────────────────────────────────
 // All guard against non-finite input (undefined/null/NaN) rather than
 // rendering a raw "NaN" -- e.g. a param object missing a field it should
@@ -140,12 +172,13 @@ function ArrowControl({ label, display, onIncrease, onDecrease, disabled, error 
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function TradeParameterPanel() {
-  const [params,      setParams]      = useState(DEFAULTS);
-  const [lastApplied, setLastApplied] = useState(DEFAULTS);
-  const [errors,      setErrors]      = useState({});
-  const [applying,    setApplying]    = useState(false);
-  const [applyState,  setApplyState]  = useState('idle'); // 'idle'|'success'|'error'
-  const [applyMsg,    setApplyMsg]    = useState('');
+  const [params,       setParams]       = useState(effectiveDefaults);
+  const [lastApplied,  setLastApplied]  = useState(effectiveDefaults);
+  const [errors,       setErrors]       = useState({});
+  const [applying,     setApplying]     = useState(false);
+  const [applyState,   setApplyState]   = useState('idle'); // 'idle'|'success'|'error'
+  const [applyMsg,     setApplyMsg]     = useState('');
+  const [defaultState, setDefaultState] = useState('idle'); // 'idle'|'success'
   const [wsStatus,    setWsStatus]    = useState(USE_MOCK ? 'mock' : 'connecting');
 
   // Ref always holds the latest params (prevents stale closures in hold intervals)
@@ -193,9 +226,11 @@ export default function TradeParameterPanel() {
       .then(d => {
         if (d) {
           // The backend endpoint can return a partial/empty object (no
-          // strategy engine attached yet) -- fall back onto DEFAULTS for
-          // any missing field instead of letting it through as undefined.
-          const loaded = { ...DEFAULTS, ...d, trailingStop: d.trailingStopEnabled ?? DEFAULTS.trailingStop };
+          // strategy engine attached yet) -- fall back onto the user's
+          // saved default (or DEFAULTS if none saved) for any missing
+          // field instead of letting it through as undefined.
+          const ed = effectiveDefaults();
+          const loaded = { ...ed, ...d, trailingStop: d.trailingStopEnabled ?? ed.trailingStop };
           setParams(loaded);
           setLastApplied(loaded);
         }
@@ -216,7 +251,7 @@ export default function TradeParameterPanel() {
   // Transactional strategy loads replace the complete editable parameter set.
   useEffect(() => {
     const handler = e => {
-      const next = { ...DEFAULTS, ...(e.detail.config?.parameters || {}) };
+      const next = { ...effectiveDefaults(), ...(e.detail.config?.parameters || {}) };
       setParams(next);
       setLastApplied(next);
       setErrors({});
@@ -232,21 +267,22 @@ export default function TradeParameterPanel() {
     const handler = event => {
       const msg = event.detail; setWsStatus('connected');
       if (msg.type !== 'parameter_update') return;
-      // Spread DEFAULTS first, then only override fields the message
-      // actually carries -- previously this object omitted breakevenTrigger
-      // (and would've omitted the two profit-lock fields below too),
-      // silently resetting them to undefined (rendered as "$NaN") on any
-      // inbound nq:integrated-strategy message.
+      // Spread the effective defaults first, then only override fields the
+      // message actually carries -- previously this object omitted
+      // breakevenTrigger (and would've omitted the two profit-lock fields
+      // below too), silently resetting them to undefined (rendered as
+      // "$NaN") on any inbound nq:integrated-strategy message.
+      const ed = effectiveDefaults();
       const merged = {
-        ...DEFAULTS,
-        contractSize: msg.contractSize ?? DEFAULTS.contractSize,
-        stopLoss: msg.stopLoss ?? DEFAULTS.stopLoss,
-        takeProfit: msg.takeProfit ?? DEFAULTS.takeProfit,
-        trailingStop: msg.trailingStop ?? DEFAULTS.trailingStop,
-        trailingDistance: msg.trailingDistance ?? DEFAULTS.trailingDistance,
-        breakevenTrigger: msg.breakevenTrigger ?? DEFAULTS.breakevenTrigger,
-        profitLockTrigger: msg.profitLockTrigger ?? DEFAULTS.profitLockTrigger,
-        profitLockRetainPct: msg.profitLockRetainPct ?? DEFAULTS.profitLockRetainPct,
+        ...ed,
+        contractSize: msg.contractSize ?? ed.contractSize,
+        stopLoss: msg.stopLoss ?? ed.stopLoss,
+        takeProfit: msg.takeProfit ?? ed.takeProfit,
+        trailingStop: msg.trailingStop ?? ed.trailingStop,
+        trailingDistance: msg.trailingDistance ?? ed.trailingDistance,
+        breakevenTrigger: msg.breakevenTrigger ?? ed.breakevenTrigger,
+        profitLockTrigger: msg.profitLockTrigger ?? ed.profitLockTrigger,
+        profitLockRetainPct: msg.profitLockRetainPct ?? ed.profitLockRetainPct,
       };
       setParams(merged); setLastApplied(merged);
     };
@@ -286,6 +322,22 @@ export default function TradeParameterPanel() {
     setApplyMsg('Changes Applied');
     setApplying(false);
     setTimeout(() => setApplyState('idle'), 2500);
+  }, []);
+
+  // ── Make Default ──────────────────────────────────────────────────────────
+  // Saves the panel's current values as this customer's own starting point
+  // (localStorage -- see effectiveDefaults' comment for why not the
+  // backend), independent of Apply/dirty state. Doesn't touch lastApplied;
+  // "default" and "applied" are separate concepts -- saving a default
+  // doesn't send anything to the bot.
+  const handleMakeDefault = useCallback(() => {
+    const p    = paramsRef.current;
+    const errs = validate(p);
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+    setErrors({});
+    saveUserDefaults(p);
+    setDefaultState('success');
+    setTimeout(() => setDefaultState('idle'), 2500);
   }, []);
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -408,23 +460,34 @@ export default function TradeParameterPanel() {
 
       </div>
 
-      {/* ── Apply button ─────────────────────────────────────────────── */}
-      <button
-        className={`tp-apply tp-apply--${applyState}`}
-        onClick={handleApply}
-        disabled={applying || (!dirty && applyState === 'idle')}
-        aria-label="Apply parameter changes to the bot"
-      >
-        {applying ? (
-          <><span className="tp-spinner" aria-hidden="true" />Applying…</>
-        ) : applyState === 'success' ? (
-          <>✓ {applyMsg}</>
-        ) : applyState === 'error' ? (
-          <>⚠ {applyMsg}</>
-        ) : (
-          'Apply Changes'
-        )}
-      </button>
+      {/* ── Action row: Make Default (secondary) + Apply (primary) ─────── */}
+      <div className="tp-actions">
+        <button
+          className={`tp-make-default tp-make-default--${defaultState}`}
+          onClick={handleMakeDefault}
+          disabled={applying}
+          aria-label="Save current parameters as your default starting values"
+          title="Save these values as your starting point the next time this panel loads"
+        >
+          {defaultState === 'success' ? '✓ Saved' : 'Make Default'}
+        </button>
+        <button
+          className={`tp-apply tp-apply--${applyState}`}
+          onClick={handleApply}
+          disabled={applying || (!dirty && applyState === 'idle')}
+          aria-label="Apply parameter changes to the bot"
+        >
+          {applying ? (
+            <><span className="tp-spinner" aria-hidden="true" />Applying…</>
+          ) : applyState === 'success' ? (
+            <>✓ {applyMsg}</>
+          ) : applyState === 'error' ? (
+            <>⚠ {applyMsg}</>
+          ) : (
+            'Apply Changes'
+          )}
+        </button>
+      </div>
 
     </div>
   );

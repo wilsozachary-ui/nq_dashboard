@@ -296,9 +296,62 @@
   color: var(--color-green);
 }
 
-/* ── Apply button ────────────────────────────────────────────────────────── */
+/* ── Action row: Make Default + Apply, sticky as a unit ───────────────────── */
+.tp-actions {
+  display: flex;
+  gap: var(--space-sm);
+  position: sticky;
+  bottom: var(--space-sm);
+}
+
+/* ── Make Default button (secondary) ────────────────────────────────────── */
+.tp-make-default {
+  flex: 1;
+  padding: 11px var(--space-sm);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-strong);
+  background-color: var(--color-bg-raised);
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out),
+              border-color     var(--dur-fast) var(--ease-out),
+              color            var(--dur-fast) var(--ease-out),
+              transform        60ms            linear;
+}
+
+.tp-make-default:hover:not(:disabled) {
+  background-color: var(--color-bg-active);
+  border-color: var(--color-border-focus);
+  color: var(--color-text-primary);
+}
+
+.tp-make-default:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.tp-make-default:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.tp-make-default:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.tp-make-default--success {
+  border-color: rgba(76, 175, 80, 0.5);
+  background-color: rgba(76, 175, 80, 0.10);
+  color: var(--color-green);
+}
+
+/* ── Apply button (primary) ─────────────────────────────────────────────── */
 .tp-apply {
-  width: 100%;
+  flex: 2;
   padding: 11px var(--space-md);
   border-radius: var(--radius-md);
   border: 1px solid rgba(76, 175, 80, 0.4);
@@ -317,8 +370,6 @@
               border-color     var(--dur-fast) var(--ease-out),
               transform        60ms            linear,
               box-shadow       var(--dur-fast) var(--ease-out);
-  position: sticky;
-  bottom: var(--space-sm);
 }
 
 .tp-apply:hover:not(:disabled) {
