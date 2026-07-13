@@ -1,10 +1,14 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    NQ Dashboard — Design Token System
    Import once in index.css; consume everywhere with var(--token).
-   Never hard-code colours, spacing, shadows, or radii in component CSS.
-   Light theme (flipped from dark 2026-07-12, matching the portal) — token
-   NAMES kept identical to the dark version so every component that consumes
-   var(--token) needed zero changes; only the values here changed.
+   Never hard-code colours, shadows, or radii in component CSS -- spacing
+   should use var(--space-*) too, but a handful of older components predate
+   that convention.
+   Light is the default (flipped from dark 2026-07-12, matching the portal);
+   dark is available as an explicit opt-in via [data-theme="dark"] -- see
+   the block below and src/theme/ThemeContext.js. Token NAMES are identical
+   between the two so no component CSS ever needs to change, only which
+   block resolves.
 ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -45,6 +49,13 @@
      states throughout the trading UI) ──────────────────────────────────── */
   --color-brand:       #18181b;
   --color-brand-dim:   #71717a;
+  /* Unlike --color-brand (an ink color that deliberately flips so it stays
+     legible against the surface -- black in light mode, white in dark),
+     this is the literal "chrome-on-black" NQ Cloud mark color -- a primary
+     CTA button drawn in it needs to stay a black pill with white text in
+     BOTH themes, not invert to a near-white pill with unreadable white
+     text. Same value in both theme blocks on purpose. */
+  --color-brand-solid: #18181b;
 
   /* ── Spacing scale ────────────────────────────────────────────────────── */
   --space-xs:  4px;
@@ -88,4 +99,92 @@
   --dur-fast:    150ms;
   --dur-base:    200ms;
   --dur-slow:    250ms;
+
+  /* ── Scrollbar (referenced directly by index.css's global scrollbar rules,
+     since those can't use rgba(var(--token)) to vary opacity per theme) ── */
+  --color-scrollbar-thumb:       rgba(24,24,27,0.18);
+  --color-scrollbar-thumb-hover: rgba(24,24,27,0.30);
+
+  /* Frosted-glass surface (sidebar, sticky headers) -- a translucent tint
+     of --color-bg-secondary, not plain white, so it doesn't go opaque-white
+     over a dark page in dark mode. */
+  --color-surface-glass: rgba(255,255,255,0.97);
+
+  /* RGB-triplet tokens (no # or rgba() wrapper) for components that build
+     their own fine-grained rgba(var(--x-rgb), alpha) overlays -- e.g. a
+     dozen different alpha steps of "ink" for borders/hovers on cell grids.
+     Matches --color-text-primary / --color-red respectively in each theme,
+     just split into channels so alpha can vary at the call site. */
+  --color-ink-rgb:    24,24,27;
+  --color-danger-rgb: 185,28,28;
+  --color-amber-rgb:  180,83,9;
+
+  color-scheme: light;
+}
+
+/* ── Dark theme — the original trading-terminal palette this app shipped
+   with before the 2026-07-12 light-mode flip, restored as an explicit
+   opt-in rather than the default. Applied via [data-theme="dark"] on
+   <html>, set by public/index.html's pre-paint script and kept in sync by
+   src/theme/ThemeContext.js -- every token name here matches the light
+   block above exactly, so no component CSS needs to change. ──────────── */
+:root[data-theme="dark"] {
+  /* ── Backgrounds ──────────────────────────────────────────────────────── */
+  --color-bg-primary:   #0d0d0d;
+  --color-bg-secondary: #111114;
+  --color-bg-surface:   #16171d;
+  --color-bg-raised:    #1c1d23;
+  --color-bg-hover:     rgba(255,255,255,0.04);
+  --color-bg-active:    rgba(255,255,255,0.07);
+
+  /* ── Borders ──────────────────────────────────────────────────────────── */
+  --color-border-subtle: rgba(255,255,255,0.05);
+  --color-border:        rgba(255,255,255,0.08);
+  --color-border-strong: rgba(255,255,255,0.15);
+  --color-border-focus:  rgba(66,133,244,0.55);
+
+  /* ── Text ─────────────────────────────────────────────────────────────── */
+  --color-text-primary:   #e5e5e5;
+  --color-text-secondary: #bdbdbd;
+  --color-text-muted:     #6b7280;
+  --color-text-dim:       #374151;
+
+  /* ── Semantic accents ─────────────────────────────────────────────────── */
+  --color-green:       #4caf50;
+  --color-green-dim:   #2e7d32;
+  --color-green-bg:    #18351f;
+  --color-green-text:  #81c784;
+  --color-red:         #e53935;
+  --color-red-dim:     #c62828;
+  --color-red-bg:      #38120f;
+  --color-red-text:    #ef9a9a;
+  --color-blue:        #4da3ff;
+  --color-amber:       #f59e0b;
+
+  /* ── Brand ────────────────────────────────────────────────────────────── */
+  --color-brand:       #f4f4f5;
+  --color-brand-dim:   #a1a1aa;
+  --color-brand-solid: #18181b;
+
+  /* ── Shadows ──────────────────────────────────────────────────────────── */
+  --shadow-sm:    0 1px 3px rgba(0,0,0,0.40);
+  --shadow-md:    0 3px 8px rgba(0,0,0,0.35);
+  --shadow-lg:    0 8px 24px rgba(0,0,0,0.40);
+  --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.04);
+  --shadow-card:  var(--shadow-sm), var(--shadow-md), var(--shadow-inset);
+  --shadow-glow-green: 0 0 10px rgba(76,175,80,0.25);
+  --shadow-glow-red:   0 0 10px rgba(229,57,53,0.25);
+  --shadow-glow-blue:  0 0 12px rgba(77,163,255,0.30);
+
+  /* ── Scrollbar ────────────────────────────────────────────────────────── */
+  --color-scrollbar-thumb:       rgba(255,255,255,0.14);
+  --color-scrollbar-thumb-hover: rgba(255,255,255,0.24);
+
+  --color-surface-glass: rgba(13,13,13,0.92);
+
+  --color-ink-rgb:    255,255,255;
+  --color-danger-rgb: 229,57,53;
+  --color-amber-rgb:  245,158,11;
+
+  color-scheme: dark;
 }

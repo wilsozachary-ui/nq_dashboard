@@ -112,3 +112,20 @@ export function IconAdmin() {
     </svg>
   );
 }
+
+export function IconSun() {
+  return (
+    <svg {...BASE_PROPS}>
+      <circle cx="9" cy="9" r="3" />
+      <path d="M9 1.8v1.7M9 14.5v1.7M16.2 9h-1.7M3.5 9H1.8M14.1 3.9l-1.2 1.2M5.1 12.9l-1.2 1.2M14.1 14.1l-1.2-1.2M5.1 5.1 3.9 3.9" />
+    </svg>
+  );
+}
+
+export function IconMoon() {
+  return (
+    <svg {...BASE_PROPS}>
+      <path d="M14.8 10.9A6 6 0 1 1 7.1 3.2a6.9 6.9 0 1 0 7.7 7.7z" />
+    </svg>
+  );
+}

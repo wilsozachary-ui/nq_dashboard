@@ -3,6 +3,7 @@ import {
   IconTrend, IconLink, IconPulse, IconCalendar, IconInsights, IconChecklist, IconHelp,
   IconSubscription, IconSettings, IconAdmin,
 } from './TabIcons';
+import ThemeToggle from './ThemeToggle';
 import logo from '../assets/logo.png';
 import './TabsLayout.css';
 
@@ -101,6 +102,10 @@ export default function TabsLayout({ children, isAdminInstance = false }) {
           {isAdminInstance && (
             <TabButton t={ADMIN_TAB} activeTab={activeTab} setActiveTab={setActiveTab} extraClass="sidebar-tab--admin" />
           )}
+
+          <div className="sidebar-footer">
+            <ThemeToggle />
+          </div>
         </nav>
 
         <div className="main-content">

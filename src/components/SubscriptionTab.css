@@ -62,7 +62,7 @@
 .sub-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .sub-btn-primary {
-  background: var(--color-brand);
+  background: var(--color-brand-solid);
   color: #ffffff;
 }
 .sub-btn-primary:hover:not(:disabled) { filter: brightness(1.08); }

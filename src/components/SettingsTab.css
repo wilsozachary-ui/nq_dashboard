@@ -62,7 +62,7 @@
   padding: 9px 18px;
   border-radius: var(--radius-md);
   border: none;
-  background: var(--color-brand);
+  background: var(--color-brand-solid);
   color: #ffffff;
   cursor: pointer;
 }

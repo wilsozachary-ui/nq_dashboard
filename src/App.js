@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import './App.css';
+import { ThemeProvider } from './theme/ThemeContext';
 import { ToastProvider } from './hooks/useToast';
 import { ToastContainer } from './components/Toast';
 import { MultiStrategyProvider } from './MultiStrategyFramework';
@@ -68,6 +69,7 @@ function App() {
   const missing = integration.missing ?? [];
 
   return (
+    <ThemeProvider>
     <ToastProvider>
       <MultiStrategyProvider>
 
@@ -106,6 +108,7 @@ function App() {
         <ToastContainer />
       </MultiStrategyProvider>
     </ToastProvider>
+    </ThemeProvider>
   );
 }
 

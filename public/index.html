@@ -2,9 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <script>
+      // Applies the saved/system theme before first paint, so there's no
+      // flash of the wrong theme while React boots. Kept as a plain inline
+      // script (not a React effect) specifically so it runs before any CSS
+      // is even parsed -- see src/styles/theme.css's [data-theme="dark"]
+      // override block and src/theme/ThemeContext.js, which stay in sync
+      // with the same "nq-theme" localStorage key afterward.
+      (function () {
+        try {
+          var saved = localStorage.getItem('nq-theme');
+          var dark = saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+        } catch (e) {}
+      })();
+    </script>
     <link rel="icon" type="image/png" href="%PUBLIC_URL%/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f7f7f8" />
+    <meta name="theme-color" content="#f7f7f8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)" />
     <meta
       name="description"
       content="NQ Cloud — automated NQ futures trading dashboard"

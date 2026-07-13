@@ -47,7 +47,7 @@ textarea {
    not just the handful of components that previously set this locally ── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(24,24,27,0.18) transparent;
+  scrollbar-color: var(--color-scrollbar-thumb) transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
@@ -57,9 +57,9 @@ textarea {
   background: transparent;
 }
 *::-webkit-scrollbar-thumb {
-  background: rgba(24,24,27,0.18);
+  background: var(--color-scrollbar-thumb);
   border-radius: 4px;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(24,24,27,0.30);
+  background: var(--color-scrollbar-thumb-hover);
 }
