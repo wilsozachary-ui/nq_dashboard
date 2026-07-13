@@ -1,36 +1,74 @@
 /* ── SystemHealthPanel — prefix: shp- ─────────────────────────────────────── */
 
-.shp-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
+.shp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-md);
+  align-items: start;
 }
 
-.shp-section {
+.shp-card {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-sm);
 }
 
-.shp-section-label {
-  font-size: var(--text-xs);
+.shp-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.shp-card-title {
+  font-size: var(--text-sm);
   font-weight: var(--fw-bold);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--color-text-muted);
-  margin-bottom: 4px;
+}
+
+.shp-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+.shp-summary::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.shp-summary--ok   { background: var(--color-green-bg); color: var(--color-green-text); border-color: rgba(21,128,61,0.25); }
+.shp-summary--bad  { background: var(--color-red-bg);   color: var(--color-red-text);   border-color: rgba(185,28,28,0.25); }
+.shp-summary--warn { background: rgba(180,83,9,0.10);   color: var(--color-amber);      border-color: rgba(180,83,9,0.3); }
+
+.shp-rows {
+  display: flex;
+  flex-direction: column;
 }
 
 .shp-row {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 4px 0;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+.shp-row:last-child {
+  border-bottom: none;
 }
 
 .shp-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
   background: var(--color-text-dim);
@@ -52,6 +90,10 @@
   font-family: var(--font-mono);
   color: var(--color-text-muted);
   text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
 }
 
 .shp-detail--ok   { color: var(--color-green-text); }

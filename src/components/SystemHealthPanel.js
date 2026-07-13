@@ -21,13 +21,45 @@ function fmtMs(ms) {
   return abs < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`;
 }
 
+function stateOf({ ok, warn }) {
+  return ok == null ? 'unknown' : warn ? 'warn' : ok ? 'ok' : 'bad';
+}
+
 function StatusRow({ label, ok, detail, warn }) {
-  const state = ok == null ? 'unknown' : warn ? 'warn' : ok ? 'ok' : 'bad';
+  const state = stateOf({ ok, warn });
   return (
-    <div className="shp-row">
+    <div className={`shp-row shp-row--${state}`}>
       <span className={`shp-dot shp-dot--${state}`} aria-hidden="true" />
       <span className="shp-label">{label}</span>
       <span className={`shp-detail shp-detail--${state}`}>{detail}</span>
+    </div>
+  );
+}
+
+// One card per section, with a summary badge in the header ("All OK" / "N
+// issue(s)") so the customer doesn't have to read every row to know
+// whether that section needs attention -- same pattern as the Admin tab's
+// "Bot containers" card badge.
+function SectionCard({ title, rows }) {
+  const states = rows.map(stateOf);
+  const badTotal = states.filter(s => s === 'bad').length;
+  const warnTotal = states.filter(s => s === 'warn').length;
+  const unknownTotal = states.filter(s => s === 'unknown').length;
+  const summary =
+    unknownTotal === rows.length ? { cls: '', text: 'Connecting…' }
+      : badTotal > 0    ? { cls: 'shp-summary--bad',  text: `${badTotal} issue${badTotal === 1 ? '' : 's'}` }
+      : warnTotal > 0   ? { cls: 'shp-summary--warn', text: `${warnTotal} warning${warnTotal === 1 ? '' : 's'}` }
+      : { cls: 'shp-summary--ok', text: 'All OK' };
+
+  return (
+    <div className="card shp-card">
+      <div className="shp-card-header">
+        <span className="shp-card-title">{title}</span>
+        <span className={`shp-summary ${summary.cls}`}>{summary.text}</span>
+      </div>
+      <div className="shp-rows">
+        {rows.map(r => <StatusRow key={r.label} {...r} />)}
+      </div>
     </div>
   );
 }
@@ -90,84 +122,79 @@ export default function SystemHealthPanel() {
   const uncanceledOrders = safeguards.uncanceled_order_count ?? 0;
   const safeguardsClean = trailingFailures === 0 && uncanceledOrders === 0;
 
+  const connectivityRows = [
+    ...(isCloud ? [] : [{
+      label: 'Launcher Service',
+      ok: launcher != null ? launcherUp : null,
+      detail: launcher == null ? 'Unreachable' : launcherUp ? 'Running' : 'Not running',
+    }]),
+    {
+      label: 'Adapter Backend',
+      ok: health != null ? adapterUp : null,
+      detail: health == null ? 'Unreachable' : `${wsClients ?? 0} WS client${wsClients === 1 ? '' : 's'}`,
+    },
+    {
+      label: 'Clock Sync',
+      ok: clockOffsetMs != null ? !clockDrifted : null,
+      warn: clockDrifted,
+      detail: clockOffsetMs != null ? `${fmtMs(clockOffsetMs)} vs Topstep` : '—',
+    },
+  ];
+
+  const marketFeedRows = [
+    {
+      label: 'Platform Connection',
+      ok: telemetry != null ? connected : null,
+      detail: telemetry == null ? 'Unreachable' : connected ? 'Connected' : 'Disconnected',
+    },
+    {
+      label: 'Feed Freshness',
+      ok: telemetry != null ? !feedStale : null,
+      warn: feedStale,
+      detail: tickAgeMs != null ? (feedStale ? `Stale — ${fmtMs(tickAgeMs)}` : `Fresh — ${fmtMs(tickAgeMs)}`) : '—',
+    },
+    {
+      label: 'Live Price',
+      ok: price != null,
+      detail: price != null ? price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—',
+    },
+  ];
+
+  const riskRows = [
+    {
+      label: 'Flatten State',
+      ok: risk != null ? !flatten.unconfirmed_active : null,
+      warn: flatten.in_progress,
+      detail:
+        flatten.unconfirmed_active ? `Unconfirmed — ${flatten.reason || 'unknown reason'}`
+          : flatten.in_progress ? 'In progress'
+          : risk != null ? 'Idle' : '—',
+    },
+    {
+      label: 'Fatal Errors',
+      ok: risk != null ? !fatalErrors.active : null,
+      detail: fatalErrors.active ? (fatalErrors.last_message || 'Active') : risk != null ? 'None' : '—',
+    },
+    {
+      label: 'Trailing Safeguards',
+      ok: risk != null ? safeguardsClean : null,
+      detail:
+        risk == null ? '—'
+          : safeguardsClean ? 'OK'
+          : `${trailingFailures} cancel failure(s), ${uncanceledOrders} uncanceled order(s)`,
+    },
+    {
+      label: 'Bracket Mode',
+      ok: bracketMode != null,
+      detail: bracketMode || '—',
+    },
+  ];
+
   return (
-    <div className="card shp-panel">
-      <h2 className="panel-title">System Health</h2>
-
-      <div className="shp-section">
-        <div className="shp-section-label">Connectivity</div>
-        {!isCloud && (
-          <StatusRow
-            label="Launcher Service"
-            ok={launcher != null ? launcherUp : null}
-            detail={launcher == null ? 'Unreachable' : launcherUp ? 'Running' : 'Not running'}
-          />
-        )}
-        <StatusRow
-          label="Adapter Backend"
-          ok={health != null ? adapterUp : null}
-          detail={health == null ? 'Unreachable' : `${wsClients ?? 0} WS client${wsClients === 1 ? '' : 's'}`}
-        />
-        <StatusRow
-          label="Clock Sync"
-          ok={clockOffsetMs != null ? !clockDrifted : null}
-          warn={clockDrifted}
-          detail={clockOffsetMs != null ? `${fmtMs(clockOffsetMs)} vs Topstep` : '—'}
-        />
-      </div>
-
-      <div className="shp-section">
-        <div className="shp-section-label">Market Feed</div>
-        <StatusRow
-          label="Platform Connection"
-          ok={telemetry != null ? connected : null}
-          detail={telemetry == null ? 'Unreachable' : connected ? 'Connected' : 'Disconnected'}
-        />
-        <StatusRow
-          label="Feed Freshness"
-          ok={telemetry != null ? !feedStale : null}
-          warn={feedStale}
-          detail={tickAgeMs != null ? (feedStale ? `Stale — ${fmtMs(tickAgeMs)}` : `Fresh — ${fmtMs(tickAgeMs)}`) : '—'}
-        />
-        <StatusRow
-          label="Live Price"
-          ok={price != null}
-          detail={price != null ? price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'}
-        />
-      </div>
-
-      <div className="shp-section">
-        <div className="shp-section-label">Risk &amp; Safeguards</div>
-        <StatusRow
-          label="Flatten State"
-          ok={risk != null ? !flatten.unconfirmed_active : null}
-          warn={flatten.in_progress}
-          detail={
-            flatten.unconfirmed_active ? `Unconfirmed — ${flatten.reason || 'unknown reason'}`
-              : flatten.in_progress ? 'In progress'
-              : risk != null ? 'Idle' : '—'
-          }
-        />
-        <StatusRow
-          label="Fatal Errors"
-          ok={risk != null ? !fatalErrors.active : null}
-          detail={fatalErrors.active ? (fatalErrors.last_message || 'Active') : risk != null ? 'None' : '—'}
-        />
-        <StatusRow
-          label="Trailing Safeguards"
-          ok={risk != null ? safeguardsClean : null}
-          detail={
-            risk == null ? '—'
-              : safeguardsClean ? 'OK'
-              : `${trailingFailures} cancel failure(s), ${uncanceledOrders} uncanceled order(s)`
-          }
-        />
-        <StatusRow
-          label="Bracket Mode"
-          ok={bracketMode != null}
-          detail={bracketMode || '—'}
-        />
-      </div>
+    <div className="shp-grid">
+      <SectionCard title="Connectivity" rows={connectivityRows} />
+      <SectionCard title="Market Feed" rows={marketFeedRows} />
+      <SectionCard title="Risk &amp; Safeguards" rows={riskRows} />
     </div>
   );
 }
