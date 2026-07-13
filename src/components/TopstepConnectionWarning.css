@@ -1,0 +1,65 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   TopstepConnectionWarning.css — persistent "don't open TopstepX" strip,
+   shown whenever the live bot is armed/active. Prefix: tcw-
+═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes tcwSlideIn {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.tcw-banner {
+  position: relative;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 10px var(--space-xl);
+  background: rgba(180,83,9,0.08);
+  border-bottom: 1px solid rgba(180,83,9,0.28);
+  animation: tcwSlideIn 0.25s var(--ease-out) both;
+}
+
+.tcw-icon {
+  flex-shrink: 0;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--color-amber);
+}
+
+.tcw-text {
+  flex: 1;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--color-text-primary);
+}
+
+.tcw-text strong {
+  color: var(--color-amber);
+  font-weight: var(--fw-semibold);
+}
+
+.tcw-dismiss {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+.tcw-dismiss:hover {
+  color: var(--color-text-primary);
+  background-color: rgba(24,24,27,0.06);
+}
+
+@media (max-width: 700px) {
+  .tcw-banner {
+    padding: 10px var(--space-md);
+  }
+  .tcw-text {
+    font-size: 12px;
+  }
+}

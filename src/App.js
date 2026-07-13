@@ -7,6 +7,7 @@ import { getCockpitStatus, initializeCockpit } from './CockpitIntegrator';
 
 // ── Global overlays (always rendered, above everything) ───────────────────────
 import MarketOpenBanner from './components/MarketOpenBanner';
+import TopstepConnectionWarning from './components/TopstepConnectionWarning';
 import ErrorWarningSystem from './components/ErrorWarningSystem';
 import TradeExecutionVisualizer from './components/TradeExecutionVisualizer';
 
@@ -82,6 +83,7 @@ function App() {
 
           {/* Global overlays — render on top of all content */}
           <MarketOpenBanner />
+          <TopstepConnectionWarning />
           <ErrorWarningSystem />
           <TradeExecutionVisualizer />
 
