@@ -18,12 +18,23 @@ export default function SettingsTab() {
   const [webhookSuccess, setWebhookSuccess] = useState(false);
   const [webhookBusy, setWebhookBusy] = useState(false);
 
+  const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(false);
+  const [emailAlertsLoading, setEmailAlertsLoading] = useState(true);
+  const [emailAlertsError, setEmailAlertsError] = useState(null);
+  const [emailAlertsBusy, setEmailAlertsBusy] = useState(false);
+
   useEffect(() => {
     cpGet('/me').then(me => setEmail(me.email)).catch(() => {});
     cpGet('/credentials')
-      .then(res => setWebhookUrl(res.discord_webhook_url || ''))
+      .then(res => {
+        setWebhookUrl(res.discord_webhook_url || '');
+        setEmailAlertsEnabled(!!res.email_alerts_enabled);
+      })
       .catch(() => {})
-      .finally(() => setWebhookLoading(false));
+      .finally(() => {
+        setWebhookLoading(false);
+        setEmailAlertsLoading(false);
+      });
   }, []);
 
   async function handleChangePassword(e) {
@@ -60,6 +71,20 @@ export default function SettingsTab() {
       setWebhookError(err.message);
     } finally {
       setWebhookBusy(false);
+    }
+  }
+
+  async function handleToggleEmailAlerts() {
+    const next = !emailAlertsEnabled;
+    setEmailAlertsError(null);
+    setEmailAlertsBusy(true);
+    try {
+      await cpPost('/credentials/email-alerts', { email_alerts_enabled: next });
+      setEmailAlertsEnabled(next);
+    } catch (err) {
+      setEmailAlertsError(err.message);
+    } finally {
+      setEmailAlertsBusy(false);
     }
   }
 
@@ -136,7 +161,26 @@ export default function SettingsTab() {
           </button>
         </form>
 
-        <p className="panel-placeholder">Email trade alerts — coming soon.</p>
+        <div className="set-email-alerts-row">
+          <div>
+            <p className="set-email-alerts-label">Email trade alerts</p>
+            <p className="set-email-alerts-hint">
+              {email ? `Sent to ${email} after every closed trade.` : 'Sent to your account email after every closed trade.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            className={`adm-toggle ${emailAlertsEnabled ? 'adm-toggle--on' : ''}`}
+            role="switch"
+            aria-checked={emailAlertsEnabled}
+            aria-label="Email trade alerts"
+            disabled={emailAlertsLoading || emailAlertsBusy}
+            onClick={handleToggleEmailAlerts}
+          >
+            <span className="adm-toggle-knob" />
+          </button>
+        </div>
+        {emailAlertsError && <p className="set-error">{emailAlertsError}</p>}
       </div>
     </div>
   );
