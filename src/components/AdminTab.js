@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { cpGet, cpPost } from '../services/controlPlaneApi';
+import { cpGet, cpPost, cpDelete } from '../services/controlPlaneApi';
 import './AdminTab.css';
 
 function compactNumber(n) {
@@ -17,6 +17,8 @@ export default function AdminTab() {
   const [error, setError] = useState(null);
   const [rosterError, setRosterError] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
+  const [confirmingId, setConfirmingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     cpGet('/admin/metrics').then(setMetrics).catch(err => setError(err.message));
@@ -34,6 +36,20 @@ export default function AdminTab() {
       setRosterError(err.message);
     } finally {
       setTogglingId(null);
+    }
+  }
+
+  async function deleteUser(entry) {
+    setDeletingId(entry.id);
+    setRosterError(null);
+    try {
+      await cpDelete(`/admin/users/${entry.id}`);
+      setRoster(current => current.filter(row => row.id !== entry.id));
+    } catch (err) {
+      setRosterError(err.message);
+    } finally {
+      setDeletingId(null);
+      setConfirmingId(null);
     }
   }
 
@@ -115,6 +131,7 @@ export default function AdminTab() {
                   <th>Email</th>
                   <th>Subscription</th>
                   <th>Free access</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -141,6 +158,38 @@ export default function AdminTab() {
                       >
                         <span className="adm-toggle-knob" />
                       </button>
+                    </td>
+                    <td className="adm-roster-delete-cell">
+                      {confirmingId === entry.id ? (
+                        <span className="adm-confirm-row">
+                          <span className="adm-confirm-label">Delete?</span>
+                          <button
+                            type="button"
+                            className="adm-confirm-btn adm-confirm-btn--yes"
+                            disabled={deletingId === entry.id}
+                            onClick={() => deleteUser(entry)}
+                          >
+                            {deletingId === entry.id ? '…' : 'Yes'}
+                          </button>
+                          <button
+                            type="button"
+                            className="adm-confirm-btn"
+                            disabled={deletingId === entry.id}
+                            onClick={() => setConfirmingId(null)}
+                          >
+                            No
+                          </button>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="adm-delete-btn"
+                          aria-label={`Delete account for ${entry.email}`}
+                          onClick={() => setConfirmingId(entry.id)}
+                        >
+                          Delete
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}

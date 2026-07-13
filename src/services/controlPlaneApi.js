@@ -52,3 +52,7 @@ export function cpGet(path) {
 export function cpPost(path, body) {
   return cpRequest(path, { method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined });
 }
+
+export function cpDelete(path) {
+  return cpRequest(path, { method: 'DELETE' });
+}

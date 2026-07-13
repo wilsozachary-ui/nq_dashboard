@@ -149,3 +149,59 @@
   transform: translateX(17px);
   background: var(--color-green);
 }
+
+/* ── Delete account (destructive, two-step confirm) ──────────────────────── */
+.adm-roster-delete-cell {
+  text-align: right;
+}
+
+.adm-delete-btn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.adm-delete-btn:hover {
+  background: rgba(185,28,28,0.08);
+  border-color: rgba(185,28,28,0.4);
+  color: var(--color-red);
+}
+
+.adm-confirm-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.adm-confirm-label {
+  font-size: var(--text-xs);
+  color: var(--color-red);
+  font-weight: var(--fw-semibold);
+}
+
+.adm-confirm-btn {
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-strong);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  padding: 3px 9px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.adm-confirm-btn:disabled { opacity: 0.5; cursor: wait; }
+
+.adm-confirm-btn--yes {
+  background: rgba(185,28,28,0.10);
+  border-color: rgba(185,28,28,0.4);
+  color: var(--color-red);
+}
+.adm-confirm-btn--yes:hover:not(:disabled) {
+  background: rgba(185,28,28,0.18);
+}
