@@ -31,6 +31,12 @@ export default function MorningStrategyLiveControl() {
 
   const status = snapshot.status || 'OFF';
   const armed = !!snapshot.armed;
+  // Server truth (set by whichever device actually armed it -- see
+  // MorningStrategyScheduler.params on the backend), not this device's own
+  // local panel state -- so arming from your PC and then checking from
+  // your phone (or nq-cloud.com) shows the same real parameters instead of
+  // whatever that other device's panel happens to have showing.
+  const armedParams = snapshot.armed_params || null;
   const position = snapshot.position || null;
   const pending = snapshot.pending_entries || {};
   const hasPendingStops = pending.long_stop_price != null || pending.short_stop_price != null;
@@ -134,6 +140,32 @@ export default function MorningStrategyLiveControl() {
         <button className="mstb-flatten-link" onClick={flatten} disabled={busy}>
           {actionBusy === 'flattening' ? 'Flattening…' : 'Flatten position only'}
         </button>
+      )}
+
+      {armed && armedParams && (
+        <div className="mstb-section">
+          <span className="mstb-section-label">Armed With</span>
+          <div className="mstb-prices">
+            <div className="mstb-price-row">
+              <span className="mstb-price-lbl">Take Profit</span>
+              <span className="mstb-price-val mstb-price-val--up">{fmtPrice(armedParams.tp_dollars)}</span>
+            </div>
+            <div className="mstb-price-row">
+              <span className="mstb-price-lbl">Stop Loss</span>
+              <span className="mstb-price-val mstb-price-val--down">{fmtPrice(armedParams.sl_dollars)}</span>
+            </div>
+            <div className="mstb-price-row">
+              <span className="mstb-price-lbl">Trailing</span>
+              <span className="mstb-price-val">
+                {armedParams.trailing_enabled ? `${armedParams.trailing_points ?? '—'} pts` : 'Off'}
+              </span>
+            </div>
+            <div className="mstb-price-row">
+              <span className="mstb-price-lbl">Contract Size</span>
+              <span className="mstb-price-val">{armedParams.contract_size ?? '—'}</span>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="mstb-section">
