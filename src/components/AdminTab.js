@@ -149,7 +149,9 @@ export default function AdminTab() {
                     </td>
                     <td className="adm-roster-email">{entry.email}</td>
                     <td>
-                      {entry.subscription_active ? (
+                      {entry.free_access ? (
+                        <span className="adm-badge adm-badge-green">Family</span>
+                      ) : entry.subscription_active ? (
                         <span className="adm-badge adm-badge-green">Active</span>
                       ) : (
                         <span className="adm-badge">Inactive</span>
