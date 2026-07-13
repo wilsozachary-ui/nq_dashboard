@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import botApi from '../services/botApi';
+import { getDashboardConfig } from '../services/controlPlaneApi';
 import './SystemHealthPanel.css';
 
 // ── System Health — a live, always-real operational status board ───────────
@@ -36,12 +37,24 @@ export default function SystemHealthPanel() {
   const [health, setHealth] = useState(null);
   const [telemetry, setTelemetry] = useState(null);
   const [risk, setRisk] = useState(null);
+  // The Launcher Service check hits LAUNCHER_ROOT, which defaults to
+  // http://localhost:8090 -- for a cloud customer that's their own PC,
+  // not the container, so it can never succeed there (there's nothing
+  // running on their machine to answer it). Detected the same way
+  // App.js detects a cloud instance: a real dashboard_token only ever
+  // gets baked in at cloud provision time, never present for the
+  // desktop exe.
+  const [isCloud, setIsCloud] = useState(false);
+
+  useEffect(() => {
+    getDashboardConfig().then(config => setIsCloud(Boolean(config.dashboard_token))).catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     const poll = () => {
       Promise.allSettled([
-        botApi.getBackendStatus(),
+        isCloud ? Promise.resolve(null) : botApi.getBackendStatus(),
         botApi.getHealth(),
         botApi.getRawTelemetry(),
         botApi.getRisk(),
@@ -56,7 +69,7 @@ export default function SystemHealthPanel() {
     poll();
     const id = setInterval(poll, 5000);
     return () => { cancelled = true; clearInterval(id); };
-  }, []);
+  }, [isCloud]);
 
   const launcherUp = launcher?.running === true;
   const adapterUp = health?.ok === true;
@@ -83,11 +96,13 @@ export default function SystemHealthPanel() {
 
       <div className="shp-section">
         <div className="shp-section-label">Connectivity</div>
-        <StatusRow
-          label="Launcher Service"
-          ok={launcher != null ? launcherUp : null}
-          detail={launcher == null ? 'Unreachable' : launcherUp ? 'Running' : 'Not running'}
-        />
+        {!isCloud && (
+          <StatusRow
+            label="Launcher Service"
+            ok={launcher != null ? launcherUp : null}
+            detail={launcher == null ? 'Unreachable' : launcherUp ? 'Running' : 'Not running'}
+          />
+        )}
         <StatusRow
           label="Adapter Backend"
           ok={health != null ? adapterUp : null}

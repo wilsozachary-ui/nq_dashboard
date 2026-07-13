@@ -7,12 +7,11 @@ import { useSelectedAccount } from './morningStrategyShared';
 import './TradeRecapTab.css';
 
 // Values match /pnl/monthly's real `strategy` query param (see
-// app/adapter_api/main.py's pnl_monthly route) -- 'orb' is deliberate,
-// not 'orb_strategy', to match what the backend actually accepts.
+// app/adapter_api/main.py's pnl_monthly route). ORB removed -- Morning
+// Strategy is the only strategy this product actually runs today.
 const STRATEGY_FILTERS = [
   { key: 'overall',          label: 'All Strategies' },
   { key: 'morning_strategy', label: 'Morning Strategy' },
-  { key: 'orb',              label: 'ORB Strategy' },
 ];
 
 export default function TradeRecapTab() {
