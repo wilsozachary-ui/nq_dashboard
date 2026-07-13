@@ -20,7 +20,7 @@ export default function AdminTab() {
 
   useEffect(() => {
     cpGet('/admin/metrics').then(setMetrics).catch(err => setError(err.message));
-    cpGet('/admin/users').then(setRoster).catch(err => setRosterError(err.message));
+    cpGet('/admin/users').then(data => setRoster(data.users)).catch(err => setRosterError(err.message));
   }, []);
 
   async function toggleFreeAccess(entry) {
