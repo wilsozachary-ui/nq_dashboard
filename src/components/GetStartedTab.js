@@ -16,6 +16,16 @@ const STEPS = [
   'Flip the switch from OFF to ON before 8:30 AM CT. Once armed, the bot fires automatically at the scheduled time -- no further clicking needed.',
 ];
 
+const API_KEY_STEPS = [
+  'Log in to your Topstep account and navigate to TopstepX.',
+  'Go to Settings under any account you own.',
+  'Click API.',
+  'On the right side, select "Link to ProjectX."',
+  'You\'ll be redirected to sign up under "Subscriptions" for a ProjectX API key -- this is Topstep\'s official gateway that lets outside software (your bot) place trades on your behalf.',
+  'Once you have a ProjectX subscription, navigate back to ProjectX and click "Generate API key."',
+  'Copy that key and paste it into the Topstep API Key field in your credentials.',
+];
+
 const FAQS = [
   {
     q: 'What does "Bot Health: OK" actually mean?',
@@ -64,6 +74,15 @@ export default function GetStartedTab() {
         <p className="gst-intro">
           A quick orientation to the dashboard and how a normal trading day works.
         </p>
+
+        <div className="gst-subhead">Getting your ProjectX API key</div>
+        <p className="gst-intro">
+          Your API key is what lets the bot place trades on your behalf through Topstep's
+          official ProjectX gateway -- without it, the bot has no way to connect to your account.
+        </p>
+        <ol className="gst-steps">
+          {API_KEY_STEPS.map((step, i) => <li key={i}>{step}</li>)}
+        </ol>
 
         <div className="gst-subhead">Your tabs</div>
         <div className="gst-tabs-list">

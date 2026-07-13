@@ -137,7 +137,16 @@ export default function AdminTab() {
               <tbody>
                 {roster.map(entry => (
                   <tr key={entry.id}>
-                    <td>{displayName(entry)}</td>
+                    <td>
+                      {displayName(entry)}
+                      <span
+                        className={`adm-disclaimer-dot ${entry.disclaimer_signed ? 'adm-disclaimer-dot--signed' : ''}`}
+                        title={entry.disclaimer_signed ? 'Disclaimer signed' : 'Disclaimer not yet signed'}
+                        aria-label={entry.disclaimer_signed ? 'Disclaimer signed' : 'Disclaimer not yet signed'}
+                      >
+                        {entry.disclaimer_signed ? '✓' : '—'}
+                      </span>
+                    </td>
                     <td className="adm-roster-email">{entry.email}</td>
                     <td>
                       {entry.subscription_active ? (

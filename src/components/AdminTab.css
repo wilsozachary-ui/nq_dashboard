@@ -112,6 +112,31 @@
   border-bottom: none;
 }
 
+/* Small denotion next to a customer's name showing whether they've
+   signed the trading-risk disclaimer -- a dash (not signed) or a check
+   (signed), not a full column, per how this was asked for. */
+.adm-disclaimer-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  margin-left: 6px;
+  border-radius: 50%;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--color-text-dim);
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border);
+  cursor: default;
+}
+
+.adm-disclaimer-dot--signed {
+  color: #fff;
+  background: var(--color-green);
+  border-color: var(--color-green);
+}
+
 .adm-roster-email {
   color: var(--color-text-secondary);
 }
