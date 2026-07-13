@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import botApi from '../services/botApi';
 import './CandleMetricsPanel.css';
 
-// Trade Recap tab -- shows the opening 1-minute NQ candle's behavior for
+// Trade Recap tab -- shows the opening 7 seconds of NQ price action for
 // whatever day is selected in the calendar above, plus the Morning
 // Strategy Live parameters/outcome that ran that day (if any), joined
 // server-side by date (see /morning_strategy/daily_summary/{date}).
@@ -111,7 +111,7 @@ export default function CandleMetricsPanel({ date }) {
             <div className="cmp-stat"><span className="cmp-stat-label">Upper Wick</span><span className="cmp-stat-value">{fmtPoints(candle.upper_wick_points)}</span></div>
             <div className="cmp-stat"><span className="cmp-stat-label">Lower Wick</span><span className="cmp-stat-value">{fmtPoints(candle.lower_wick_points)}</span></div>
             <div className="cmp-stat"><span className="cmp-stat-label">Tick Speed</span><span className="cmp-stat-value">{candle.tick_speed != null ? `${candle.tick_speed}/s` : '—'}</span></div>
-            <div className="cmp-stat"><span className="cmp-stat-label">Volatility (ATR)</span><span className="cmp-stat-value">{fmtPoints(candle.atr_1m)}</span></div>
+            <div className="cmp-stat"><span className="cmp-stat-label">Ticks Recorded</span><span className="cmp-stat-value">{candle.tick_count ?? '—'}</span></div>
           </div>
 
           {trade && (
