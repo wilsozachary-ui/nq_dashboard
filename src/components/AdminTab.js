@@ -1,18 +1,41 @@
 import { useEffect, useState } from 'react';
-import { cpGet } from '../services/controlPlaneApi';
+import { cpGet, cpPost } from '../services/controlPlaneApi';
 import './AdminTab.css';
 
 function compactNumber(n) {
   return new Intl.NumberFormat(undefined, { notation: n >= 10000 ? 'compact' : 'standard' }).format(n);
 }
 
+function displayName(entry) {
+  const name = [entry.first_name, entry.last_name].filter(Boolean).join(' ');
+  return name || '—';
+}
+
 export default function AdminTab() {
   const [metrics, setMetrics] = useState(null);
+  const [roster, setRoster] = useState(null);
   const [error, setError] = useState(null);
+  const [rosterError, setRosterError] = useState(null);
+  const [togglingId, setTogglingId] = useState(null);
 
   useEffect(() => {
     cpGet('/admin/metrics').then(setMetrics).catch(err => setError(err.message));
+    cpGet('/admin/users').then(setRoster).catch(err => setRosterError(err.message));
   }, []);
+
+  async function toggleFreeAccess(entry) {
+    const nextValue = !entry.free_access;
+    setTogglingId(entry.id);
+    setRosterError(null);
+    try {
+      await cpPost(`/admin/users/${entry.id}/free-access`, { free_access: nextValue });
+      setRoster(current => current.map(row => (row.id === entry.id ? { ...row, free_access: nextValue } : row)));
+    } catch (err) {
+      setRosterError(err.message);
+    } finally {
+      setTogglingId(null);
+    }
+  }
 
   if (error) {
     return (
@@ -76,6 +99,55 @@ export default function AdminTab() {
         <p className="panel-placeholder">
           {metrics.containers_healthy} of {metrics.containers_total} deployed container(s) reporting healthy.
         </p>
+      </div>
+
+      <div className="card adm-card adm-card--roster">
+        <div className="panel-title">Signups</div>
+        {rosterError && <p className="set-error">{rosterError}</p>}
+        {!roster && !rosterError && <p className="panel-placeholder">Loading…</p>}
+        {roster && roster.length === 0 && <p className="panel-placeholder">No signups yet.</p>}
+        {roster && roster.length > 0 && (
+          <div className="adm-roster-scroll">
+            <table className="adm-roster">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Subscription</th>
+                  <th>Free access</th>
+                </tr>
+              </thead>
+              <tbody>
+                {roster.map(entry => (
+                  <tr key={entry.id}>
+                    <td>{displayName(entry)}</td>
+                    <td className="adm-roster-email">{entry.email}</td>
+                    <td>
+                      {entry.subscription_active ? (
+                        <span className="adm-badge adm-badge-green">Active</span>
+                      ) : (
+                        <span className="adm-badge">Inactive</span>
+                      )}
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className={`adm-toggle ${entry.free_access ? 'adm-toggle--on' : ''}`}
+                        role="switch"
+                        aria-checked={entry.free_access}
+                        aria-label={`Free access for ${entry.email}`}
+                        disabled={togglingId === entry.id}
+                        onClick={() => toggleFreeAccess(entry)}
+                      >
+                        <span className="adm-toggle-knob" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

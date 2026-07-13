@@ -54,11 +54,11 @@ export default function SubscriptionTab() {
   }
 
   const isActive = sub?.status === 'active';
-  // has_access without an active paid subscription means the account-owner
-  // free-access bypass (see nq_control_plane's billing/service.py has_access) --
-  // derived here rather than a separate /me call, since the subscription
-  // response already implies it.
-  const isAdminFreeAccess = sub?.has_access && !isActive;
+  // has_access without an active paid subscription means either the
+  // account-owner bypass or an admin-granted free-access grant (see
+  // nq_control_plane's billing/service.py has_access) -- is_admin
+  // distinguishes which, so the two aren't both labeled "Admin access".
+  const isFreeAccess = sub?.has_access && !isActive;
 
   return (
     <div className="tab-single-col sub-tab">
@@ -68,14 +68,18 @@ export default function SubscriptionTab() {
         {!sub && !error && <p className="panel-placeholder">Loading…</p>}
         {error && <p className="sub-error">{error}</p>}
 
-        {sub && isAdminFreeAccess && (
+        {sub && isFreeAccess && (
           <div className="sub-status-row">
-            <span className="sub-badge sub-badge-gold">Admin access</span>
-            <p className="sub-detail">Free access as the account owner — no subscription needed.</p>
+            <span className="sub-badge sub-badge-gold">{sub.is_admin ? 'Admin access' : 'Free access'}</span>
+            <p className="sub-detail">
+              {sub.is_admin
+                ? 'Free access as the account owner — no subscription needed.'
+                : 'Free access granted — no subscription needed.'}
+            </p>
           </div>
         )}
 
-        {sub && isActive && !isAdminFreeAccess && (
+        {sub && isActive && !isFreeAccess && (
           <div className="sub-status-row">
             <span className="sub-badge sub-badge-green">Active</span>
             <p className="sub-detail">
@@ -95,7 +99,7 @@ export default function SubscriptionTab() {
           </div>
         )}
 
-        {sub && !isActive && !isAdminFreeAccess && (
+        {sub && !isActive && !isFreeAccess && (
           <div className="sub-status-row">
             <span className="sub-badge sub-badge-amber">Inactive</span>
             <p className="sub-detail">Subscribe to keep your bot running.</p>
