@@ -2,6 +2,7 @@ import botApi, { BOT_API_ROOT, BOT_WS_URL } from './services/botApi';
 import { emitError, emitWarning, resolveWarning } from './utils/errorBus';
 import { startMarketScheduler, stopMarketScheduler } from './utils/marketOpenMode';
 import { applyGlobalStyles } from './CockpitThemePolish';
+import { getSessionToken } from './services/sessionToken';
 
 const STREAMS = ['activity', 'pnl', 'risk', 'price', 'strategy', 'testbot', 'trailing', 'orb'];
 const listeners = new Map();
@@ -210,7 +211,12 @@ export function initializeWebSockets() {
     if (stopped) return;
     publishConnectionState(attempts ? 'reconnecting' : 'connecting');
     try {
-      ws = new WebSocket(`${BOT_WS_URL}/ws`);
+      // Browser WebSocket API can't set an Authorization header -- the
+      // session token travels as a query param instead, checked by
+      // nq_bot's session_auth.py before the socket is ever accepted.
+      const token = getSessionToken();
+      const wsUrl = `${BOT_WS_URL}/ws${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+      ws = new WebSocket(wsUrl);
     } catch {
       scheduleReconnect();
       return;
@@ -301,8 +307,12 @@ export async function integratedFetch(pathOrUrl, options = {}, metadata = {}) {
   };
   const path = pathOrUrl.startsWith('http') ? pathOrUrl.replace(BOT_API_ROOT, '') : remap(pathOrUrl);
   const url = pathOrUrl.startsWith('http') ? pathOrUrl : `${BOT_API_ROOT}${path}`;
+  const token = getSessionToken();
+  const fetchOptions = token
+    ? { ...options, headers: { ...options.headers, Authorization: `Bearer ${token}` } }
+    : options;
   try {
-    const response = await fetch(url, options);
+    const response = await fetch(url, fetchOptions);
     const elapsed = Math.round(performance.now() - started);
     if (elapsed > 750) emitWarning('api_latency', `${options.method || 'GET'} ${path} took ${elapsed}ms`, { path, elapsed });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);

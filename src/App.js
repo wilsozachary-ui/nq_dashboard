@@ -27,15 +27,27 @@ import SubscriptionTab from './components/SubscriptionTab';
 import SettingsTab from './components/SettingsTab';
 import AdminTab from './components/AdminTab';
 import { getDashboardConfig } from './services/controlPlaneApi';
+import { captureSessionTokenFromUrl, getSessionToken } from './services/sessionToken';
 
 // Force full live mode — all WS + REST feeds are required.
 window.cockpitLiveMode = true;
 if (window.cockpitLiveMode) console.log('[Cockpit] Running in FULL LIVE MODE');
 
+// Runs at module load, before anything mounts or fetches -- every API call
+// this app makes (bot API + control-plane calls) needs the token in place
+// first. See services/sessionToken.js.
+captureSessionTokenFromUrl();
+
+// Matches CockpitIntegrator.js's own BYPASS_LIVE_VALIDATION -- the test
+// environment never goes through a real nq-cloud.com login, so the auth
+// gate below would otherwise block every test that renders <App />.
+const BYPASS_AUTH_GATE = process.env.NODE_ENV === 'test';
+
 function App() {
   const [isLive, setIsLive] = useState(false);
   const [integration, setIntegration] = useState(() => getCockpitStatus());
   const [isAdminInstance, setIsAdminInstance] = useState(false);
+  const [hasSession] = useState(() => BYPASS_AUTH_GATE || Boolean(getSessionToken()));
 
   useEffect(() => {
     // One-time check, not part of the live WS/telemetry integration above --
@@ -67,6 +79,25 @@ function App() {
   }, []);
 
   const missing = integration.missing ?? [];
+
+  if (!hasSession) {
+    // No valid session token in localStorage -- either this dashboard was
+    // opened directly (its bare *.fly.dev URL, no longer sufficient as of
+    // the 2026-07-14 audit fix) or the token expired. Nothing below this
+    // point can succeed against the now-gated bot API, so show a clear
+    // path back instead of a half-broken cockpit full of 401s.
+    return (
+      <ThemeProvider>
+        <div className="auth-gate">
+          <div className="auth-gate-card">
+            <h1>Not signed in</h1>
+            <p>Open your bot dashboard from your NQ Cloud account — not this direct link.</p>
+            <a className="auth-gate-link" href="https://nq-cloud.com">Go to NQ Cloud →</a>
+          </div>
+        </div>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider>

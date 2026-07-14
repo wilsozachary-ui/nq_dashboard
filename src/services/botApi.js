@@ -1,3 +1,5 @@
+import { getSessionToken } from './sessionToken';
+
 // Same-origin fallback: works unmodified for both the desktop exe (frontend
 // and adapter always served from the same http://localhost:8080 origin) and
 // a cloud container (each tenant's frontend+API share their own origin).
@@ -29,7 +31,9 @@ async function launcherRequest(path, init = {}) {
 }
 
 async function request(path, init = {}, signal) {
-  const response = await fetch(`${BOT_API_ROOT}${path}`, { ...init, signal: signal || init.signal });
+  const token = getSessionToken();
+  const headers = token ? { ...init.headers, Authorization: `Bearer ${token}` } : init.headers;
+  const response = await fetch(`${BOT_API_ROOT}${path}`, { ...init, headers, signal: signal || init.signal });
   if (!response.ok) {
     throw new Error(`${init.method || 'GET'} ${path} failed (${response.status})`);
   }

@@ -4,6 +4,47 @@
   background-color: var(--color-bg-primary);
 }
 
+/* ── Auth gate — shown when there's no valid session token (see App.js) ──── */
+.auth-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-primary);
+  padding: 24px;
+}
+
+.auth-gate-card {
+  max-width: 420px;
+  text-align: center;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 32px 28px;
+}
+
+.auth-gate-card h1 {
+  font-size: 1.25rem;
+  color: var(--color-text-primary);
+  margin: 0 0 10px;
+}
+
+.auth-gate-card p {
+  color: var(--color-text-secondary);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.auth-gate-link {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: var(--color-accent, #3b82f6);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
 /* ── Activity dashboard section (full-width row below main grid) ─────────── */
 .activity-section {
   max-width: 1680px;
