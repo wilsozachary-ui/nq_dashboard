@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { API_ROOT, USE_MOCK } from '../api/pnlApi';
 import './TradeParameterPanel.css';
 import { integratedFetch } from '../CockpitIntegrator';
+import { useTestBotSnapshot } from './morningStrategyShared';
 
 // ── Adjustment steps ──────────────────────────────────────────────────────────
 const HOLD_MS       = 120;     // hold-to-repeat interval (ms)
@@ -68,6 +69,29 @@ function saveUserDefaults(p) {
 function effectiveDefaults() {
   const stored = loadUserDefaults();
   return stored ? { ...DEFAULTS, ...stored } : DEFAULTS;
+}
+
+// ── Server-truth armed parameters -> this panel's own field shape ───────────
+// snapshot.armed_params (see MorningStrategyLiveControl.js's "Armed With"
+// section) comes from GET /testbot/live -- server-side, set by whichever
+// device actually armed it, exactly what this panel was missing. Only maps
+// fields that exist; anything armed_params doesn't carry (e.g. a bot armed
+// before this field existed) falls back to effectiveDefaults() as before.
+function armedParamsToPanelState(armedParams) {
+  const base = effectiveDefaults();
+  if (!armedParams) return base;
+  return {
+    ...base,
+    contractSize:        armedParams.contract_size ?? base.contractSize,
+    takeProfit:           armedParams.tp_dollars ?? base.takeProfit,
+    stopLoss:              armedParams.sl_dollars ?? base.stopLoss,
+    trailingStop:          armedParams.trailing_enabled ?? base.trailingStop,
+    trailingDistance:      armedParams.trailing_points ?? base.trailingDistance,
+    spreadPoints:          armedParams.spread_points ?? base.spreadPoints,
+    breakevenTrigger:      armedParams.breakeven_dollars ?? base.breakevenTrigger,
+    profitLockTrigger:     armedParams.profit_lock_dollars ?? base.profitLockTrigger,
+    profitLockRetainPct:   armedParams.profit_lock_retain_pct ?? base.profitLockRetainPct,
+  };
 }
 
 // ── Format helpers ────────────────────────────────────────────────────────────
@@ -186,6 +210,28 @@ export default function TradeParameterPanel() {
   paramsRef.current = params;
 
   const dirty = JSON.stringify(params) !== JSON.stringify(lastApplied);
+
+  // ── Sync to server-truth armed parameters, once ─────────────────────────
+  // effectiveDefaults() above is per-device localStorage, which is exactly
+  // what caused a real bug: arming from one device and checking this panel
+  // from another showed that OTHER device's own local leftover state, not
+  // what was actually armed. Once (not on every poll -- see the ref guard
+  // below), if the bot is armed when this panel first sees it, pull in the
+  // real armed parameters as the starting point instead. Deliberately only
+  // once: after that, this panel is a staging area for the NEXT arm (e.g.
+  // preparing tomorrow's settings while today's trade is still running
+  // under different ones), and shouldn't keep clobbering active edits every
+  // second just because the poll ticked.
+  const snapshot = useTestBotSnapshot('live');
+  const armedSyncedRef = useRef(false);
+  useEffect(() => {
+    if (armedSyncedRef.current) return;
+    if (!snapshot.armed || !snapshot.armed_params) return;
+    armedSyncedRef.current = true;
+    const synced = armedParamsToPanelState(snapshot.armed_params);
+    setParams(synced);
+    setLastApplied(synced);
+  }, [snapshot.armed, snapshot.armed_params]);
 
   // Keep late-mounting/already-mounted Morning Strategy controls in sync
   // with the current panel values (not just the last-applied ones), since
