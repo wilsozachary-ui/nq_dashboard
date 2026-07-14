@@ -48,7 +48,7 @@
   flex: 1;
   overflow-y: auto;
   min-height: 140px;
-  max-height: 320px;
+  max-height: 420px;
   padding: 4px 0;
   scrollbar-width: thin;
   scrollbar-color: rgba(24,24,27,0.08) transparent;
@@ -96,7 +96,15 @@
 .ap-detail {
   color: var(--color-text-muted);
   font-size: 10px;
-  flex-shrink: 0;
+  /* The one element in the row allowed to give up space -- time/tag/price/
+     PnL (below) all stay flex-shrink:0 so the result at the end of the row
+     is never what gets clipped when the column is narrower than the row's
+     full natural width. */
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ap-detail b { color: var(--color-text-secondary, rgba(24,24,27,0.75)); font-weight: 600; }
 .ap-detail-sub { opacity: 0.7; font-style: italic; }

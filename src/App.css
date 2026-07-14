@@ -14,7 +14,12 @@
 /* ── 3-column cockpit grid ───────────────────────────────────────────────── */
 .dashboard {
   display: grid;
-  grid-template-columns: 210px minmax(0, 2fr) minmax(0, 1.2fr);
+  /* Right column (LiveTicker + ActivityPanel) widened from 1.2fr -- at the
+     old 2fr:1.2fr split (62.5%:37.5% of the flexible space), ActivityPanel's
+     rows (time + tag + price + detail + PnL, none of which shrink -- see
+     ActivityPanel.css) didn't reliably fit, clipping the PnL result at the
+     end of the row on real viewport widths. */
+  grid-template-columns: 210px minmax(0, 1.7fr) minmax(0, 1.5fr);
   gap: var(--space-lg);
   align-items: start;
   max-width: 1680px;
