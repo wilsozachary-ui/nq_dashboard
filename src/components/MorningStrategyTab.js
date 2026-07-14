@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { cpGet } from '../services/controlPlaneApi';
 import MorningStrategyLiveControl from './MorningStrategyLiveControl';
 // MorningStrategyPracticeBotControl is intentionally hidden from the tab
 // below, not removed -- the component, its CSS, and the backend's
@@ -22,12 +24,19 @@ import TopstepAccountSelector from './TopstepAccountSelector';
 import PracticeBotStatus from './PracticeBotStatus';
 
 export default function MorningStrategyTab() {
+  const [firstName, setFirstName] = useState(null);
+
+  useEffect(() => {
+    cpGet('/me').then(me => setFirstName(me.first_name)).catch(() => {});
+  }, []);
+
   return (
     <div className="ms-tab">
 
       {/* Top bar: firm title + market overview + account selector */}
       <div className="tab-topbar">
         <span className="tab-title">Morning Strategy</span>
+        {firstName && <span className="tab-greeting">Hello, {firstName}</span>}
         <MarketOverviewStrip symbol="NQ" />
         <TopstepAccountSelector strategy="morning" />
       </div>

@@ -236,6 +236,14 @@
   letter-spacing: 0.01em;
 }
 
+/* Personal greeting shown next to the tab title once /me resolves (see
+   MorningStrategyTab.js) -- muted so it reads as secondary to the title. */
+.tab-greeting {
+  font-size: var(--text-body, 0.9rem);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
 /* Compact single-column layout for narrower tabs */
 .tab-single-col {
   padding: 16px;
