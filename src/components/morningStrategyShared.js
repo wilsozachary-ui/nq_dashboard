@@ -73,9 +73,13 @@ export function isPracticeAccountName(name) {
 // adapter's own _periodic_refresh cadence, so this never lags behind data
 // that's already only recomputed server-side once a second. Live and
 // Practice are independent engines/routes -- never share one poll.
+// mode: 'live' | 'practice' | null/undefined (disabled -- no fetch, no
+// poll, returns {} forever; lets a caller conditionally opt out without
+// violating the rules of hooks by skipping the call entirely).
 export function useTestBotSnapshot(mode) {
   const [snapshot, setSnapshot] = useState({});
   useEffect(() => {
+    if (mode !== 'live' && mode !== 'practice') return undefined;
     let alive = true;
     const fetcher = mode === 'live' ? botApi.getLiveBot : botApi.getPracticeBot;
     const poll = () => fetcher().then(d => { if (alive) setSnapshot(d || {}); }).catch(() => {});

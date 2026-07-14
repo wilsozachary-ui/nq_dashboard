@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import botApi from '../services/botApi';
-import { isPracticeAccountName } from './morningStrategyShared';
+import { isPracticeAccountName, useTestBotSnapshot } from './morningStrategyShared';
 import './TopstepAccountSelector.css';
 
 const ACCOUNTS = [];
@@ -128,6 +128,28 @@ export default function TopstepAccountSelector({ strategy = 'morning' }) {
     window.addEventListener('nq:accounts-changed', h);
     return () => window.removeEventListener('nq:accounts-changed', h);
   }, [strategy]);
+
+  // ── Sync to server-truth armed account, once (morning/Live only) ────────
+  // Same root cause and same fix shape as TradeParameterPanel.js's armed-
+  // params sync: `selected` above is per-device localStorage, with no
+  // connection to which account is actually armed. Arming only ever uses
+  // selected[0] (see useSelectedAccount()/MorningStrategyLiveControl.js),
+  // and that account_id is already part of GET /testbot/live's
+  // armed_params -- the same server truth already wired up for the
+  // parameters fix -- so this needs no new backend work. Scoped to the
+  // "morning" instance specifically since that's the one whose selection
+  // actually drives live arming; the "recap" instance is a view filter
+  // with no real "currently armed" concept to sync to.
+  const liveSnapshot = useTestBotSnapshot(strategy === 'morning' ? 'live' : null);
+  const armedAccountSyncedRef = useRef(false);
+  useEffect(() => {
+    if (strategy !== 'morning') return;
+    if (armedAccountSyncedRef.current) return;
+    const armedAccountId = liveSnapshot.armed_params?.account_id;
+    if (!liveSnapshot.armed || armedAccountId == null) return;
+    armedAccountSyncedRef.current = true;
+    setSelected([String(armedAccountId)]);
+  }, [strategy, liveSnapshot.armed, liveSnapshot.armed_params]);
 
   const toggle    = useCallback(id => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]), []);
   const selectAll = () => setSelected(accounts.map(a => a.id));
