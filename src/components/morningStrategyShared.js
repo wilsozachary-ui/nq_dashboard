@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import botApi from '../services/botApi';
 
 // ── Shared helpers/hooks for MorningStrategyLiveControl and
@@ -69,25 +69,85 @@ export function isPracticeAccountName(name) {
   return String(name || '').toUpperCase().includes('PRAC');
 }
 
-// Polls GET /testbot/live or /testbot/practice every 1s -- matches the
-// adapter's own _periodic_refresh cadence, so this never lags behind data
-// that's already only recomputed server-side once a second. Live and
-// Practice are independent engines/routes -- never share one poll.
+const SNAPSHOT_POLL_MS = 1000;
+const EMPTY_SNAPSHOT = {};
+
+function createSnapshotStore(mode) {
+  const fetcher = mode === 'live' ? botApi.getLiveBot : botApi.getPracticeBot;
+  const listeners = new Set();
+  let timer = null;
+  let requestInFlight = false;
+  let value = {};
+
+  const publish = (data, error = null) => {
+    value = {
+      ...(data || {}),
+      _snapshotMeta: {
+        error: error ? String(error.message || error) : null,
+        stale: Boolean(error),
+        updatedAt: error ? value._snapshotMeta?.updatedAt || null : new Date().toISOString(),
+      },
+    };
+    listeners.forEach(listener => listener());
+  };
+
+  const poll = async () => {
+    if (requestInFlight) return;
+    requestInFlight = true;
+    try {
+      publish(await fetcher());
+    } catch (error) {
+      publish(value, error);
+    } finally {
+      requestInFlight = false;
+    }
+  };
+
+  const start = () => {
+    if (timer !== null) return;
+    poll();
+    timer = window.setInterval(poll, SNAPSHOT_POLL_MS);
+  };
+
+  const stop = () => {
+    if (timer === null) return;
+    window.clearInterval(timer);
+    timer = null;
+  };
+
+  return {
+    getSnapshot: () => value,
+    subscribe(listener) {
+      listeners.add(listener);
+      if (listeners.size === 1) start();
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0) stop();
+      };
+    },
+  };
+}
+
+const snapshotStores = {
+  live: createSnapshotStore('live'),
+  practice: createSnapshotStore('practice'),
+};
+
+const emptySnapshotStore = {
+  getSnapshot: () => EMPTY_SNAPSHOT,
+  subscribe: () => () => {},
+};
+
+// Polls GET /testbot/live or /testbot/practice once per mode every 1s --
+// matches the adapter's own _periodic_refresh cadence. All mounted consumers
+// share the same request, timer, snapshot, and error state. Live and Practice
+// remain independent engines/routes and therefore retain separate stores.
 // mode: 'live' | 'practice' | null/undefined (disabled -- no fetch, no
 // poll, returns {} forever; lets a caller conditionally opt out without
 // violating the rules of hooks by skipping the call entirely).
 export function useTestBotSnapshot(mode) {
-  const [snapshot, setSnapshot] = useState({});
-  useEffect(() => {
-    if (mode !== 'live' && mode !== 'practice') return undefined;
-    let alive = true;
-    const fetcher = mode === 'live' ? botApi.getLiveBot : botApi.getPracticeBot;
-    const poll = () => fetcher().then(d => { if (alive) setSnapshot(d || {}); }).catch(() => {});
-    poll();
-    const id = setInterval(poll, 1000);
-    return () => { alive = false; clearInterval(id); };
-  }, [mode]);
-  return snapshot;
+  const store = snapshotStores[mode] || emptySnapshotStore;
+  return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 }
 
 // Reads the live TradeParameterPanel values via the window global +

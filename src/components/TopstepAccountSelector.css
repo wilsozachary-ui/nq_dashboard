@@ -14,6 +14,13 @@
   margin-left: auto;
 }
 
+.tsa-fetch-error {
+  color: var(--color-red);
+  font-size: var(--text-xs);
+  margin-right: 8px;
+  max-width: 260px;
+}
+
 /* ── Trigger button ──────────────────────────────────────────────────────── */
 .tsa-trigger {
   display: inline-flex;

@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders next session button', () => {
+test('renders the primary Topstep workspace tab', () => {
   render(<App />);
-  const buttonElement = screen.getByText(/next session/i);
-  expect(buttonElement).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: /topstep/i })).toBeInTheDocument();
 });

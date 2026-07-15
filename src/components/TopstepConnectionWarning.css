@@ -20,6 +20,20 @@
   animation: tcwSlideIn 0.25s var(--ease-out) both;
 }
 
+.tcw-banner--error {
+  background: rgba(185,28,28,0.10);
+  border-bottom-color: rgba(185,28,28,0.36);
+}
+
+.tcw-banner--error .tcw-icon,
+.tcw-banner--error .tcw-text strong {
+  color: var(--color-red, #b91c1c);
+}
+
+.tcw-detail {
+  color: var(--color-text-muted);
+}
+
 .tcw-icon {
   flex-shrink: 0;
   font-size: 15px;

@@ -10,6 +10,7 @@
 // admin-instance flag, neither of which is sensitive.
 
 import { getSessionToken } from './sessionToken';
+import { readJsonResponse, validateEnvelope } from './apiContract';
 
 let configPromise = null;
 
@@ -40,7 +41,8 @@ async function cpRequest(path, init = {}) {
       ...init.headers,
     },
   });
-  const envelope = await response.json().catch(() => ({}));
+  const label = `${init.method || 'GET'} control-plane ${path}`;
+  const envelope = validateEnvelope(await readJsonResponse(response, label), label);
   if (!envelope.ok) {
     const message = envelope?.error?.message || `${init.method || 'GET'} ${path} failed (${response.status})`;
     const err = new Error(message);

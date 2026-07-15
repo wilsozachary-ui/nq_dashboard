@@ -43,6 +43,7 @@ export default function TopstepAccountSelector({ strategy = 'morning' }) {
   const [open,     setOpen]    = useState(false);
   const [selected, setSelected] = useState(loadSelected);
   const [applyAll, setApplyAll] = useState(loadApplyAll);
+  const [accountsError, setAccountsError] = useState('');
   const rootRef = useRef(null);
   // Seeded once at mount; flips permanently to true the one time (if ever)
   // the "default to all" fallback below actually fires, so a later prune
@@ -69,6 +70,7 @@ export default function TopstepAccountSelector({ strategy = 'morning' }) {
             })
             : [];
           if (!mounted) return;
+          setAccountsError('');
           setAccounts(normalized);
           setSelected(prev => {
             // filter() only ever removes entries and preserves order, so
@@ -85,7 +87,9 @@ export default function TopstepAccountSelector({ strategy = 'morning' }) {
             return normalized.map(a => a.id);
           });
         })
-        .catch(() => {});
+        .catch(error => {
+          if (mounted) setAccountsError(`Account list unavailable: ${error.message || 'request failed'}`);
+        });
     };
 
     fetchAccounts();
@@ -159,6 +163,7 @@ export default function TopstepAccountSelector({ strategy = 'morning' }) {
 
   return (
     <div className="tsa-root" ref={rootRef}>
+      {accountsError && <span className="tsa-fetch-error" role="alert">{accountsError}</span>}
 
       {/* Trigger button */}
       <button

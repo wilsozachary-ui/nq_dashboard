@@ -55,7 +55,7 @@ export default function MorningStrategyLiveControl() {
     if (on) {
       setActionBusy('stopping');
       try {
-        const r = await botApi.offLiveBot();
+        const r = await botApi.offLiveBot({ expected_arm_revision: snapshot.arm_revision ?? 0 });
         setMessage(r.ok ? { text: 'Turned off', kind: 'success' } : { text: r.error?.message || 'Failed to turn off', kind: 'error' });
       } catch (err) {
         setMessage({ text: err.message || 'Failed to turn off', kind: 'error' });
@@ -71,6 +71,7 @@ export default function MorningStrategyLiveControl() {
     try {
       const p = paramsRef.current || {};
       const r = await botApi.armLiveBot({
+        expected_arm_revision: snapshot.arm_revision ?? 0,
         account_id: accountId,
         contract_size: p.contractSize,
         spread_points: p.spreadPoints,

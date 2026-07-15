@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import botApi from '../services/botApi';
 import { getDashboardConfig } from '../services/controlPlaneApi';
+import { getSessionToken } from '../services/sessionToken';
 import './SystemHealthPanel.css';
 
 // ── System Health — a live, always-real operational status board ───────────
@@ -73,13 +74,12 @@ export default function SystemHealthPanel() {
   // http://localhost:8090 -- for a cloud customer that's their own PC,
   // not the container, so it can never succeed there (there's nothing
   // running on their machine to answer it). Detected the same way
-  // App.js detects a cloud instance: a real dashboard_token only ever
-  // gets baked in at cloud provision time, never present for the
-  // desktop exe.
+  // A captured per-login token exists only in a cloud dashboard opened
+  // through NQ Cloud; /dashboard-config intentionally contains no token.
   const [isCloud, setIsCloud] = useState(false);
 
   useEffect(() => {
-    getDashboardConfig().then(config => setIsCloud(Boolean(config.dashboard_token))).catch(() => {});
+    getDashboardConfig().then(() => setIsCloud(Boolean(getSessionToken()))).catch(() => {});
   }, []);
 
   useEffect(() => {

@@ -11,7 +11,9 @@
  *
  * strategy values: "overall" | "morning_strategy" | "orb"
  * account_id: omit for all accounts combined; pass a specific id to filter to one account
- */
+*/
+import { getSessionToken } from '../services/sessionToken';
+import { readJsonResponse, unwrapApiBody } from '../services/apiContract';
 
 export const USE_MOCK = false; // live mode — all components use real WS + REST feeds
 // Same-origin fallback -- see botApi.js for the rationale (identical
@@ -36,9 +38,15 @@ function sleep(ms, signal) {
 }
 
 async function attempt(url, signal) {
-  const res = await fetch(url, { signal });
+  const token = getSessionToken();
+  const res = await fetch(url, {
+    signal,
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
   if (!res.ok) throw new Error(`Failed to fetch monthly PnL (${res.status})`);
-  return res.json();
+  const data = unwrapApiBody(await readJsonResponse(res, 'GET /pnl/monthly'), 'GET /pnl/monthly');
+  if (!Array.isArray(data)) throw new Error('GET /pnl/monthly returned a non-array payload');
+  return data;
 }
 
 // ── Public export ─────────────────────────────────────────────────────────────

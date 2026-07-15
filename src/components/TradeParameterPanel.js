@@ -3,6 +3,7 @@ import { API_ROOT, USE_MOCK } from '../api/pnlApi';
 import './TradeParameterPanel.css';
 import { integratedFetch } from '../CockpitIntegrator';
 import { useTestBotSnapshot } from './morningStrategyShared';
+import { unwrapApiBody } from '../services/apiContract';
 
 // ── Adjustment steps ──────────────────────────────────────────────────────────
 const HOLD_MS       = 120;     // hold-to-repeat interval (ms)
@@ -204,6 +205,7 @@ export default function TradeParameterPanel() {
   const [applyMsg,     setApplyMsg]     = useState('');
   const [defaultState, setDefaultState] = useState('idle'); // 'idle'|'success'
   const [wsStatus,    setWsStatus]    = useState(USE_MOCK ? 'mock' : 'connecting');
+  const [loadError,   setLoadError]   = useState('');
 
   // Ref always holds the latest params (prevents stale closures in hold intervals)
   const paramsRef = useRef(params);
@@ -268,7 +270,10 @@ export default function TradeParameterPanel() {
   useEffect(() => {
     if (USE_MOCK) return;
     integratedFetch(`${API_ROOT}/topstep/strategy/parameters`)
-      .then(r => r.json())
+      .then(async r => {
+        if (!r.ok) throw new Error(`request failed (${r.status})`);
+        return unwrapApiBody(await r.json(), 'GET /topstep/strategy/parameters');
+      })
       .then(d => {
         if (d) {
           // The backend endpoint can return a partial/empty object (no
@@ -279,9 +284,12 @@ export default function TradeParameterPanel() {
           const loaded = { ...ed, ...d, trailingStop: d.trailingStopEnabled ?? ed.trailingStop };
           setParams(loaded);
           setLastApplied(loaded);
+          setLoadError('');
         }
       })
-      .catch(() => {});
+      .catch(error => {
+        setLoadError(`Could not load server parameters (${error.message}). Showing saved/default values; verify before arming.`);
+      });
   }, []);
 
   // ── Sync from StrategyControlBar quick-adjustments ────────────────────────
@@ -415,6 +423,12 @@ export default function TradeParameterPanel() {
       {dirty && (
         <div className="tp-dirty-banner">
           Unsaved changes — click Apply to send to bot
+        </div>
+      )}
+
+      {loadError && (
+        <div className="tp-load-error" role="alert">
+          {loadError}
         </div>
       )}
 

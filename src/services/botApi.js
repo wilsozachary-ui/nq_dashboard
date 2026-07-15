@@ -1,4 +1,5 @@
 import { getSessionToken } from './sessionToken';
+import { readJsonResponse, unwrapApiBody, validateEnvelope } from './apiContract';
 
 // Same-origin fallback: works unmodified for both the desktop exe (frontend
 // and adapter always served from the same http://localhost:8080 origin) and
@@ -34,14 +35,12 @@ async function request(path, init = {}, signal) {
   const token = getSessionToken();
   const headers = token ? { ...init.headers, Authorization: `Bearer ${token}` } : init.headers;
   const response = await fetch(`${BOT_API_ROOT}${path}`, { ...init, headers, signal: signal || init.signal });
+  const label = `${init.method || 'GET'} ${path}`;
   if (!response.ok) {
-    throw new Error(`${init.method || 'GET'} ${path} failed (${response.status})`);
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error?.message || body?.message || `${label} failed (${response.status})`);
   }
-  const body = await response.json();
-  if (body && typeof body === 'object' && Object.prototype.hasOwnProperty.call(body, 'ok') && Object.prototype.hasOwnProperty.call(body, 'data')) {
-    return body.data;
-  }
-  return body;
+  return unwrapApiBody(await readJsonResponse(response, label), label);
 }
 
 function get(path, signal) {
@@ -72,11 +71,12 @@ async function postEnvelope(path, body, signal) {
     body: JSON.stringify(body || {}),
     signal,
   });
-  const envelope = await response.json().catch(() => ({}));
+  const label = `POST ${path}`;
+  const envelope = await readJsonResponse(response, label);
   if (!response.ok) {
-    throw new Error(envelope?.error?.message || `POST ${path} failed (${response.status})`);
+    throw new Error(envelope?.error?.message || `${label} failed (${response.status})`);
   }
-  return envelope;
+  return validateEnvelope(envelope, label);
 }
 
 async function getFirst(paths, signal, fallback = null) {
@@ -334,7 +334,7 @@ const botApi = {
   // /strategy/start|pause placeholder routes.
   getLiveBot: signal => get('/testbot/live', signal),
   armLiveBot: (payload = {}, signal) => postEnvelope('/testbot/live/arm', payload, signal),
-  offLiveBot: signal => postEnvelope('/testbot/live/off', {}, signal),
+  offLiveBot: (payload = {}, signal) => postEnvelope('/testbot/live/off', payload, signal),
   flattenLiveBot: signal => postEnvelope('/testbot/live/flatten', {}, signal),
 
   getPracticeBot: signal => get('/testbot/practice', signal),

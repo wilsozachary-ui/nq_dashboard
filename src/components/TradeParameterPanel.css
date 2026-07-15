@@ -67,6 +67,17 @@
   letter-spacing: 0.02em;
 }
 
+.tp-load-error {
+  font-size: var(--text-xs);
+  color: var(--color-red);
+  background: rgba(229, 57, 53, 0.08);
+  border: 1px solid rgba(229, 57, 53, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 6px var(--space-sm);
+  margin-bottom: var(--space-sm);
+  text-align: center;
+}
+
 /* ── Controls stack -- grouped into Entry / Risk / Trailing sections ─────── */
 .tp-controls {
   display: flex;
