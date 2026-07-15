@@ -336,13 +336,23 @@ export default function TradeParameterPanel() {
     return () => window.removeEventListener('nq:integrated-strategy', handler);
   }, []);
 
-  // ── Apply Changes ─────────────────────────────────────────────────────────
+  // ── Confirm Changes ────────────────────────────────────────────────────────
   // There is no backend "staged config" to push these to -- Fire/Arm on the
   // Morning Strategy live/practice controls already read the live panel
   // values directly (via broadcastMorningStrategyParams) at the moment they
-  // fire, not a previously-applied snapshot. Apply here is purely a local
+  // fire, not a previously-applied snapshot: that's already correct and is
+  // NOT changed by clicking this button. This is purely a local
   // confirm-and-clear-dirty step. (The adapter only exposes GET for
   // /topstep/strategy/parameters -- POSTing to it 405s.)
+  //
+  // Previously labeled "Apply Changes" / "Apply parameter changes to the
+  // bot", which claimed a live sync that never happened -- a user could
+  // click it, see a success state, then arm from a different device (or
+  // after this component remounted) and get traded with different
+  // parameters than whatever they thought they'd just "applied"
+  // (2026-07-14 audit, High). Relabeled to "Confirm Changes" to match what
+  // this button actually does: acknowledge the current on-screen values
+  // and clear the unsaved-changes indicator, nothing more.
   const handleApply = useCallback(async () => {
     const p    = paramsRef.current;
     const errs = validate(p);
@@ -365,7 +375,7 @@ export default function TradeParameterPanel() {
     }
 
     setApplyState('success');
-    setApplyMsg('Changes Applied');
+    setApplyMsg('Confirmed');
     setApplying(false);
     setTimeout(() => setApplyState('idle'), 2500);
   }, []);
@@ -506,7 +516,7 @@ export default function TradeParameterPanel() {
 
       </div>
 
-      {/* ── Action row: Make Default (secondary) + Apply (primary) ─────── */}
+      {/* ── Action row: Make Default (secondary) + Confirm (primary) ────── */}
       <div className="tp-actions">
         <button
           className={`tp-make-default tp-make-default--${defaultState}`}
@@ -521,16 +531,17 @@ export default function TradeParameterPanel() {
           className={`tp-apply tp-apply--${applyState}`}
           onClick={handleApply}
           disabled={applying || (!dirty && applyState === 'idle')}
-          aria-label="Apply parameter changes to the bot"
+          aria-label="Confirm these parameters for your next Arm -- Fire/Arm always uses whatever is currently on screen"
+          title="These values are used automatically whenever you next Arm -- this just confirms them and clears the unsaved-changes indicator"
         >
           {applying ? (
-            <><span className="tp-spinner" aria-hidden="true" />Applying…</>
+            <><span className="tp-spinner" aria-hidden="true" />Confirming…</>
           ) : applyState === 'success' ? (
             <>✓ {applyMsg}</>
           ) : applyState === 'error' ? (
             <>⚠ {applyMsg}</>
           ) : (
-            'Apply Changes'
+            'Confirm Changes'
           )}
         </button>
       </div>
