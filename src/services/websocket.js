@@ -124,7 +124,7 @@ const DEFAULT_OPTIONS = {
   maxReconnectAttempts: Number.POSITIVE_INFINITY,
 };
 
-function authenticatedWebSocketUrl(rawUrl) {
+export function authenticatedWebSocketUrl(rawUrl) {
   const token = getSessionToken();
   if (!token) return rawUrl;
   const url = new URL(rawUrl);

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import botApi, { BOT_WS_URL } from '../services/botApi';
+import { authenticatedWebSocketUrl } from '../services/websocket';
 import './SessionStartChecklist.css';
 
 // ── Pre-Flight Checklist ─────────────────────────────────────────────────────
@@ -48,7 +49,7 @@ async function checkAdapterHealth() {
 }
 
 async function checkRealtimeWs() {
-  const url = BOT_WS_URL + '/ws';
+  const url = authenticatedWebSocketUrl(BOT_WS_URL + '/ws');
   return new Promise(resolve => {
     let ws;
     const t0 = performance.now();
