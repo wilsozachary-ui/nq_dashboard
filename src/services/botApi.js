@@ -43,6 +43,15 @@ async function request(path, init = {}, signal) {
   return unwrapApiBody(await readJsonResponse(response, label), label);
 }
 
+async function rawGet(path, signal) {
+  const token = getSessionToken();
+  const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+  const response = await fetch(`${BOT_API_ROOT}${path}`, { headers, signal });
+  const label = `GET ${path}`;
+  if (!response.ok) throw new Error(`${label} failed (${response.status})`);
+  return readJsonResponse(response, label);
+}
+
 function get(path, signal) {
   return request(path, { method: 'GET' }, signal);
 }
@@ -249,7 +258,11 @@ const botApi = {
   postSellOrder: (body, signal) => post('/activity/event', { type: 'sell', ...body }, signal),
   postFlattenOrder: (body = {}, signal) => post('/strategy/pause', body, signal),
 
-  getHealth: signal => get('/health', signal),
+  // /health is intentionally a raw public object, not a RestEnvelope. It
+  // contains an `ok` field of its own, so generic envelope unwrapping would
+  // otherwise reject it for lacking `data` and display a healthy adapter as
+  // "Connecting / Unreachable" forever.
+  getHealth: signal => rawGet('/health', signal),
   getRisk: signal => getFirst(['/risk', '/risk/status'], signal, {}),
   getRawTelemetry: signal => getFirst(['/telemetry'], signal, {}),
 
