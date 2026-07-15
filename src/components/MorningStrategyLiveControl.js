@@ -5,6 +5,7 @@ import {
   useTestBotSnapshot, useMorningStrategyParams, useSelectedAccount,
 } from './morningStrategyShared';
 import './MorningStrategyLiveControl.css';
+import { armPayloadFromDraft } from './parameterDraft';
 
 function fmtCountdown(ms) {
   if (ms == null || ms < 0) return '—';
@@ -70,25 +71,23 @@ export default function MorningStrategyLiveControl() {
     setActionBusy('arming');
     try {
       const p = paramsRef.current || {};
-      const r = await botApi.armLiveBot({
-        expected_arm_revision: snapshot.arm_revision ?? 0,
-        account_id: accountId,
-        contract_size: p.contractSize,
-        spread_points: p.spreadPoints,
-        tp_dollars: p.takeProfit,
-        sl_dollars: p.stopLoss,
-        trailing_points: p.trailingDistance,
-        trailing_enabled: !!p.trailingStop,
-        breakeven_dollars: p.trailingStop && p.breakevenTrigger > 0 ? p.breakevenTrigger : null,
-        profit_lock_dollars: p.trailingStop && p.profitLockTrigger > 0 ? p.profitLockTrigger : null,
-        // Gated on trailingStop only, not also > 0 -- a deliberate 0%
-        // retain setting (pure breakeven-style tier 2) is legitimate,
-        // unlike the trigger fields where 0/off is the natural default.
-        profit_lock_retain_pct: p.trailingStop ? p.profitLockRetainPct : null,
-      });
+      const r = await botApi.armLiveBot(armPayloadFromDraft(p, accountId, snapshot.arm_revision ?? 0));
       setMessage(r.ok ? { text: 'Armed', kind: 'success' } : { text: r.error?.message || 'Failed to arm', kind: 'error' });
     } catch (err) {
       setMessage({ text: err.message || 'Failed to arm', kind: 'error' });
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
+  const updateArmed = async () => {
+    if (!accountId) { setMessage({ text: 'Select an account first', kind: 'error' }); return; }
+    setActionBusy('arming');
+    try {
+      const r = await botApi.armLiveBot(armPayloadFromDraft(paramsRef.current, accountId, snapshot.arm_revision ?? 0));
+      setMessage(r.ok ? { text: 'Armed parameters updated', kind: 'success' } : { text: r.error?.message || 'Update failed', kind: 'error' });
+    } catch (err) {
+      setMessage({ text: err.message || 'Update failed', kind: 'error' });
     } finally {
       setActionBusy(null);
     }
@@ -167,6 +166,12 @@ export default function MorningStrategyLiveControl() {
             </div>
           </div>
         </div>
+      )}
+
+      {armed && (
+        <button className="mstb-flatten-link" onClick={updateArmed} disabled={busy}>
+          {actionBusy === 'arming' ? 'Updating…' : 'Update Armed Bot'}
+        </button>
       )}
 
       <div className="mstb-section">

@@ -38,7 +38,10 @@ async function request(path, init = {}, signal) {
   const label = `${init.method || 'GET'} ${path}`;
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.error?.message || body?.message || `${label} failed (${response.status})`);
+    const error = new Error(body?.detail?.message || body?.error?.message || body?.message || `${label} failed (${response.status})`);
+    error.status = response.status;
+    error.detail = body?.detail;
+    throw error;
   }
   return unwrapApiBody(await readJsonResponse(response, label), label);
 }
@@ -59,6 +62,14 @@ function get(path, signal) {
 function post(path, body, signal) {
   return request(path, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {}),
+  }, signal);
+}
+
+function put(path, body, signal) {
+  return request(path, {
+    method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body || {}),
   }, signal);
@@ -346,6 +357,12 @@ const botApi = {
   // postTestbotStart/postTestbotStop stubs above, which hit the no-op
   // /strategy/start|pause placeholder routes.
   getLiveBot: signal => get('/testbot/live', signal),
+  getMorningStrategyParameters: signal => get('/morning-strategy/parameters', signal),
+  saveMorningStrategyParameters: (draft, expectedRevision, signal) => put(
+    '/morning-strategy/parameters',
+    { draft, expected_revision: expectedRevision },
+    signal,
+  ),
   armLiveBot: (payload = {}, signal) => postEnvelope('/testbot/live/arm', payload, signal),
   offLiveBot: (payload = {}, signal) => postEnvelope('/testbot/live/off', payload, signal),
   flattenLiveBot: signal => postEnvelope('/testbot/live/flatten', {}, signal),

@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { API_ROOT, USE_MOCK } from '../api/pnlApi';
+import { USE_MOCK } from '../api/pnlApi';
 import './TradeParameterPanel.css';
-import { integratedFetch } from '../CockpitIntegrator';
-import { useTestBotSnapshot } from './morningStrategyShared';
-import { unwrapApiBody } from '../services/apiContract';
+import botApi from '../services/botApi';
+import { PARAMETER_DEFAULTS, normalizeParameterDraft } from './parameterDraft';
 
 // ── Adjustment steps ──────────────────────────────────────────────────────────
 const HOLD_MS       = 120;     // hold-to-repeat interval (ms)
@@ -15,86 +14,16 @@ const PCT_STEP      = 5;       // profit-lock retain-% adjustment step
 // Shared by both the ORB display and the Morning Strategy live/practice
 // bots (TestBotEngine) -- TP/SL are dollar risk amounts, trailing distance
 // is in points, matching TestBotConfig/ORBConfig, not raw price levels.
-const DEFAULTS = {
-  contractSize:     3,
-  takeProfit:       900,
-  stopLoss:         450,
-  trailingStop:     true,
-  trailingDistance: 7,
-  spreadPoints:     15,
-  // Once unrealized profit reaches this many dollars, the stop snaps to
-  // breakeven regardless of Trailing Distance -- prevents a trade that
-  // was briefly profitable from giving back the whole move and closing
-  // at a real loss. 0 disables it (pure fixed-distance trailing).
-  breakevenTrigger: 100,
-  // Second tier, independent of Breakeven Trigger: once unrealized profit
-  // reaches this many dollars, the stop locks in profitLockRetainPct of
-  // whatever the CURRENT peak profit is -- not frozen at the value when
-  // this tier first activated, so a bigger later peak raises the floor
-  // further. This is what actually protects a trade that ran deep into
-  // profit and reversed -- Breakeven Trigger alone only ever protects $0.
-  // Retain 50% (not 100%) deliberately -- a 100% retain pins the stop to
-  // within ~1 point of the peak the instant this tier fires, which
-  // silently defeats Trailing Distance for the rest of the trade.
-  profitLockTrigger:    150,
-  profitLockRetainPct:  50,
-};
+const DEFAULTS = PARAMETER_DEFAULTS;
 
 // ── User-saved defaults ("Make Default" button) ──────────────────────────────
-// There's no backend "staged config" for these (see handleApply's comment
-// below), so the customer's own preferred baseline is persisted client-side
-// and layered on top of the hardcoded DEFAULTS wherever this file already
-// falls back to DEFAULTS -- initial load, a partial backend response, a
-// strategy switch, an inbound WS message missing a field.
-const USER_DEFAULTS_KEY = 'nq:tradeParamDefaults';
-
-function loadUserDefaults() {
-  try {
-    const raw = localStorage.getItem(USER_DEFAULTS_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveUserDefaults(p) {
-  try {
-    localStorage.setItem(USER_DEFAULTS_KEY, JSON.stringify(p));
-  } catch {
-    // Storage disabled/full -- the button will just not persist across
-    // reloads this session; not worth surfacing as an error.
-  }
-}
-
+// Browser storage is never parameter authority. These defaults are only a
+// temporary fallback while the server-authoritative saved draft loads.
 function effectiveDefaults() {
-  const stored = loadUserDefaults();
-  return stored ? { ...DEFAULTS, ...stored } : DEFAULTS;
+  return { ...DEFAULTS };
 }
 
 // ── Server-truth armed parameters -> this panel's own field shape ───────────
-// snapshot.armed_params (see MorningStrategyLiveControl.js's "Armed With"
-// section) comes from GET /testbot/live -- server-side, set by whichever
-// device actually armed it, exactly what this panel was missing. Only maps
-// fields that exist; anything armed_params doesn't carry (e.g. a bot armed
-// before this field existed) falls back to effectiveDefaults() as before.
-function armedParamsToPanelState(armedParams) {
-  const base = effectiveDefaults();
-  if (!armedParams) return base;
-  return {
-    ...base,
-    contractSize:        armedParams.contract_size ?? base.contractSize,
-    takeProfit:           armedParams.tp_dollars ?? base.takeProfit,
-    stopLoss:              armedParams.sl_dollars ?? base.stopLoss,
-    trailingStop:          armedParams.trailing_enabled ?? base.trailingStop,
-    trailingDistance:      armedParams.trailing_points ?? base.trailingDistance,
-    spreadPoints:          armedParams.spread_points ?? base.spreadPoints,
-    breakevenTrigger:      armedParams.breakeven_dollars ?? base.breakevenTrigger,
-    profitLockTrigger:     armedParams.profit_lock_dollars ?? base.profitLockTrigger,
-    profitLockRetainPct:   armedParams.profit_lock_retain_pct ?? base.profitLockRetainPct,
-  };
-}
-
 // ── Format helpers ────────────────────────────────────────────────────────────
 // All guard against non-finite input (undefined/null/NaN) rather than
 // rendering a raw "NaN" -- e.g. a param object missing a field it should
@@ -203,7 +132,7 @@ export default function TradeParameterPanel() {
   const [applying,     setApplying]     = useState(false);
   const [applyState,   setApplyState]   = useState('idle'); // 'idle'|'success'|'error'
   const [applyMsg,     setApplyMsg]     = useState('');
-  const [defaultState, setDefaultState] = useState('idle'); // 'idle'|'success'
+  const [draftRevision, setDraftRevision] = useState(0);
   const [wsStatus,    setWsStatus]    = useState(USE_MOCK ? 'mock' : 'connecting');
   const [loadError,   setLoadError]   = useState('');
 
@@ -215,26 +144,6 @@ export default function TradeParameterPanel() {
 
   // ── Sync to server-truth armed parameters, once ─────────────────────────
   // effectiveDefaults() above is per-device localStorage, which is exactly
-  // what caused a real bug: arming from one device and checking this panel
-  // from another showed that OTHER device's own local leftover state, not
-  // what was actually armed. Once (not on every poll -- see the ref guard
-  // below), if the bot is armed when this panel first sees it, pull in the
-  // real armed parameters as the starting point instead. Deliberately only
-  // once: after that, this panel is a staging area for the NEXT arm (e.g.
-  // preparing tomorrow's settings while today's trade is still running
-  // under different ones), and shouldn't keep clobbering active edits every
-  // second just because the poll ticked.
-  const snapshot = useTestBotSnapshot('live');
-  const armedSyncedRef = useRef(false);
-  useEffect(() => {
-    if (armedSyncedRef.current) return;
-    if (!snapshot.armed || !snapshot.armed_params) return;
-    armedSyncedRef.current = true;
-    const synced = armedParamsToPanelState(snapshot.armed_params);
-    setParams(synced);
-    setLastApplied(synced);
-  }, [snapshot.armed, snapshot.armed_params]);
-
   // Keep late-mounting/already-mounted Morning Strategy controls in sync
   // with the current panel values (not just the last-applied ones), since
   // Fire/Arm should always use whatever is currently on screen.
@@ -269,26 +178,18 @@ export default function TradeParameterPanel() {
   // ── Load initial params from backend (real mode) ──────────────────────────
   useEffect(() => {
     if (USE_MOCK) return;
-    integratedFetch(`${API_ROOT}/topstep/strategy/parameters`)
-      .then(async r => {
-        if (!r.ok) throw new Error(`request failed (${r.status})`);
-        return unwrapApiBody(await r.json(), 'GET /topstep/strategy/parameters');
-      })
+    botApi.getMorningStrategyParameters()
       .then(d => {
         if (d) {
-          // The backend endpoint can return a partial/empty object (no
-          // strategy engine attached yet) -- fall back onto the user's
-          // saved default (or DEFAULTS if none saved) for any missing
-          // field instead of letting it through as undefined.
-          const ed = effectiveDefaults();
-          const loaded = { ...ed, ...d, trailingStop: d.trailingStopEnabled ?? ed.trailingStop };
+          const loaded = normalizeParameterDraft(d.draft);
           setParams(loaded);
           setLastApplied(loaded);
+          setDraftRevision(d.revision ?? 0);
           setLoadError('');
         }
       })
       .catch(error => {
-        setLoadError(`Could not load server parameters (${error.message}). Showing saved/default values; verify before arming.`);
+        setLoadError(`Could not load saved parameters (${error.message}). Verify before arming.`);
       });
   }, []);
 
@@ -369,8 +270,22 @@ export default function TradeParameterPanel() {
     setApplying(true);
     setApplyState('idle');
 
-    await new Promise(r => setTimeout(r, 300));
-    setLastApplied({ ...p });
+    try {
+      const saved = await botApi.saveMorningStrategyParameters(p, draftRevision);
+      setLastApplied(normalizeParameterDraft(saved.draft));
+      setDraftRevision(saved.revision);
+    } catch (error) {
+      if (error.status === 409 && error.detail) {
+        const current = normalizeParameterDraft(error.detail.draft);
+        setParams(current);
+        setLastApplied(current);
+        setDraftRevision(error.detail.revision);
+      }
+      setApplyState('error');
+      setApplyMsg(error.message || 'Save failed');
+      setApplying(false);
+      return;
+    }
     pushEvent(`Contract Size Updated → ${fmtContracts(p.contractSize)}`);
     pushEvent(`Stop Loss Updated → ${fmtDist(p.stopLoss)}`);
     pushEvent(`Take Profit Updated → ${fmtDist(p.takeProfit)}`);
@@ -383,26 +298,10 @@ export default function TradeParameterPanel() {
     }
 
     setApplyState('success');
-    setApplyMsg('Confirmed');
+    setApplyMsg('Saved');
     setApplying(false);
     setTimeout(() => setApplyState('idle'), 2500);
-  }, []);
-
-  // ── Make Default ──────────────────────────────────────────────────────────
-  // Saves the panel's current values as this customer's own starting point
-  // (localStorage -- see effectiveDefaults' comment for why not the
-  // backend), independent of Apply/dirty state. Doesn't touch lastApplied;
-  // "default" and "applied" are separate concepts -- saving a default
-  // doesn't send anything to the bot.
-  const handleMakeDefault = useCallback(() => {
-    const p    = paramsRef.current;
-    const errs = validate(p);
-    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-    setErrors({});
-    saveUserDefaults(p);
-    setDefaultState('success');
-    setTimeout(() => setDefaultState('idle'), 2500);
-  }, []);
+  }, [draftRevision]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -422,7 +321,7 @@ export default function TradeParameterPanel() {
 
       {dirty && (
         <div className="tp-dirty-banner">
-          Unsaved changes — click Apply to send to bot
+          Unsaved changes — save to sync across devices
         </div>
       )}
 
@@ -533,29 +432,20 @@ export default function TradeParameterPanel() {
       {/* ── Action row: Make Default (secondary) + Confirm (primary) ────── */}
       <div className="tp-actions">
         <button
-          className={`tp-make-default tp-make-default--${defaultState}`}
-          onClick={handleMakeDefault}
-          disabled={applying}
-          aria-label="Save current parameters as your default starting values"
-          title="Save these values as your starting point the next time this panel loads"
-        >
-          {defaultState === 'success' ? '✓ Saved' : 'Make Default'}
-        </button>
-        <button
           className={`tp-apply tp-apply--${applyState}`}
           onClick={handleApply}
           disabled={applying || (!dirty && applyState === 'idle')}
-          aria-label="Confirm these parameters for your next Arm -- Fire/Arm always uses whatever is currently on screen"
-          title="These values are used automatically whenever you next Arm -- this just confirms them and clears the unsaved-changes indicator"
+          aria-label="Save parameters for all devices"
+          title="Save these parameters as the server-authoritative draft without changing the armed bot"
         >
           {applying ? (
-            <><span className="tp-spinner" aria-hidden="true" />Confirming…</>
+            <><span className="tp-spinner" aria-hidden="true" />Saving…</>
           ) : applyState === 'success' ? (
             <>✓ {applyMsg}</>
           ) : applyState === 'error' ? (
             <>⚠ {applyMsg}</>
           ) : (
-            'Confirm Changes'
+            'Save Parameters'
           )}
         </button>
       </div>
