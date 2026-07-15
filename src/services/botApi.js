@@ -62,9 +62,13 @@ function post(path, body, signal) {
 // back as HTTP 200 and would otherwise be silently swallowed by request()'s
 // generic unwrap.
 async function postEnvelope(path, body, signal) {
+  const token = getSessionToken();
   const response = await fetch(`${BOT_API_ROOT}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body || {}),
     signal,
   });
