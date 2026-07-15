@@ -1,4 +1,5 @@
 import { BOT_WS_URL } from './botApi';
+import { getSessionToken } from './sessionToken';
 
 export const BOT_WS_ROUTES = {
   price: `${BOT_WS_URL}/ws`,
@@ -123,6 +124,14 @@ const DEFAULT_OPTIONS = {
   maxReconnectAttempts: Number.POSITIVE_INFINITY,
 };
 
+function authenticatedWebSocketUrl(rawUrl) {
+  const token = getSessionToken();
+  if (!token) return rawUrl;
+  const url = new URL(rawUrl);
+  url.searchParams.set('token', token);
+  return url.toString();
+}
+
 export class BotWebSocketClient {
   constructor(options = {}) {
     this.ws = null;
@@ -145,9 +154,13 @@ export class BotWebSocketClient {
 
     this.setStatus(this.reconnectAttempts > 0 ? 'reconnecting' : 'connecting');
 
+    // Browser WebSockets cannot attach the Authorization header used by
+    // REST calls. The bot validates this query token before accepting the
+    // socket; never log the resulting URL because it contains a live token.
+    const socketUrl = authenticatedWebSocketUrl(this.options.url);
     console.debug(`[ws:${this.options.stream}] connecting -> ${this.options.url}`);
     try {
-      this.ws = new WebSocket(this.options.url);
+      this.ws = new WebSocket(socketUrl);
     } catch (err) {
       console.warn(`[ws:${this.options.stream}] failed to open: ${err.message}`);
       this.scheduleReconnect();
