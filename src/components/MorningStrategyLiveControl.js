@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import botApi from '../services/botApi';
 import {
   StatusPill, PowerToggle, fmtPrice, fmtPnl,
-  useTestBotSnapshot, useMorningStrategyParams, useSelectedAccounts,
+  useTestBotSnapshot, useSelectedAccounts,
 } from './morningStrategyShared';
 import './MorningStrategyLiveControl.css';
 import { armPayloadFromDraft } from './parameterDraft';
@@ -16,13 +16,23 @@ function fmtCountdown(ms) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+export async function buildSavedArmPayload(accountIds, armRevision) {
+  // The server-saved draft is the only cross-device authority. Reading a
+  // window-level editor ref here allowed a hard-refresh race to arm with
+  // defaults before TradeParameterPanel finished loading the saved draft.
+  const saved = await botApi.getMorningStrategyParameters();
+  if (!saved || typeof saved.draft !== 'object' || Array.isArray(saved.draft)) {
+    throw new Error('Saved parameters are unavailable. Save or reload the parameters before arming.');
+  }
+  return armPayloadFromDraft(saved.draft, accountIds, armRevision);
+}
+
 export default function MorningStrategyLiveControl() {
   const [now, setNow] = useState(Date.now());
   const [actionBusy, setActionBusy] = useState(null); // null | 'arming' | 'stopping' | 'flattening'
   const [message, setMessage] = useState(null); // { text, kind: 'success'|'error'|'info' }
 
   const snapshot = useTestBotSnapshot('live');
-  const paramsRef = useMorningStrategyParams();
   const { accountIds } = useSelectedAccounts();
 
   useEffect(() => {
@@ -71,8 +81,8 @@ export default function MorningStrategyLiveControl() {
 
     setActionBusy('arming');
     try {
-      const p = paramsRef.current || {};
-      const r = await botApi.armLiveBot(armPayloadFromDraft(p, accountIds, snapshot.arm_revision ?? 0));
+      const payload = await buildSavedArmPayload(accountIds, snapshot.arm_revision ?? 0);
+      const r = await botApi.armLiveBot(payload);
       setMessage(r.ok ? { text: 'Armed', kind: 'success' } : { text: r.error?.message || 'Failed to arm', kind: 'error' });
     } catch (err) {
       setMessage({ text: err.message || 'Failed to arm', kind: 'error' });
@@ -85,7 +95,8 @@ export default function MorningStrategyLiveControl() {
     if (!accountIds.length) { setMessage({ text: 'Select at least one account first', kind: 'error' }); return; }
     setActionBusy('arming');
     try {
-      const r = await botApi.armLiveBot(armPayloadFromDraft(paramsRef.current, accountIds, snapshot.arm_revision ?? 0));
+      const payload = await buildSavedArmPayload(accountIds, snapshot.arm_revision ?? 0);
+      const r = await botApi.armLiveBot(payload);
       setMessage(r.ok ? { text: 'Armed parameters updated', kind: 'success' } : { text: r.error?.message || 'Update failed', kind: 'error' });
     } catch (err) {
       setMessage({ text: err.message || 'Update failed', kind: 'error' });
@@ -145,11 +156,17 @@ export default function MorningStrategyLiveControl() {
 
       {armed && armedParams && (
         <div className="mstb-section">
-          <span className="mstb-section-label">Armed With</span>
+          <span className="mstb-section-label">Currently Armed With</span>
           <div className="mstb-prices">
             <div className="mstb-price-row">
               <span className="mstb-price-lbl">Accounts</span>
               <span className="mstb-price-val">{(armedParams.account_ids || []).join(', ') || '—'}</span>
+            </div>
+            <div className="mstb-price-row">
+              <span className="mstb-price-lbl">Entry Spread</span>
+              <span className="mstb-price-val">
+                {armedParams.spread_points == null ? '—' : `${armedParams.spread_points} pts`}
+              </span>
             </div>
             <div className="mstb-price-row">
               <span className="mstb-price-lbl">Take Profit</span>
@@ -168,6 +185,20 @@ export default function MorningStrategyLiveControl() {
             <div className="mstb-price-row">
               <span className="mstb-price-lbl">Contract Size</span>
               <span className="mstb-price-val">{armedParams.contract_size ?? '—'}</span>
+            </div>
+            <div className="mstb-price-row">
+              <span className="mstb-price-lbl">Breakeven</span>
+              <span className="mstb-price-val">
+                {armedParams.breakeven_dollars == null ? 'Off' : fmtPrice(armedParams.breakeven_dollars)}
+              </span>
+            </div>
+            <div className="mstb-price-row">
+              <span className="mstb-price-lbl">Profit Lock</span>
+              <span className="mstb-price-val">
+                {armedParams.profit_lock_dollars == null
+                  ? 'Off'
+                  : `${fmtPrice(armedParams.profit_lock_dollars)} · keep ${armedParams.profit_lock_retain_pct ?? '—'}%`}
+              </span>
             </div>
           </div>
         </div>
