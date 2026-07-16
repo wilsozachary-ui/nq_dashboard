@@ -164,14 +164,11 @@ export function useMorningStrategyParams() {
   return ref;
 }
 
-// Tracks the currently-selected Topstep account (first of
-// TopstepAccountSelector's multi-select) and resolves its account object
-// (for the practice-account name check) from GET /accounts.
-export function useSelectedAccount() {
+export function useSelectedAccounts() {
   const [accounts, setAccounts] = useState([]);
-  const [accountId, setAccountId] = useState(() => {
+  const [accountIds, setAccountIds] = useState(() => {
     const sel = window.topstepAccountsSelected;
-    return sel && sel.length ? sel[0] : null;
+    return Array.isArray(sel) ? sel.map(String) : [];
   });
 
   useEffect(() => {
@@ -185,12 +182,30 @@ export function useSelectedAccount() {
   useEffect(() => {
     const handler = e => {
       const sel = e.detail.selected;
-      setAccountId(sel && sel.length ? sel[0] : null);
+      setAccountIds(Array.isArray(sel) ? sel.map(String) : []);
     };
     window.addEventListener('nq:accounts-changed', handler);
     return () => window.removeEventListener('nq:accounts-changed', handler);
   }, []);
 
+  const selectedAccounts = accounts.filter(a => accountIds.includes(String(a.account_id ?? a.id)));
+  return { accountIds, accounts: selectedAccounts };
+}
+
+export function resolveSinglePracticeAccount(accounts) {
+  const practiceAccounts = (Array.isArray(accounts) ? accounts : []).filter(account =>
+    isPracticeAccountName(account?.account_name ?? account?.name)
+  );
+  if (practiceAccounts.length !== 1) {
+    return { account: null, count: practiceAccounts.length };
+  }
+  return { account: practiceAccounts[0], count: 1 };
+}
+
+// Single-account compatibility for Practice, recap, and view filters.
+export function useSelectedAccount() {
+  const { accountIds, accounts } = useSelectedAccounts();
+  const accountId = accountIds[0] || null;
   const account = accounts.find(a => String(a.account_id ?? a.id) === String(accountId)) || null;
   const isPractice = isPracticeAccountName(account?.account_name ?? account?.name);
 

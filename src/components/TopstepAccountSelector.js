@@ -1,174 +1,136 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import botApi from '../services/botApi';
-import { isPracticeAccountName, useTestBotSnapshot } from './morningStrategyShared';
+import { isPracticeAccountName } from './morningStrategyShared';
 import './TopstepAccountSelector.css';
 
-const ACCOUNTS = [];
-// In the packaged desktop app, the frontend and backend both start in the
-// same process at the same instant -- a fresh launch can genuinely have
-// zero accounts loaded yet (platform.start()'s refresh_accounts() hasn't
-// finished) when this component's first fetch fires. A one-shot fetch with
-// no retry left the account count stuck at 0/0 forever once that race was
-// lost, even after the backend caught up seconds later.
 const POLL_MS = 5000;
 
-// ── LocalStorage helpers ──────────────────────────────────────────────────────
-const LS_SEL  = 'topstep_selected_accounts';
-const LS_APLY = 'topstep_apply_to_all';
-
-function loadSelected() {
-  try { const r = localStorage.getItem(LS_SEL); return r ? JSON.parse(r) : []; }
-  catch { return []; }
+function accountTypeLabel(account) {
+  if (account.isPractice) return 'Practice';
+  if (account.simulated === true) return 'Combine';
+  if (account.simulated === false) return 'Funded';
+  const descriptor = `${account.name || ''} ${account.type || ''}`.toUpperCase();
+  if (descriptor.includes('COMBINE') || descriptor.includes('EVALUATION')) return 'Combine';
+  if (descriptor.includes('FUNDED') || descriptor.includes('LIVE')) return 'Funded';
+  return 'Live';
 }
 
-// Distinguishes "this key has never been written" (genuinely first launch,
-// a sensible default of "select everything" applies) from "this key was
-// written and happens to be []" (the user explicitly cleared every account
-// via the None button, and that choice must stick). loadSelected() alone
-// can't tell these apart since both read back as an empty array.
-function hasSavedSelection() {
-  try { return localStorage.getItem(LS_SEL) !== null; }
-  catch { return false; }
-}
-
-function loadApplyAll() {
-  try { return localStorage.getItem(LS_APLY) !== 'false'; }
-  catch { return true; }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-export default function TopstepAccountSelector({ strategy = 'morning' }) {
-  const [accounts, setAccounts] = useState(ACCOUNTS);
-  const [open,     setOpen]    = useState(false);
-  const [selected, setSelected] = useState(loadSelected);
-  const [applyAll, setApplyAll] = useState(loadApplyAll);
+export default function TopstepAccountSelector({ strategy = 'morning', pollMs = POLL_MS }) {
+  const [accounts, setAccounts] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState([]);
+  const [selectionRevision, setSelectionRevision] = useState(0);
+  const [selectionBusy, setSelectionBusy] = useState(false);
   const [accountsError, setAccountsError] = useState('');
   const rootRef = useRef(null);
-  // Seeded once at mount; flips permanently to true the one time (if ever)
-  // the "default to all" fallback below actually fires, so a later prune
-  // that empties the list (accounts removed, or the user clearing them)
-  // never gets reinterpreted as "still first launch" on the next poll tick.
-  const everHadSavedSelection = useRef(hasSavedSelection());
+  const selectionRevisionRef = useRef(0);
+  const selectionBusyRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
+    let timer = null;
 
-    const fetchAccounts = () => {
-      botApi.getAccounts()
-        .then(data => {
-          const normalized = Array.isArray(data)
-            ? data.map((a, i) => {
-              const name = a.name ?? a.account_name ?? `Account ${i + 1}`;
-              return {
-                id: String(a.id ?? a.account_id ?? `acc-${i + 1}`),
-                name,
-                isPractice: isPracticeAccountName(name),
-                enabled: a.enabled !== false,
-                balance: Number(a.balance ?? a.cash ?? 0),
-              };
-            })
-            : [];
-          if (!mounted) return;
-          setAccountsError('');
-          setAccounts(normalized);
-          setSelected(prev => {
-            // filter() only ever removes entries and preserves order, so
-            // equal lengths means nothing was actually pruned -- return the
-            // exact same reference in that case so React bails out of the
-            // update entirely (no re-render, no nq:accounts-changed
-            // dispatch every single 5s tick when nothing changed).
-            const pruned = prev.filter(id => normalized.some(a => String(a.id) === String(id)));
-            if (pruned.length === prev.length) return prev;
-            if (pruned.length > 0 || everHadSavedSelection.current) return pruned;
-            // Truly first-ever load (localStorage key never written) --
-            // fires at most once per component lifetime, see the ref above.
-            everHadSavedSelection.current = true;
-            return normalized.map(a => a.id);
-          });
-        })
-        .catch(error => {
-          if (mounted) setAccountsError(`Account list unavailable: ${error.message || 'request failed'}`);
-        });
-    };
-
-    fetchAccounts();
-    // Keep polling rather than fetching once -- on a fresh launch the
-    // backend's account list can genuinely still be empty at the moment
-    // this first fires (platform.start() hasn't finished refresh_accounts()
-    // yet), and a one-shot fetch had no way to recover from that once lost.
-    const id = setInterval(fetchAccounts, POLL_MS);
-    return () => { mounted = false; clearInterval(id); };
-  }, []);
-
-  // Expose globally + persist
-  useEffect(() => {
-    window.topstepAccountsSelected = selected;
-    try { localStorage.setItem(LS_SEL, JSON.stringify(selected)); } catch {}
-    window.dispatchEvent(new CustomEvent('nq:accounts-changed', {
-      detail: { selected, applyAll, strategy },
-    }));
-  }, [selected, applyAll, strategy]);
-
-  useEffect(() => {
-    try { localStorage.setItem(LS_APLY, String(applyAll)); } catch {}
-  }, [applyAll]);
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    const h = e => { if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, [open]);
-
-  // Listen for cross-strategy sync (apply-to-all)
-  useEffect(() => {
-    const h = e => {
-      if (e.detail.strategy !== strategy && e.detail.applyAll) {
-        setSelected(e.detail.selected);
+    const refresh = async () => {
+      const revisionWhenRequested = selectionRevisionRef.current;
+      try {
+        const [data, serverSelection] = await Promise.all([
+          botApi.getAccounts(),
+          botApi.getAccountSelection(),
+        ]);
+        if (!mounted) return;
+        const normalized = Array.isArray(data) ? data.map((account, index) => {
+          const name = account.name ?? account.account_name ?? `Account ${index + 1}`;
+          return {
+            id: String(account.id ?? account.account_id ?? `acc-${index + 1}`),
+            name,
+            isPractice: isPracticeAccountName(name),
+            canTrade: account.can_trade !== false && account.canTrade !== false,
+            isVisible: account.is_visible !== false && account.isVisible !== false,
+            simulated: account.simulated,
+            type: account.type,
+            balance: Number(account.balance ?? account.cash ?? 0),
+          };
+        }).filter(account => account.isVisible) : [];
+        setAccounts(normalized);
+        // A poll started before a successful PUT may return afterward. Do
+        // not let that stale GET roll the browser back to the old account
+        // set; the next poll will still pick up genuine cross-device edits.
+        if (!selectionBusyRef.current && selectionRevisionRef.current === revisionWhenRequested) {
+          const serverRevision = Number(serverSelection?.revision) || 0;
+          selectionRevisionRef.current = serverRevision;
+          setSelected(Array.isArray(serverSelection?.account_ids)
+            ? serverSelection.account_ids.map(String)
+            : []);
+          setSelectionRevision(serverRevision);
+        }
+        setAccountsError('');
+      } catch (error) {
+        if (mounted) setAccountsError(`Account list unavailable: ${error.message || 'request failed'}`);
+      } finally {
+        if (mounted) timer = setTimeout(refresh, pollMs);
       }
     };
-    window.addEventListener('nq:accounts-changed', h);
-    return () => window.removeEventListener('nq:accounts-changed', h);
-  }, [strategy]);
 
-  // ── Sync to server-truth armed account, once (morning/Live only) ────────
-  // Same root cause and same fix shape as TradeParameterPanel.js's armed-
-  // params sync: `selected` above is per-device localStorage, with no
-  // connection to which account is actually armed. Arming only ever uses
-  // selected[0] (see useSelectedAccount()/MorningStrategyLiveControl.js),
-  // and that account_id is already part of GET /testbot/live's
-  // armed_params -- the same server truth already wired up for the
-  // parameters fix -- so this needs no new backend work. Scoped to the
-  // "morning" instance specifically since that's the one whose selection
-  // actually drives live arming; the "recap" instance is a view filter
-  // with no real "currently armed" concept to sync to.
-  const liveSnapshot = useTestBotSnapshot(strategy === 'morning' ? 'live' : null);
-  const armedAccountSyncedRef = useRef(false);
+    refresh();
+    return () => { mounted = false; if (timer) clearTimeout(timer); };
+  }, [pollMs]);
+
   useEffect(() => {
-    if (strategy !== 'morning') return;
-    if (armedAccountSyncedRef.current) return;
-    const armedAccountId = liveSnapshot.armed_params?.account_id;
-    if (!liveSnapshot.armed || armedAccountId == null) return;
-    armedAccountSyncedRef.current = true;
-    setSelected([String(armedAccountId)]);
-  }, [strategy, liveSnapshot.armed, liveSnapshot.armed_params]);
+    window.topstepAccountsSelected = selected;
+    window.dispatchEvent(new CustomEvent('nq:accounts-changed', {
+      detail: { selected, revision: selectionRevision, applyAll: true, strategy },
+    }));
+  }, [selected, selectionRevision, strategy]);
 
-  const toggle    = useCallback(id => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]), []);
-  const selectAll = () => setSelected(accounts.map(a => a.id));
-  const clearAll  = () => setSelected([]);
+  useEffect(() => {
+    if (!open) return undefined;
+    const close = event => {
+      if (rootRef.current && !rootRef.current.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
 
-  const fmtBal = n => `$${n.toLocaleString('en-US')}`;
+  const saveSelection = useCallback(async next => {
+    if (selectionBusy) return;
+    setSelectionBusy(true);
+    selectionBusyRef.current = true;
+    try {
+      const saved = await botApi.saveAccountSelection(next, selectionRevision);
+      setSelected((saved.account_ids || []).map(String));
+      const savedRevision = Number(saved.revision) || 0;
+      selectionRevisionRef.current = savedRevision;
+      setSelectionRevision(savedRevision);
+      setAccountsError('');
+    } catch (error) {
+      if (error.status === 409 && error.detail) {
+        setSelected((error.detail.account_ids || []).map(String));
+        const currentRevision = Number(error.detail.revision) || 0;
+        selectionRevisionRef.current = currentRevision;
+        setSelectionRevision(currentRevision);
+      }
+      setAccountsError(error.message || 'Account selection could not be saved');
+    } finally {
+      selectionBusyRef.current = false;
+      setSelectionBusy(false);
+    }
+  }, [selectionBusy, selectionRevision]);
+
+  const toggle = useCallback(id => {
+    const next = selected.includes(id) ? selected.filter(value => value !== id) : [...selected, id];
+    saveSelection(next);
+  }, [selected, saveSelection]);
+
+  const selectAll = () => saveSelection(accounts.filter(account => account.canTrade).map(account => account.id));
+  const clearAll = () => saveSelection([]);
+  const fmtBal = value => `$${value.toLocaleString('en-US')}`;
 
   return (
     <div className="tsa-root" ref={rootRef}>
       {accountsError && <span className="tsa-fetch-error" role="alert">{accountsError}</span>}
-
-      {/* Trigger button */}
       <button
         className={`tsa-trigger${open ? ' tsa-trigger--open' : ''}`}
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen(value => !value)}
         aria-expanded={open}
         aria-haspopup="listbox"
         title="Select Topstep accounts"
@@ -179,33 +141,33 @@ export default function TopstepAccountSelector({ strategy = 'morning' }) {
         <span className="tsa-trigger-caret" aria-hidden="true">{open ? '▲' : '▼'}</span>
       </button>
 
-      {/* Dropdown panel */}
       {open && (
         <div className="tsa-panel" role="dialog" aria-label="Account selection">
-
           <div className="tsa-panel-header">
             <span className="tsa-panel-heading">Active Accounts</span>
             <div className="tsa-header-actions">
-              <button className="tsa-link-btn" onClick={selectAll}>All</button>
+              <button className="tsa-link-btn" onClick={selectAll} disabled={selectionBusy}>All</button>
               <span className="tsa-sep">·</span>
-              <button className="tsa-link-btn" onClick={clearAll}>None</button>
+              <button className="tsa-link-btn" onClick={clearAll} disabled={selectionBusy}>None</button>
             </div>
           </div>
 
           <div className="tsa-list" role="listbox" aria-multiselectable="true">
-            {accounts.map(acc => {
-              const checked = selected.includes(acc.id);
+            {accounts.map(account => {
+              const checked = selected.includes(account.id);
+              const typeLabel = accountTypeLabel(account);
               return (
                 <label
-                  key={acc.id}
-                  className={`tsa-item${checked ? ' tsa-item--checked' : ''}${acc.enabled ? '' : ' tsa-item--disabled'}`}
+                  key={account.id}
+                  className={`tsa-item${checked ? ' tsa-item--checked' : ''}${account.canTrade ? '' : ' tsa-item--disabled'}`}
                   role="option"
                   aria-selected={checked}
                 >
                   <input
                     type="checkbox"
                     checked={checked}
-                    onChange={() => toggle(acc.id)}
+                    onChange={() => toggle(account.id)}
+                    disabled={!account.canTrade || selectionBusy}
                     className="tsa-checkbox-input"
                   />
                   <span className={`tsa-check${checked ? ' tsa-check--on' : ''}`} aria-hidden="true">
@@ -214,16 +176,16 @@ export default function TopstepAccountSelector({ strategy = 'morning' }) {
                     </svg>
                   </span>
                   <div className="tsa-acc-info">
-                    <span className="tsa-acc-name">{acc.name}</span>
+                    <span className="tsa-acc-name">{account.name}</span>
                     <span className="tsa-acc-meta">
-                      <span className={`tsa-type-badge${acc.isPractice ? ' tsa-type-badge--practice' : ' tsa-type-badge--live'}`}>
-                        {acc.isPractice ? 'Practice' : 'Live'}
+                      <span className={`tsa-type-badge${account.isPractice ? ' tsa-type-badge--practice' : ' tsa-type-badge--live'}`}>
+                        {typeLabel}
                       </span>
-                      {!acc.enabled && <span className="tsa-disabled-badge">Disabled</span>}
+                      {!account.canTrade && <span className="tsa-disabled-badge">Not tradeable</span>}
                     </span>
                   </div>
-                  <span className={`tsa-acc-balance${acc.balance < 50_000 ? ' tsa-acc-balance--low' : ''}`}>
-                    {fmtBal(acc.balance)}
+                  <span className={`tsa-acc-balance${account.balance < 50_000 ? ' tsa-acc-balance--low' : ''}`}>
+                    {fmtBal(account.balance)}
                   </span>
                 </label>
               );
@@ -231,17 +193,8 @@ export default function TopstepAccountSelector({ strategy = 'morning' }) {
           </div>
 
           <div className="tsa-panel-footer">
-            <label className="tsa-apply-row">
-              <input
-                type="checkbox"
-                checked={applyAll}
-                onChange={e => setApplyAll(e.target.checked)}
-                className="tsa-checkbox"
-              />
-              <span className="tsa-apply-label">Apply selection to all strategies</span>
-            </label>
+            <span className="tsa-apply-label">Selection applies to all strategies and devices</span>
           </div>
-
         </div>
       )}
     </div>

@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import botApi from '../services/botApi';
 import {
   StatusPill, PowerToggle, fmtPrice, fmtPnl,
-  useTestBotSnapshot, useMorningStrategyParams, useSelectedAccount,
+  useTestBotSnapshot, useMorningStrategyParams, useSelectedAccounts, resolveSinglePracticeAccount,
 } from './morningStrategyShared';
 import './MorningStrategyLiveControl.css';
 
@@ -12,7 +12,12 @@ export default function MorningStrategyPracticeBotControl() {
 
   const snapshot = useTestBotSnapshot('practice');
   const paramsRef = useMorningStrategyParams();
-  const { accountId, isPractice } = useSelectedAccount();
+  const { accounts: selectedAccounts } = useSelectedAccounts();
+  const practiceSelection = resolveSinglePracticeAccount(selectedAccounts);
+  const accountId = practiceSelection.account
+    ? practiceSelection.account.account_id ?? practiceSelection.account.id
+    : null;
+  const isPractice = accountId != null;
   const firingRef = useRef(false);
 
   const status = snapshot.status || 'OFF';
@@ -68,7 +73,15 @@ export default function MorningStrategyPracticeBotControl() {
 
   const handleToggle = () => {
     if (on) { off(); return; }
-    if (!isPractice) { setMessage({ text: 'Select a practice account to fire', kind: 'error' }); return; }
+    if (!isPractice) {
+      setMessage({
+        text: practiceSelection.count > 1
+          ? 'Select exactly one practice account to fire'
+          : 'Select a practice account to fire',
+        kind: 'error',
+      });
+      return;
+    }
     fire();
   };
 
@@ -77,6 +90,7 @@ export default function MorningStrategyPracticeBotControl() {
     if (status === 'ARMED') return 'Armed — waiting for fill';
     if (status === 'CLOSED_TP') return 'Closed — take profit hit';
     if (status === 'CLOSED_SL') return 'Closed — stop loss hit';
+    if (practiceSelection.count > 1) return 'Select exactly one practice account';
     return isPractice ? 'Fires immediately · Practice Only' : 'Select a practice account to fire';
   })();
 

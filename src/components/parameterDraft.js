@@ -14,11 +14,14 @@ export function normalizeParameterDraft(draft) {
   return { ...PARAMETER_DEFAULTS, ...(draft || {}) };
 }
 
-export function armPayloadFromDraft(draft, accountId, armRevision) {
+export function armPayloadFromDraft(draft, accountIds, armRevision) {
   const p = normalizeParameterDraft(draft);
+  const normalizedAccountIds = (Array.isArray(accountIds) ? accountIds : [accountIds])
+    .filter(value => value != null && String(value).trim() !== '')
+    .map(String);
   return {
     expected_arm_revision: armRevision,
-    account_id: accountId,
+    account_ids: [...new Set(normalizedAccountIds)],
     contract_size: p.contractSize,
     spread_points: p.spreadPoints,
     tp_dollars: p.takeProfit,

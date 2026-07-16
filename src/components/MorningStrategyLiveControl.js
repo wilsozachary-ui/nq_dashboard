@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import botApi from '../services/botApi';
 import {
   StatusPill, PowerToggle, fmtPrice, fmtPnl,
-  useTestBotSnapshot, useMorningStrategyParams, useSelectedAccount,
+  useTestBotSnapshot, useMorningStrategyParams, useSelectedAccounts,
 } from './morningStrategyShared';
 import './MorningStrategyLiveControl.css';
 import { armPayloadFromDraft } from './parameterDraft';
@@ -23,7 +23,7 @@ export default function MorningStrategyLiveControl() {
 
   const snapshot = useTestBotSnapshot('live');
   const paramsRef = useMorningStrategyParams();
-  const { accountId } = useSelectedAccount();
+  const { accountIds } = useSelectedAccounts();
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -39,6 +39,7 @@ export default function MorningStrategyLiveControl() {
   // whatever that other device's panel happens to have showing.
   const armedParams = snapshot.armed_params || null;
   const position = snapshot.position || null;
+  const accountStates = Array.isArray(snapshot.accounts) ? snapshot.accounts : [];
   const pending = snapshot.pending_entries || {};
   const hasPendingStops = pending.long_stop_price != null || pending.short_stop_price != null;
   const nextFireAtMs = snapshot.next_fire_at ? new Date(snapshot.next_fire_at).getTime() : null;
@@ -66,12 +67,12 @@ export default function MorningStrategyLiveControl() {
       return;
     }
 
-    if (!accountId) { setMessage({ text: 'Select an account first', kind: 'error' }); return; }
+    if (!accountIds.length) { setMessage({ text: 'Select at least one account first', kind: 'error' }); return; }
 
     setActionBusy('arming');
     try {
       const p = paramsRef.current || {};
-      const r = await botApi.armLiveBot(armPayloadFromDraft(p, accountId, snapshot.arm_revision ?? 0));
+      const r = await botApi.armLiveBot(armPayloadFromDraft(p, accountIds, snapshot.arm_revision ?? 0));
       setMessage(r.ok ? { text: 'Armed', kind: 'success' } : { text: r.error?.message || 'Failed to arm', kind: 'error' });
     } catch (err) {
       setMessage({ text: err.message || 'Failed to arm', kind: 'error' });
@@ -81,10 +82,10 @@ export default function MorningStrategyLiveControl() {
   };
 
   const updateArmed = async () => {
-    if (!accountId) { setMessage({ text: 'Select an account first', kind: 'error' }); return; }
+    if (!accountIds.length) { setMessage({ text: 'Select at least one account first', kind: 'error' }); return; }
     setActionBusy('arming');
     try {
-      const r = await botApi.armLiveBot(armPayloadFromDraft(paramsRef.current, accountId, snapshot.arm_revision ?? 0));
+      const r = await botApi.armLiveBot(armPayloadFromDraft(paramsRef.current, accountIds, snapshot.arm_revision ?? 0));
       setMessage(r.ok ? { text: 'Armed parameters updated', kind: 'success' } : { text: r.error?.message || 'Update failed', kind: 'error' });
     } catch (err) {
       setMessage({ text: err.message || 'Update failed', kind: 'error' });
@@ -115,7 +116,7 @@ export default function MorningStrategyLiveControl() {
     if (status === 'CLOSED_TP') return armed ? 'Closed — take profit hit · armed for tomorrow' : 'Closed — take profit hit';
     if (status === 'CLOSED_SL') return armed ? 'Closed — stop loss hit · armed for tomorrow' : 'Closed — stop loss hit';
     if (armed) return `Armed — firing in ${fmtCountdown(countdownMs)}`;
-    return accountId ? 'Arms at 08:29:59 CST' : 'Select an account to arm';
+    return accountIds.length ? `Arms ${accountIds.length} account${accountIds.length === 1 ? '' : 's'} at 08:29:59 CST` : 'Select accounts to arm';
   })();
 
   const toggleDisabled = busy;
@@ -147,6 +148,10 @@ export default function MorningStrategyLiveControl() {
           <span className="mstb-section-label">Armed With</span>
           <div className="mstb-prices">
             <div className="mstb-price-row">
+              <span className="mstb-price-lbl">Accounts</span>
+              <span className="mstb-price-val">{(armedParams.account_ids || []).join(', ') || '—'}</span>
+            </div>
+            <div className="mstb-price-row">
               <span className="mstb-price-lbl">Take Profit</span>
               <span className="mstb-price-val mstb-price-val--up">{fmtPrice(armedParams.tp_dollars)}</span>
             </div>
@@ -172,6 +177,25 @@ export default function MorningStrategyLiveControl() {
         <button className="mstb-flatten-link" onClick={updateArmed} disabled={busy}>
           {actionBusy === 'arming' ? 'Updating…' : 'Update Armed Bot'}
         </button>
+      )}
+
+      {accountStates.length > 0 && (
+        <div className="mstb-section">
+          <span className="mstb-section-label">Account Status</span>
+          <div className="mstb-prices">
+            {accountStates.map(account => (
+              <div className="mstb-price-row" key={String(account.account_id)}>
+                <span className="mstb-price-lbl">{account.account_id}</span>
+                <span className="mstb-price-val">
+                  {account.status || 'OFF'}
+                  {account.side ? ` · ${account.side}` : ''}
+                  {account.entry_price != null ? ` @ ${fmtPrice(account.entry_price)}` : ''}
+                  {account.reconciliation_required ? ' · Needs review' : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="mstb-section">

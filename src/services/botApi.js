@@ -239,6 +239,11 @@ const botApi = {
     const accounts = await getFirst(['/accounts'], signal, []);
     return Array.isArray(accounts) ? accounts : [];
   },
+  getAccountSelection: signal => get('/accounts/selection', signal),
+  saveAccountSelection: (accountIds, expectedRevision, signal) => put('/accounts/selection', {
+    account_ids: accountIds,
+    expected_revision: expectedRevision,
+  }, signal),
   getAccountSettings: signal => getFirst(['/testbot', '/strategy/parameters'], signal, {}),
   getPositions: async signal => {
     const t = await getTelemetry(signal);
