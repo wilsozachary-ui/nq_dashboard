@@ -188,19 +188,30 @@ function StandingDoberman({ pose }) {
 function SittingDoberman() {
   return (
     <g className="dl-dog-pose dl-dog-pose--sit" transform="translate(160 143)">
-      <path d="M-40-62L-21-69L-8-55L-10-29L7-18L25-4L32 15H17L5 5L-12 4L-23 13H-38L-45-8L-49-37Z" className="dl-dog-shadow" />
-      <path d="M-43-65L-25-72L-11-58L-14-31L3-21L22-7L28 13H14L3 3H-14L-25 11H-40L-48-11L-51-41Z" className="dl-dog-ink" />
-      <path d="M-84-74H-50L-36-65L-40-51L-62-45L-88-50L-99-59L-96-69Z" className="dl-dog-ink" />
-      <path d="M-100-65H-79V-50H-94L-104-56Z" className="dl-dog-ink" />
-      <path d="M-77-72L-72-104L-60-78ZM-55-75L-47-103L-40-67Z" className="dl-dog-ink" />
-      <path d="M-38-15H-24V23H-14V30H-33L-40 23ZM9 3H24L37 19V30H17L9 22Z" className="dl-dog-ink" />
-      <path d="M18-9L36-17L48-26L52-19L40-8L28-2Z" className="dl-dog-ink" />
-      <path d="M-101-61H-80V-52H-94L-102-57ZM-74-69H-63V-63H-75ZM-47-57H-39V-49H-48Z" className="dl-rust" />
-      <path d="M-51-47L-39-37L-35-20H-44L-51-34Z" className="dl-rust-hi" />
-      <path d="M-37 8H-25V24H-17V28H-32L-38 23ZM15 13H27L35 21V28H20L14 22Z" className="dl-rust" />
-      <rect x="-71" y="-64" width="5" height="5" className="dl-eye" />
-      <rect x="-104" y="-61" width="5" height="6" className="dl-nose" />
-      <rect x="-49" y="-49" width="11" height="4" className="dl-collar" />
+      {/* Front-facing pose: a strong symmetrical breed silhouette remains
+          readable against the couch, TV and dark floor at small sizes. */}
+      <path d="M-34-65L-30-101L-12-76H12L30-101L34-65L32-41L20-23H-20L-32-41Z" className="dl-dog-outline" />
+      <path d="M-28-63L-26-91L-10-71H10L26-91L28-63L27-43L17-28H-17L-27-43Z" className="dl-dog-ink" />
+      <path d="M-27-83L-18-73L-27-69ZM27-83L18-73L27-69Z" className="dl-ear-rust" />
+
+      {/* Long wedge muzzle and classic rust cheek points. */}
+      <path d="M-22-52H22L28-39L20-21H-20L-28-39Z" className="dl-rust" />
+      <path d="M-13-48H13L20-35L13-20H-13L-20-35Z" className="dl-dog-muzzle" />
+      <path d="M-9-45H9V-38L5-34H-5L-9-38Z" className="dl-nose" />
+      <path d="M-13-27H13V-23H-13Z" className="dl-mouth" />
+      <rect x="-23" y="-58" width="10" height="6" className="dl-rust-hi" />
+      <rect x="13" y="-58" width="10" height="6" className="dl-rust-hi" />
+      <rect x="-19" y="-50" width="4" height="4" className="dl-eye" />
+      <rect x="15" y="-50" width="4" height="4" className="dl-eye" />
+      <rect x="-24" y="-27" width="48" height="5" className="dl-collar" />
+      <rect x="-3" y="-22" width="6" height="7" className="dl-collar-tag" />
+
+      {/* Deep chest, narrow waist, straight forelegs and seated haunches. */}
+      <path d="M-25-22L-43-6L-48 21L-37 30H-17L-10 18H10L17 30H37L48 21L43-6L25-22Z" className="dl-dog-outline" />
+      <path d="M-22-19L-37-5L-41 18L-33 25H-18L-12 13H12L18 25H33L41 18L37-5L22-19Z" className="dl-dog-ink" />
+      <path d="M-15-16H-3V7H-11L-18-2ZM3-16H15L18-2L11 7H3Z" className="dl-rust-hi" />
+      <path d="M-29-5H-15V25H-8V31H-31V25H-26ZM15-5H29L26 25H31V31H8V25H15Z" className="dl-dog-ink" />
+      <path d="M-28 12H-16V25H-10V29H-29ZM16 12H28L29 29H10V25H16Z" className="dl-rust" />
     </g>
   );
 }

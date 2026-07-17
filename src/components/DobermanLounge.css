@@ -3,8 +3,9 @@
   --dl-wall-grid: rgba(101, 126, 158, 0.07);
   --dl-floor: #19151a;
   --dl-floor-line: #29222a;
-  --dl-black: #100e0d;
-  --dl-black-hi: #302b2a;
+  --dl-black: #292524;
+  --dl-black-hi: #4b4340;
+  --dl-outline: #090808;
   --dl-rust: #b85f34;
   --dl-rust-hi: #e38a52;
   --dl-collar: #8d1823;
@@ -86,11 +87,16 @@
 .dl-rug-lines { stroke: #50627e; stroke-width: 2; fill: none; }
 .dl-dog-ink { fill: var(--dl-black); }
 .dl-dog-shadow { fill: var(--dl-black-hi); }
+.dl-dog-outline { fill: var(--dl-outline); }
+.dl-dog-muzzle { fill: #171413; }
 .dl-rust { fill: var(--dl-rust); }
 .dl-rust-hi { fill: var(--dl-rust-hi); }
+.dl-ear-rust { fill: #744124; }
 .dl-eye { fill: #f3c96b; }
 .dl-nose { fill: #050505; }
+.dl-mouth { fill: #080707; }
 .dl-collar { fill: var(--dl-collar); }
+.dl-collar-tag { fill: #d7a74c; }
 
 .dl-doberman-reference {
   shape-rendering: crispEdges;
