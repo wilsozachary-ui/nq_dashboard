@@ -7,6 +7,7 @@
   --dl-black-hi: #302b2a;
   --dl-rust: #b85f34;
   --dl-rust-hi: #e38a52;
+  --dl-collar: #8d1823;
   --dl-green: #31d67b;
   --dl-red: #ef4d5f;
   overflow: hidden;
@@ -88,9 +89,12 @@
 .dl-rust { fill: var(--dl-rust); }
 .dl-rust-hi { fill: var(--dl-rust-hi); }
 .dl-eye { fill: #f3c96b; }
+.dl-nose { fill: #050505; }
+.dl-collar { fill: var(--dl-collar); }
 
 .dl-doberman-reference {
   shape-rendering: crispEdges;
+  stroke-linejoin: miter;
 }
 
 .dl-dog-pose { display: none; }

@@ -159,63 +159,80 @@ const STATE_COPY = {
   },
 };
 
+function StandingDoberman({ pose }) {
+  return (
+    <g className={`dl-dog-pose dl-dog-pose--${pose}`} transform="translate(160 140)">
+      {/* Lean torso, deep chest and pronounced tuck-up. */}
+      <path d="M-41-42H22L39-36L49-25V-11H35L27-17H8L1-8H-18L-23-17H-36L-46-27Z" className="dl-dog-shadow" />
+      <path d="M-43-45H21L38-39L46-29V-14H33L25-21H7L-1-11H-20L-26-20H-39L-49-31Z" className="dl-dog-ink" />
+      {/* Tall neck and unmistakably long Doberman head/muzzle. */}
+      <path d="M-48-65L-27-72L-14-59L-18-39L-35-25L-50-34L-56-50Z" className="dl-dog-ink" />
+      <path d="M-86-72H-50L-36-62L-40-49L-63-43L-88-48L-99-57L-96-67Z" className="dl-dog-ink" />
+      <path d="M-100-63H-79V-48H-94L-104-54Z" className="dl-dog-ink" />
+      {/* Cropped upright ears. */}
+      <path d="M-78-70L-73-103L-61-76ZM-56-73L-48-101L-41-65Z" className="dl-dog-ink" />
+      {/* Long athletic legs and high-set docked tail. */}
+      <path d="M-34-22H-20V24H-10V31H-30L-37 24ZM22-20H35V17L44 24V31H25L18 24Z" className="dl-dog-ink" />
+      <path d="M38-38L54-47L63-61L71-59L66-43L53-29L44-23Z" className="dl-dog-ink" />
+      {/* Rust muzzle, brows, throat, chest and stockings. */}
+      <path d="M-101-59H-80V-50H-94L-102-55ZM-76-67H-65V-61H-77ZM-48-56H-40V-48H-49Z" className="dl-rust" />
+      <path d="M-50-45L-39-35L-34-20H-43L-50-31Z" className="dl-rust-hi" />
+      <path d="M-34 8H-21V25H-13V29H-29L-35 24ZM23 7H34V18L42 25V29H28L22 23Z" className="dl-rust" />
+      <rect x="-73" y="-62" width="5" height="5" className="dl-eye" />
+      <rect x="-104" y="-59" width="5" height="6" className="dl-nose" />
+      <rect x="-48" y="-47" width="11" height="4" className="dl-collar" />
+    </g>
+  );
+}
+
+function SittingDoberman() {
+  return (
+    <g className="dl-dog-pose dl-dog-pose--sit" transform="translate(160 143)">
+      <path d="M-40-62L-21-69L-8-55L-10-29L7-18L25-4L32 15H17L5 5L-12 4L-23 13H-38L-45-8L-49-37Z" className="dl-dog-shadow" />
+      <path d="M-43-65L-25-72L-11-58L-14-31L3-21L22-7L28 13H14L3 3H-14L-25 11H-40L-48-11L-51-41Z" className="dl-dog-ink" />
+      <path d="M-84-74H-50L-36-65L-40-51L-62-45L-88-50L-99-59L-96-69Z" className="dl-dog-ink" />
+      <path d="M-100-65H-79V-50H-94L-104-56Z" className="dl-dog-ink" />
+      <path d="M-77-72L-72-104L-60-78ZM-55-75L-47-103L-40-67Z" className="dl-dog-ink" />
+      <path d="M-38-15H-24V23H-14V30H-33L-40 23ZM9 3H24L37 19V30H17L9 22Z" className="dl-dog-ink" />
+      <path d="M18-9L36-17L48-26L52-19L40-8L28-2Z" className="dl-dog-ink" />
+      <path d="M-101-61H-80V-52H-94L-102-57ZM-74-69H-63V-63H-75ZM-47-57H-39V-49H-48Z" className="dl-rust" />
+      <path d="M-51-47L-39-37L-35-20H-44L-51-34Z" className="dl-rust-hi" />
+      <path d="M-37 8H-25V24H-17V28H-32L-38 23ZM15 13H27L35 21V28H20L14 22Z" className="dl-rust" />
+      <rect x="-71" y="-64" width="5" height="5" className="dl-eye" />
+      <rect x="-104" y="-61" width="5" height="6" className="dl-nose" />
+      <rect x="-49" y="-49" width="11" height="4" className="dl-collar" />
+    </g>
+  );
+}
+
+function RestingDoberman() {
+  return (
+    <g className="dl-dog-pose dl-dog-pose--lose" transform="translate(160 150)">
+      <path d="M-43-30H31L48-23L51-10L42-3H-34L-48-9L-52-20Z" className="dl-dog-shadow" />
+      <path d="M-46-33H29L45-26L48-13L39-6H-36L-51-12L-55-23Z" className="dl-dog-ink" />
+      <path d="M-55-48L-38-54L-26-43L-31-27L-47-18L-61-27Z" className="dl-dog-ink" />
+      <path d="M-88-55H-57L-45-47L-49-35L-70-29L-94-34L-103-42L-100-51Z" className="dl-dog-ink" />
+      <path d="M-103-47H-82V-33H-97L-108-39Z" className="dl-dog-ink" />
+      <path d="M-82-54L-78-78L-66-59ZM-62-56L-55-77L-49-49Z" className="dl-dog-ink" />
+      <path d="M-40-11H-5V-2H-47L-55-7ZM18-10H45V-2H10Z" className="dl-dog-ink" />
+      <path d="M42-25L57-32L67-42L73-38L66-27L51-18Z" className="dl-dog-ink" />
+      <path d="M-105-43H-84V-35H-98L-106-40ZM-79-51H-68V-45H-80ZM-55-43H-48V-36H-56Z" className="dl-rust" />
+      <path d="M-59-35L-48-27L-44-16H-53L-59-25Z" className="dl-rust-hi" />
+      <path d="M-39-9H-12V-3H-43ZM23-9H43V-3H18Z" className="dl-rust" />
+      <rect x="-76" y="-47" width="5" height="4" className="dl-eye" />
+      <rect x="-108" y="-43" width="5" height="6" className="dl-nose" />
+      <rect x="-57" y="-37" width="11" height="4" className="dl-collar" />
+    </g>
+  );
+}
+
 function DobermanSprite() {
   return (
     <g className="dl-dog-motion dl-doberman-reference" data-dog-style="black-rust-profile">
-      <g className="dl-dog-pose dl-dog-pose--run" transform="translate(160 140)">
-        <path d="M-31-35H34V-30H46V-22H53V5H45V12H-30V6H-39V-25H-31Z" className="dl-dog-shadow" />
-        <path d="M-30-33H35V-27H46V4H38V9H-29V3H-36V-24H-30Z" className="dl-dog-ink" />
-        <path d="M-34-25H-47V-42H-58V-58H-47V-68H-37V-53H-26V-39H-18V-25Z" className="dl-dog-ink" />
-        <path d="M-58-55H-78V-49H-91V-35H-78V-29H-51V-36H-43V-51H-58Z" className="dl-dog-ink" />
-        <path d="M-51-58V-77H-43V-67H-36V-52ZM-68-54V-70H-60V-61H-54V-52Z" className="dl-dog-ink" />
-        <path d="M45-24H58V-31H66V-42H73V-34H69V-20H61V-9H48Z" className="dl-dog-ink" />
-        <path d="M-27 6H-17V24H-7V31H-25V24H-32V10ZM22 6H32V18H43V25H27V31H13V24H20Z" className="dl-dog-ink" />
-        <path d="M-29 8H-20V22H-13V29H-25V23H-29ZM24 7H32V18H39V24H28V29H20V23H24Z" className="dl-rust" />
-        <path d="M-91-42H-74V-34H-88V-37H-94V-42ZM-65-55H-56V-49H-66ZM-49-46H-42V-33H-48Z" className="dl-rust" />
-        <rect x="-72" y="-50" width="4" height="4" className="dl-eye" />
-        <rect x="-38" y="-31" width="5" height="26" className="dl-rust-hi" />
-      </g>
-
-      <g className="dl-dog-pose dl-dog-pose--sit" transform="translate(160 145)">
-        <path d="M-24-42H14V-30H27V-14H37V7H29V15H-26V7H-35V-27H-24Z" className="dl-dog-shadow" />
-        <path d="M-26-43H7V-35H17V-18H26V6H18V12H-25V5H-32V-30H-26Z" className="dl-dog-ink" />
-        <path d="M-27-34H-43V-52H-54V-68H-44V-78H-34V-61H-22V-44H-15V-30Z" className="dl-dog-ink" />
-        <path d="M-54-65H-74V-59H-87V-45H-72V-39H-48V-47H-40V-61H-54Z" className="dl-dog-ink" />
-        <path d="M-47-69V-87H-39V-76H-33V-62ZM-65-64V-80H-57V-71H-51V-62Z" className="dl-dog-ink" />
-        <path d="M18-13H33V-3H40V12H31V17H12V10H17Z" className="dl-dog-ink" />
-        <path d="M-23 6H-13V27H-5V33H-25V27H-30V11ZM13 10H24V27H34V33H11Z" className="dl-dog-ink" />
-        <path d="M-87-52H-70V-44H-84V-47H-90ZM-61-65H-53V-58H-62ZM-43-55H-36V-41H-42Z" className="dl-rust" />
-        <path d="M-25 7H-16V26H-9V31H-24ZM17 12H24V27H31V31H15Z" className="dl-rust" />
-        <rect x="-68" y="-60" width="4" height="4" className="dl-eye" />
-        <rect x="-34" y="-39" width="5" height="27" className="dl-rust-hi" />
-      </g>
-
-      <g className="dl-dog-pose dl-dog-pose--celebrate" transform="translate(160 135)">
-        <path d="M-31-35H34V-30H46V-22H53V5H45V12H-30V6H-39V-25H-31Z" className="dl-dog-shadow" />
-        <path d="M-30-33H35V-27H46V4H38V9H-29V3H-36V-24H-30Z" className="dl-dog-ink" />
-        <path d="M-34-25H-47V-42H-58V-58H-47V-68H-37V-53H-26V-39H-18V-25Z" className="dl-dog-ink" />
-        <path d="M-58-55H-78V-49H-91V-35H-78V-29H-51V-36H-43V-51H-58Z" className="dl-dog-ink" />
-        <path d="M-51-58V-77H-43V-67H-36V-52ZM-68-54V-70H-60V-61H-54V-52Z" className="dl-dog-ink" />
-        <path d="M45-24H58V-31H66V-42H73V-34H69V-20H61V-9H48Z" className="dl-dog-ink" />
-        <path d="M-27 4H-17V-14H-9V-22H-25V-14H-31ZM23 5H33V-12H43V-20H27V-13H21Z" className="dl-dog-ink" />
-        <path d="M-28-16H-19V-8H-27ZM25-15H34V-8H24Z" className="dl-rust" />
-        <path d="M-91-42H-74V-34H-88V-37H-94V-42ZM-65-55H-56V-49H-66ZM-49-46H-42V-33H-48Z" className="dl-rust" />
-        <rect x="-72" y="-50" width="4" height="4" className="dl-eye" />
-        <rect x="-38" y="-31" width="5" height="26" className="dl-rust-hi" />
-      </g>
-
-      <g className="dl-dog-pose dl-dog-pose--lose" transform="translate(160 151)">
-        <path d="M-30-27H43V-21H54V-5H46V3H-37V-2H-48V-15H-39V-22H-30Z" className="dl-dog-shadow" />
-        <path d="M-31-25H42V-19H50V-3H42V1H-38V-4H-46V-14H-37V-20H-31Z" className="dl-dog-ink" />
-        <path d="M-38-17H-54V-30H-64V-43H-54V-51H-44V-39H-34V-25H-27V-17Z" className="dl-dog-ink" />
-        <path d="M-64-41H-82V-36H-95V-24H-78V-20H-51V-27H-44V-38H-64Z" className="dl-dog-ink" />
-        <path d="M-58-43V-57H-50V-49H-44V-38ZM-73-40V-52H-66V-45H-61V-38Z" className="dl-dog-ink" />
-        <path d="M47-18H60V-24H68V-31H74V-24H70V-14H62V-6H50Z" className="dl-dog-ink" />
-        <path d="M-30-3H-5V5H-35V1H-42V-4ZM23-2H47V5H17V2H10V-3Z" className="dl-dog-ink" />
-        <path d="M-95-31H-78V-24H-92V-27H-98ZM-70-42H-62V-36H-71ZM-53-34H-46V-23H-52Z" className="dl-rust" />
-        <rect x="-77" y="-37" width="4" height="4" className="dl-eye" />
-        <rect x="-42" y="-19" width="5" height="16" className="dl-rust-hi" />
-      </g>
+      <StandingDoberman pose="run" />
+      <SittingDoberman />
+      <StandingDoberman pose="celebrate" />
+      <RestingDoberman />
     </g>
   );
 }
