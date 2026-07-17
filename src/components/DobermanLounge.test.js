@@ -73,6 +73,13 @@ test('does not render full brokerage account identifiers', () => {
   expect(container.textContent).not.toMatch(/\d{5,}/);
 });
 
+test('renders the reimplemented black-and-rust profile Doberman', () => {
+  const { container } = render(<DobermanLoungeView isArmed dailyPnl={0} />);
+  expect(container.querySelector('[data-dog-style="black-rust-profile"]')).toBeInTheDocument();
+  expect(container.querySelectorAll('.dl-dog-ink').length).toBeGreaterThan(10);
+  expect(container.querySelectorAll('.dl-rust').length).toBeGreaterThan(6);
+});
+
 test('defines every required animation and a reduced-motion override', () => {
   const css = fs.readFileSync(path.join(__dirname, 'DobermanLounge.css'), 'utf8');
   [

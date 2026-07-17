@@ -159,71 +159,62 @@ const STATE_COPY = {
   },
 };
 
-function DogMarkings() {
-  return (
-    <>
-      <rect x="-11" y="-23" width="7" height="7" className="dl-rust" />
-      <rect x="4" y="-23" width="7" height="7" className="dl-rust" />
-      <rect x="-7" y="-13" width="14" height="5" className="dl-rust" />
-      <rect x="-13" y="-25" width="4" height="4" className="dl-eye" />
-      <rect x="9" y="-25" width="4" height="4" className="dl-eye" />
-    </>
-  );
-}
-
 function DobermanSprite() {
   return (
-    <g className="dl-dog-motion">
-      <g className="dl-dog-pose dl-dog-pose--run" transform="translate(160 138)">
-        <rect x="-30" y="-25" width="51" height="22" className="dl-dog-black" />
-        <rect x="15" y="-38" width="24" height="28" className="dl-dog-black" />
-        <polygon points="18,-38 21,-54 29,-39" className="dl-dog-black" />
-        <polygon points="30,-39 38,-54 38,-36" className="dl-dog-black" />
-        <rect x="-42" y="-30" width="15" height="6" className="dl-dog-black" />
-        <rect x="-26" y="-5" width="8" height="22" className="dl-dog-black" />
-        <rect x="10" y="-5" width="8" height="22" className="dl-dog-black" />
-        <rect x="-19" y="13" width="21" height="5" className="dl-rust" />
-        <rect x="16" y="13" width="20" height="5" className="dl-rust" />
-        <g transform="translate(27 -15)"><DogMarkings /></g>
+    <g className="dl-dog-motion dl-doberman-reference" data-dog-style="black-rust-profile">
+      <g className="dl-dog-pose dl-dog-pose--run" transform="translate(160 140)">
+        <path d="M-31-35H34V-30H46V-22H53V5H45V12H-30V6H-39V-25H-31Z" className="dl-dog-shadow" />
+        <path d="M-30-33H35V-27H46V4H38V9H-29V3H-36V-24H-30Z" className="dl-dog-ink" />
+        <path d="M-34-25H-47V-42H-58V-58H-47V-68H-37V-53H-26V-39H-18V-25Z" className="dl-dog-ink" />
+        <path d="M-58-55H-78V-49H-91V-35H-78V-29H-51V-36H-43V-51H-58Z" className="dl-dog-ink" />
+        <path d="M-51-58V-77H-43V-67H-36V-52ZM-68-54V-70H-60V-61H-54V-52Z" className="dl-dog-ink" />
+        <path d="M45-24H58V-31H66V-42H73V-34H69V-20H61V-9H48Z" className="dl-dog-ink" />
+        <path d="M-27 6H-17V24H-7V31H-25V24H-32V10ZM22 6H32V18H43V25H27V31H13V24H20Z" className="dl-dog-ink" />
+        <path d="M-29 8H-20V22H-13V29H-25V23H-29ZM24 7H32V18H39V24H28V29H20V23H24Z" className="dl-rust" />
+        <path d="M-91-42H-74V-34H-88V-37H-94V-42ZM-65-55H-56V-49H-66ZM-49-46H-42V-33H-48Z" className="dl-rust" />
+        <rect x="-72" y="-50" width="4" height="4" className="dl-eye" />
+        <rect x="-38" y="-31" width="5" height="26" className="dl-rust-hi" />
       </g>
 
       <g className="dl-dog-pose dl-dog-pose--sit" transform="translate(160 145)">
-        <rect x="-19" y="-37" width="38" height="31" className="dl-dog-black" />
-        <rect x="-24" y="-13" width="48" height="19" className="dl-dog-black" />
-        <rect x="-15" y="-62" width="30" height="29" className="dl-dog-black" />
-        <polygon points="-14,-61 -11,-78 -2,-62" className="dl-dog-black" />
-        <polygon points="3,-62 12,-78 14,-59" className="dl-dog-black" />
-        <rect x="-20" y="3" width="9" height="16" className="dl-dog-black" />
-        <rect x="11" y="3" width="9" height="16" className="dl-dog-black" />
-        <rect x="-22" y="16" width="13" height="5" className="dl-rust" />
-        <rect x="9" y="16" width="13" height="5" className="dl-rust" />
-        <g transform="translate(0 -39)"><DogMarkings /></g>
+        <path d="M-24-42H14V-30H27V-14H37V7H29V15H-26V7H-35V-27H-24Z" className="dl-dog-shadow" />
+        <path d="M-26-43H7V-35H17V-18H26V6H18V12H-25V5H-32V-30H-26Z" className="dl-dog-ink" />
+        <path d="M-27-34H-43V-52H-54V-68H-44V-78H-34V-61H-22V-44H-15V-30Z" className="dl-dog-ink" />
+        <path d="M-54-65H-74V-59H-87V-45H-72V-39H-48V-47H-40V-61H-54Z" className="dl-dog-ink" />
+        <path d="M-47-69V-87H-39V-76H-33V-62ZM-65-64V-80H-57V-71H-51V-62Z" className="dl-dog-ink" />
+        <path d="M18-13H33V-3H40V12H31V17H12V10H17Z" className="dl-dog-ink" />
+        <path d="M-23 6H-13V27H-5V33H-25V27H-30V11ZM13 10H24V27H34V33H11Z" className="dl-dog-ink" />
+        <path d="M-87-52H-70V-44H-84V-47H-90ZM-61-65H-53V-58H-62ZM-43-55H-36V-41H-42Z" className="dl-rust" />
+        <path d="M-25 7H-16V26H-9V31H-24ZM17 12H24V27H31V31H15Z" className="dl-rust" />
+        <rect x="-68" y="-60" width="4" height="4" className="dl-eye" />
+        <rect x="-34" y="-39" width="5" height="27" className="dl-rust-hi" />
       </g>
 
       <g className="dl-dog-pose dl-dog-pose--celebrate" transform="translate(160 135)">
-        <rect x="-24" y="-33" width="46" height="27" className="dl-dog-black" />
-        <rect x="-14" y="-58" width="29" height="28" className="dl-dog-black" />
-        <polygon points="-13,-57 -10,-73 -1,-58" className="dl-dog-black" />
-        <polygon points="3,-58 12,-73 14,-55" className="dl-dog-black" />
-        <rect x="-31" y="-31" width="8" height="25" className="dl-dog-black" />
-        <rect x="22" y="-31" width="8" height="25" className="dl-dog-black" />
-        <rect x="-20" y="-7" width="8" height="25" className="dl-dog-black" />
-        <rect x="12" y="-7" width="8" height="25" className="dl-dog-black" />
-        <rect x="-33" y="-8" width="12" height="5" className="dl-rust" />
-        <rect x="21" y="-8" width="12" height="5" className="dl-rust" />
-        <rect x="-22" y="15" width="13" height="5" className="dl-rust" />
-        <rect x="9" y="15" width="13" height="5" className="dl-rust" />
-        <g transform="translate(0 -35)"><DogMarkings /></g>
+        <path d="M-31-35H34V-30H46V-22H53V5H45V12H-30V6H-39V-25H-31Z" className="dl-dog-shadow" />
+        <path d="M-30-33H35V-27H46V4H38V9H-29V3H-36V-24H-30Z" className="dl-dog-ink" />
+        <path d="M-34-25H-47V-42H-58V-58H-47V-68H-37V-53H-26V-39H-18V-25Z" className="dl-dog-ink" />
+        <path d="M-58-55H-78V-49H-91V-35H-78V-29H-51V-36H-43V-51H-58Z" className="dl-dog-ink" />
+        <path d="M-51-58V-77H-43V-67H-36V-52ZM-68-54V-70H-60V-61H-54V-52Z" className="dl-dog-ink" />
+        <path d="M45-24H58V-31H66V-42H73V-34H69V-20H61V-9H48Z" className="dl-dog-ink" />
+        <path d="M-27 4H-17V-14H-9V-22H-25V-14H-31ZM23 5H33V-12H43V-20H27V-13H21Z" className="dl-dog-ink" />
+        <path d="M-28-16H-19V-8H-27ZM25-15H34V-8H24Z" className="dl-rust" />
+        <path d="M-91-42H-74V-34H-88V-37H-94V-42ZM-65-55H-56V-49H-66ZM-49-46H-42V-33H-48Z" className="dl-rust" />
+        <rect x="-72" y="-50" width="4" height="4" className="dl-eye" />
+        <rect x="-38" y="-31" width="5" height="26" className="dl-rust-hi" />
       </g>
 
       <g className="dl-dog-pose dl-dog-pose--lose" transform="translate(160 151)">
-        <rect x="-43" y="-20" width="67" height="20" className="dl-dog-black" />
-        <rect x="18" y="-27" width="29" height="22" className="dl-dog-black" />
-        <polygon points="22,-26 25,-38 32,-27" className="dl-dog-black" />
-        <polygon points="35,-27 43,-37 44,-23" className="dl-dog-black" />
-        <rect x="-48" y="-4" width="36" height="6" className="dl-dog-black" />
-        <rect x="-35" y="-5" width="18" height="6" className="dl-rust" />
-        <g transform="translate(33 -4)"><DogMarkings /></g>
+        <path d="M-30-27H43V-21H54V-5H46V3H-37V-2H-48V-15H-39V-22H-30Z" className="dl-dog-shadow" />
+        <path d="M-31-25H42V-19H50V-3H42V1H-38V-4H-46V-14H-37V-20H-31Z" className="dl-dog-ink" />
+        <path d="M-38-17H-54V-30H-64V-43H-54V-51H-44V-39H-34V-25H-27V-17Z" className="dl-dog-ink" />
+        <path d="M-64-41H-82V-36H-95V-24H-78V-20H-51V-27H-44V-38H-64Z" className="dl-dog-ink" />
+        <path d="M-58-43V-57H-50V-49H-44V-38ZM-73-40V-52H-66V-45H-61V-38Z" className="dl-dog-ink" />
+        <path d="M47-18H60V-24H68V-31H74V-24H70V-14H62V-6H50Z" className="dl-dog-ink" />
+        <path d="M-30-3H-5V5H-35V1H-42V-4ZM23-2H47V5H17V2H10V-3Z" className="dl-dog-ink" />
+        <path d="M-95-31H-78V-24H-92V-27H-98ZM-70-42H-62V-36H-71ZM-53-34H-46V-23H-52Z" className="dl-rust" />
+        <rect x="-77" y="-37" width="4" height="4" className="dl-eye" />
+        <rect x="-42" y="-19" width="5" height="16" className="dl-rust-hi" />
       </g>
     </g>
   );

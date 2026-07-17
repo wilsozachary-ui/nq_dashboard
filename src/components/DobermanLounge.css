@@ -3,10 +3,10 @@
   --dl-wall-grid: rgba(101, 126, 158, 0.07);
   --dl-floor: #19151a;
   --dl-floor-line: #29222a;
-  --dl-black: #17191d;
-  --dl-black-hi: #25282e;
-  --dl-rust: #a94f28;
-  --dl-rust-hi: #d4783f;
+  --dl-black: #100e0d;
+  --dl-black-hi: #302b2a;
+  --dl-rust: #b85f34;
+  --dl-rust-hi: #e38a52;
   --dl-green: #31d67b;
   --dl-red: #ef4d5f;
   overflow: hidden;
@@ -83,9 +83,15 @@
 .dl-books { stroke: #b77142; stroke-width: 5; }
 .dl-rug { fill: #303b50; }
 .dl-rug-lines { stroke: #50627e; stroke-width: 2; fill: none; }
-.dl-dog-black { fill: var(--dl-black); stroke: var(--dl-black-hi); stroke-width: 1; }
+.dl-dog-ink { fill: var(--dl-black); }
+.dl-dog-shadow { fill: var(--dl-black-hi); }
 .dl-rust { fill: var(--dl-rust); }
+.dl-rust-hi { fill: var(--dl-rust-hi); }
 .dl-eye { fill: #f3c96b; }
+
+.dl-doberman-reference {
+  shape-rendering: crispEdges;
+}
 
 .dl-dog-pose { display: none; }
 .dl-dog-motion { transform-box: view-box; }
