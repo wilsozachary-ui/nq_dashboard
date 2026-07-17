@@ -9,18 +9,19 @@ jest.mock('./AiSuggestedParametersPanel', () => () => <div data-testid="ai-param
 jest.mock('./MarketContextPanel', () => () => <div data-testid="market-context" />);
 jest.mock('./LiveTicker', () => () => <div data-testid="live-ticker" />);
 jest.mock('./ActivityPanel', () => () => <div data-testid="activity-panel" />);
-jest.mock('./DobermanLounge', () => () => <div data-testid="doberman-lounge" />);
 jest.mock('./MarketOverviewStrip', () => () => <div data-testid="market-overview" />);
 jest.mock('./TopstepAccountSelector', () => () => <div data-testid="account-selector" />);
 jest.mock('./PracticeBotStatus', () => () => <div data-testid="practice-status" />);
 
-test('renders Doberman Lounge immediately beneath Activity in the right column', () => {
+test('renders ticker and activity in the right column without the paused lounge', () => {
   cpGet.mockReturnValue(new Promise(() => {}));
   render(<MorningStrategyTab />);
+  const ticker = screen.getByTestId('live-ticker');
   const activity = screen.getByTestId('activity-panel');
-  const lounge = screen.getByTestId('doberman-lounge');
 
   expect(activity.parentElement).toHaveClass('column-right');
-  expect(lounge.parentElement).toBe(activity.parentElement);
-  expect(activity.nextElementSibling).toBe(lounge);
+  expect(ticker.parentElement).toBe(activity.parentElement);
+  expect(ticker.nextElementSibling).toBe(activity);
+  expect(activity.nextElementSibling).toBeNull();
+  expect(screen.queryByTestId('doberman-lounge')).not.toBeInTheDocument();
 });
