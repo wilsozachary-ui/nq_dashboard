@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { cpGet, cpPost } from '../services/controlPlaneApi';
+import { IconAdmin, IconLink, IconPulse } from './TabIcons';
 import './SettingsTab.css';
 
 export default function SettingsTab() {
@@ -17,6 +18,7 @@ export default function SettingsTab() {
   const [webhookError, setWebhookError] = useState(null);
   const [webhookSuccess, setWebhookSuccess] = useState(false);
   const [webhookBusy, setWebhookBusy] = useState(false);
+  const [showWebhook, setShowWebhook] = useState(false);
 
   const [credentialsSaved, setCredentialsSaved] = useState(false);
   const [showCredentialsForm, setShowCredentialsForm] = useState(false);
@@ -129,9 +131,27 @@ export default function SettingsTab() {
 
   return (
     <div className="tab-single-col set-tab">
-      <div className="card set-card">
-        <div className="panel-title">Login</div>
-        {email && <p className="set-email">Signed in as {email}</p>}
+      <header className="set-hero">
+        <div>
+          <span className="set-eyebrow">Account settings</span>
+          <h1 className="set-title">Security and notifications</h1>
+          <p className="set-hero-copy">Manage access to your dashboard, trading connection, and trade alerts.</p>
+        </div>
+        <div className="set-account-chip">
+          <span className="set-account-dot" />
+          <span>{email || 'Account connected'}</span>
+        </div>
+      </header>
+
+      <div className="set-grid">
+      <section className="card set-card set-card--login">
+        <div className="set-card-head">
+          <span className="set-card-icon"><IconAdmin /></span>
+          <div>
+            <div className="panel-title">Login security</div>
+            <p className="set-card-copy">Update the password used to access your NQ Cloud account.</p>
+          </div>
+        </div>
 
         <form onSubmit={handleChangePassword} className="set-form">
           <label className="set-label">
@@ -175,14 +195,25 @@ export default function SettingsTab() {
             {pwBusy ? 'Saving…' : 'Change password'}
           </button>
         </form>
-      </div>
+      </section>
 
-      <div className="card set-card">
-        <div className="panel-title">Topstep credentials</div>
+      <section className="card set-card set-card--credentials">
+        <div className="set-card-head">
+          <span className="set-card-icon"><IconLink /></span>
+          <div>
+            <div className="panel-title">Topstep credentials</div>
+            <p className="set-card-copy">Securely connect this bot to your Topstep account.</p>
+          </div>
+          <span className={`set-status ${credentialsSaved ? 'set-status--ready' : ''}`}>
+            {credentialsSaved ? 'On file' : 'Not set'}
+          </span>
+        </div>
         {!showCredentialsForm && (
           <>
-            <p className="set-email">
-              {credentialsSaved ? 'Platform credentials are on file.' : 'No platform credentials saved yet.'}
+            <p className="set-body-copy">
+              {credentialsSaved
+                ? 'Your credentials are encrypted and never displayed after saving.'
+                : 'Add your ProjectX API credentials before attempting to connect the bot.'}
             </p>
             <button
               type="button"
@@ -239,24 +270,43 @@ export default function SettingsTab() {
             </div>
           </form>
         )}
-      </div>
+      </section>
 
-      <div className="card set-card">
-        <div className="panel-title">Alerts</div>
+      <section className="card set-card set-card--alerts">
+        <div className="set-card-head">
+          <span className="set-card-icon"><IconPulse /></span>
+          <div>
+            <div className="panel-title">Trade alerts</div>
+            <p className="set-card-copy">Choose where completed-trade notifications are delivered.</p>
+          </div>
+        </div>
 
         <form onSubmit={handleSaveWebhook} className="set-form">
           <label className="set-label">
             Discord webhook URL
-            <input
-              type="url"
-              className="set-input"
-              value={webhookUrl}
-              onChange={e => { setWebhookUrl(e.target.value); setWebhookSuccess(false); }}
-              placeholder="https://discord.com/api/webhooks/..."
-              autoComplete="off"
-              disabled={webhookLoading}
-            />
+            <span className="set-secret-field">
+              <input
+                type={showWebhook ? 'url' : 'password'}
+                className="set-input set-input--secret"
+                value={webhookUrl}
+                onChange={e => { setWebhookUrl(e.target.value); setWebhookSuccess(false); }}
+                placeholder="https://discord.com/api/webhooks/..."
+                autoComplete="off"
+                disabled={webhookLoading}
+              />
+              <button
+                type="button"
+                className="set-reveal-btn"
+                aria-label={showWebhook ? 'Hide Discord webhook URL' : 'Show Discord webhook URL'}
+                aria-pressed={showWebhook}
+                onClick={() => setShowWebhook(value => !value)}
+                disabled={webhookLoading || !webhookUrl}
+              >
+                {showWebhook ? 'Hide' : 'Show'}
+              </button>
+            </span>
           </label>
+          <p className="set-hint">Hidden by default because a webhook URL grants permission to post to your Discord channel.</p>
           {webhookError && <p className="set-error">{webhookError}</p>}
           {webhookSuccess && <p className="set-success">Discord webhook updated.</p>}
           <button type="submit" className="set-btn" disabled={webhookBusy || webhookLoading}>
@@ -284,6 +334,7 @@ export default function SettingsTab() {
           </button>
         </div>
         {emailAlertsError && <p className="set-error">{emailAlertsError}</p>}
+      </section>
       </div>
     </div>
   );
