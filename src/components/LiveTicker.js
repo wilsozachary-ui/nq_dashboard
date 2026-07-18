@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import useBotData from '../hooks/useBotData';
 import useWebSocket from '../hooks/useWebSocket';
+import { isFuturesMarketOpenNow } from '../utils/marketOpenMode';
 import './LiveTicker.css';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -23,6 +24,10 @@ export default function LiveTicker() {
   const [pulsing,    setPulsing]    = useState(false);
   const [isLive,     setIsLive]     = useState(false);
   const [wsStatus,   setWsStatus]   = useState('connecting');
+  // Read directly on mount (not just via the change event below) so a page
+  // load during the weekend close shows the right state immediately,
+  // rather than only correcting itself on the next scheduler tick.
+  const [futuresOpen, setFuturesOpen] = useState(() => isFuturesMarketOpenNow());
 
   const pulseTimer  = useRef(null);
   const pendingRef  = useRef(null); // latest price awaiting the next throttled flush
@@ -84,6 +89,13 @@ export default function LiveTicker() {
     return () => window.removeEventListener('nq:market-open-mode', h);
   }, []);
 
+  // ── Futures weekly session (Fri 3pm CT - Sun 5pm CT close) ────────────────
+  useEffect(() => {
+    const h = e => setFuturesOpen(e.detail.open);
+    window.addEventListener('nq:futures-market-mode', h);
+    return () => window.removeEventListener('nq:futures-market-mode', h);
+  }, []);
+
   // ── Mount flag (checklist DOM/global check) ───────────────────────────────
   useEffect(() => { window.LiveTickerMounted = true; return () => { window.LiveTickerMounted = false; }; }, []);
 
@@ -104,13 +116,26 @@ export default function LiveTicker() {
           <h3 className="panel-title ltk-title">NQ Live Ticker</h3>
           {isLive && <span className="ltk-live-badge">● LIVE</span>}
         </div>
-        <span className={`ltk-ws ltk-ws--${wsStatus}`}>
-          <span className="ltk-ws-dot" />
-          {wsStatus === 'connected' ? 'Live' : 'Connecting…'}
-        </span>
+        {futuresOpen ? (
+          <span className={`ltk-ws ltk-ws--${wsStatus}`}>
+            <span className="ltk-ws-dot" />
+            {wsStatus === 'connected' ? 'Live' : 'Connecting…'}
+          </span>
+        ) : (
+          <span className="ltk-ws ltk-ws--closed">
+            <span className="ltk-ws-dot" />
+            Closed
+          </span>
+        )}
       </div>
 
       {/* ── Price display ────────────────────────────────────────────────── */}
+      {!futuresOpen ? (
+        <div className="ltk-price-section ltk-closed" aria-live="polite">
+          <div className="ltk-closed-text">Market Closed</div>
+          <div className="ltk-closed-hint">Reopens Sunday 5:00pm CT</div>
+        </div>
+      ) : (
       <div className="ltk-price-section" aria-live="polite" aria-label="Current NQ price">
         <div className={`ltk-price-row${pulsing ? ` ltk-price-row--pulse-${dir}` : ''}${isLive ? ' ltk-price-row--live' : ''}`}>
 
@@ -132,6 +157,7 @@ export default function LiveTicker() {
           )}
         </div>
       </div>
+      )}
 
     </div>
   );

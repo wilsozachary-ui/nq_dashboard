@@ -50,7 +50,13 @@ export default function TopstepAccountSelector({ strategy = 'morning', pollMs = 
             type: account.type,
             balance: Number(account.balance ?? account.cash ?? 0),
           };
-        }).filter(account => account.isVisible) : [];
+        // canTrade comes straight from Topstep's own account record --
+        // false for an account that's been cancelled or hit its max loss
+        // limit (MLL). Previously these still rendered, just grayed out
+        // with a "Not tradeable" badge; hidden entirely now since an
+        // account the bot can never actually use has no reason to occupy
+        // space in the picker.
+        }).filter(account => account.isVisible && account.canTrade) : [];
         setAccounts(normalized);
         // A poll started before a successful PUT may return afterward. Do
         // not let that stale GET roll the browser back to the old account
@@ -121,7 +127,7 @@ export default function TopstepAccountSelector({ strategy = 'morning', pollMs = 
     saveSelection(next);
   }, [selected, saveSelection]);
 
-  const selectAll = () => saveSelection(accounts.filter(account => account.canTrade).map(account => account.id));
+  const selectAll = () => saveSelection(accounts.map(account => account.id));
   const clearAll = () => saveSelection([]);
   const fmtBal = value => `$${value.toLocaleString('en-US')}`;
 
@@ -159,7 +165,7 @@ export default function TopstepAccountSelector({ strategy = 'morning', pollMs = 
               return (
                 <label
                   key={account.id}
-                  className={`tsa-item${checked ? ' tsa-item--checked' : ''}${account.canTrade ? '' : ' tsa-item--disabled'}`}
+                  className={`tsa-item${checked ? ' tsa-item--checked' : ''}`}
                   role="option"
                   aria-selected={checked}
                 >
@@ -167,7 +173,7 @@ export default function TopstepAccountSelector({ strategy = 'morning', pollMs = 
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggle(account.id)}
-                    disabled={!account.canTrade || selectionBusy}
+                    disabled={selectionBusy}
                     className="tsa-checkbox-input"
                   />
                   <span className={`tsa-check${checked ? ' tsa-check--on' : ''}`} aria-hidden="true">
@@ -181,7 +187,6 @@ export default function TopstepAccountSelector({ strategy = 'morning', pollMs = 
                       <span className={`tsa-type-badge${account.isPractice ? ' tsa-type-badge--practice' : ' tsa-type-badge--live'}`}>
                         {typeLabel}
                       </span>
-                      {!account.canTrade && <span className="tsa-disabled-badge">Not tradeable</span>}
                     </span>
                   </div>
                   <span className={`tsa-acc-balance${account.balance < 50_000 ? ' tsa-acc-balance--low' : ''}`}>

@@ -130,7 +130,12 @@ export default function SettingsTab() {
   return (
     <div className="tab-single-col set-tab">
       <div className="card set-card">
-        <div className="panel-title">Login</div>
+        <div className="set-card-header">
+          <div>
+            <div className="panel-title">Login</div>
+            <p className="set-card-subtitle">Your account credentials for nq-cloud.com.</p>
+          </div>
+        </div>
         {email && <p className="set-email">Signed in as {email}</p>}
 
         <form onSubmit={handleChangePassword} className="set-form">
@@ -178,12 +183,16 @@ export default function SettingsTab() {
       </div>
 
       <div className="card set-card">
-        <div className="panel-title">Topstep credentials</div>
+        <div className="set-card-header">
+          <div>
+            <div className="panel-title">Topstep credentials</div>
+            <p className="set-card-subtitle">Connects your bot to your Topstep/ProjectX account. Stored encrypted.</p>
+          </div>
+          {credentialsSaved && <span className="set-badge set-badge--ok">Connected</span>}
+        </div>
         {!showCredentialsForm && (
           <>
-            <p className="set-email">
-              {credentialsSaved ? 'Platform credentials are on file.' : 'No platform credentials saved yet.'}
-            </p>
+            {!credentialsSaved && <p className="set-email">No platform credentials saved yet.</p>}
             <button
               type="button"
               className="set-btn"
@@ -242,7 +251,12 @@ export default function SettingsTab() {
       </div>
 
       <div className="card set-card">
-        <div className="panel-title">Alerts</div>
+        <div className="set-card-header">
+          <div>
+            <div className="panel-title">Alerts</div>
+            <p className="set-card-subtitle">Where trade notifications get sent.</p>
+          </div>
+        </div>
 
         <form onSubmit={handleSaveWebhook} className="set-form">
           <label className="set-label">

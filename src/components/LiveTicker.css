@@ -65,6 +65,7 @@
 .ltk-ws--connected  .ltk-ws-dot { background: var(--color-green); }
 .ltk-ws--mock       .ltk-ws-dot { background: #64b5f6; }
 .ltk-ws--connecting .ltk-ws-dot { background: var(--color-amber); animation: ltkBlink 1s step-start infinite; }
+.ltk-ws--closed     .ltk-ws-dot { background: var(--color-text-muted); }
 
 @keyframes ltkBlink { 50% { opacity: 0; } }
 
@@ -73,6 +74,26 @@
   padding: 14px 14px 8px;
   display: flex;
   align-items: center;
+}
+
+/* ── Market closed state ─────────────────────────────────────────────────── */
+.ltk-closed {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding-bottom: 14px;
+}
+
+.ltk-closed-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.2px;
+}
+
+.ltk-closed-hint {
+  font-size: 11px;
+  color: var(--color-text-muted);
 }
 
 .ltk-price-row {

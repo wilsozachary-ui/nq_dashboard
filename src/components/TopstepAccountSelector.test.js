@@ -25,12 +25,15 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-test('All selects every tradeable funded/combine account and excludes locked accounts', async () => {
+test('All selects every tradeable funded/combine account; locked accounts never render at all', async () => {
   const { unmount } = render(<TopstepAccountSelector />);
   fireEvent.click(await screen.findByRole('button', { name: /Topstep Accounts/i }));
   expect(await screen.findByText('Funded')).toBeInTheDocument();
   expect(screen.getByText('Combine')).toBeInTheDocument();
-  expect(screen.getByText('Not tradeable')).toBeInTheDocument();
+  // A cancelled or MLL-locked account (can_trade: false) is hidden
+  // entirely, not shown grayed-out -- the bot can never use it either way.
+  expect(screen.queryByText('LOCKED')).not.toBeInTheDocument();
+  expect(screen.queryByText('Not tradeable')).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'All' }));
   await waitFor(() => {
@@ -43,7 +46,9 @@ test('loads the complete server selection instead of choosing only the first acc
   botApi.getAccountSelection.mockResolvedValue({ account_ids: ['11', '22'], revision: 7 });
   const { unmount } = render(<TopstepAccountSelector />);
   await waitFor(() => expect(window.topstepAccountsSelected).toEqual(['11', '22']));
-  expect(await screen.findByText('2/3')).toBeInTheDocument();
+  // 2/2, not 2/3 -- the locked account from the shared fixture is excluded
+  // from the visible/selectable total entirely.
+  expect(await screen.findByText('2/2')).toBeInTheDocument();
   unmount();
 });
 
