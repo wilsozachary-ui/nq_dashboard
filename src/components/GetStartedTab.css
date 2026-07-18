@@ -1,19 +1,106 @@
-/* ── GetStartedTab — prefix: gst- ─────────────────────────────────────────── */
+/* GetStartedTab — prefix: gst- */
 
 .gst-tab {
-  max-width: 860px;
+  width: min(100%, 980px);
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 8px 0 40px;
+  box-sizing: border-box;
+}
+
+.gst-hero {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 18px;
+  padding: 34px 38px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: radial-gradient(circle at 90% 10%, rgba(58, 199, 94, 0.14), transparent 34%), linear-gradient(135deg, var(--color-bg-raised), var(--color-bg-card));
+}
+
+.gst-hero::after {
+  content: '';
+  position: absolute;
+  top: -45px;
+  right: -32px;
+  width: 170px;
+  height: 170px;
+  border: 1px solid rgba(58, 199, 94, 0.16);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.gst-eyebrow {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--color-green);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.gst-title {
+  position: relative;
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: clamp(26px, 4vw, 38px);
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+}
+
+.gst-hero-copy {
+  position: relative;
+  max-width: 650px;
+  margin: 12px 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: 1.65;
 }
 
 .gst-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
+  padding: 28px 30px;
+}
+
+.gst-section-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 4px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.gst-section-number {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(58, 199, 94, 0.28);
+  border-radius: 10px;
+  background: rgba(58, 199, 94, 0.08);
+  color: var(--color-green);
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.05em;
+}
+
+.gst-section-copy {
+  margin: 5px 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
 }
 
 .gst-intro {
   color: var(--color-text-secondary);
   font-size: var(--text-body);
   margin: 0 0 4px;
+  line-height: 1.6;
 }
 
 .gst-subhead {
@@ -22,12 +109,18 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--color-text-muted);
-  margin-top: 8px;
+  margin-top: 14px;
 }
 
-.gst-tabs-list {
+.gst-tabs-list,
+.gst-faq-list,
+.gst-steps {
   display: flex;
   flex-direction: column;
+}
+
+.gst-tabs-list,
+.gst-steps {
   gap: 8px;
 }
 
@@ -35,8 +128,9 @@
   display: grid;
   grid-template-columns: 120px 1fr;
   gap: 12px;
-  padding: 8px 10px;
+  padding: 11px 13px;
   background: var(--color-bg-raised);
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
 }
 
@@ -55,9 +149,6 @@
 .gst-steps {
   margin: 0;
   padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   color: var(--color-text-secondary);
   font-size: var(--text-body);
   line-height: var(--lh-base);
@@ -69,50 +160,71 @@
 }
 
 .gst-faq-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  gap: 10px;
 }
 
 .gst-faq-item {
-  border-bottom: 1px solid var(--color-border-subtle);
-  padding: 10px 2px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 10px;
+  background: var(--color-bg-raised);
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
 }
 
-.gst-faq-item:last-child {
-  border-bottom: none;
+.gst-faq-item[open] {
+  border-color: rgba(58, 199, 94, 0.26);
+  background: rgba(58, 199, 94, 0.035);
 }
 
 .gst-faq-q {
   cursor: pointer;
-  font-size: var(--text-body);
-  font-weight: var(--fw-medium);
-  color: var(--color-text-primary);
   list-style: none;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 17px;
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--fw-medium);
 }
 
 .gst-faq-q::-webkit-details-marker {
   display: none;
 }
 
-.gst-faq-q::before {
-  content: '▸';
-  color: var(--color-text-muted);
-  font-size: 11px;
+.gst-faq-q::after {
+  content: '+';
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--color-bg-card);
+  color: var(--color-green);
+  font-size: 17px;
   transition: transform var(--dur-fast) var(--ease-out);
 }
 
-.gst-faq-item[open] .gst-faq-q::before {
-  transform: rotate(90deg);
+.gst-faq-item[open] .gst-faq-q::after {
+  transform: rotate(45deg);
 }
 
 .gst-faq-a {
-  margin: 8px 0 0 19px;
+  max-width: 780px;
+  margin: 0;
+  padding: 0 52px 17px 17px;
   color: var(--color-text-secondary);
   font-size: var(--text-sm);
-  line-height: var(--lh-base);
-  max-width: 700px;
+  line-height: 1.65;
+}
+
+@media (max-width: 720px) {
+  .gst-tab { padding-top: 0; }
+  .gst-hero { padding: 26px 22px; border-radius: var(--radius-md); }
+  .gst-card { padding: 22px 18px; }
+  .gst-tab-row { grid-template-columns: 1fr; gap: 4px; }
+  .gst-faq-q { padding: 14px; }
+  .gst-faq-a { padding: 0 44px 15px 14px; }
 }

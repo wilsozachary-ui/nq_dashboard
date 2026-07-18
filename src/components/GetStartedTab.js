@@ -69,11 +69,23 @@ export default function GetStartedTab() {
   return (
     <div className="tab-single-col gst-tab">
 
-      <div className="card gst-card">
-        <div className="panel-title">Get Started</div>
-        <p className="gst-intro">
-          A quick orientation to the dashboard and how a normal trading day works.
+      <header className="gst-hero">
+        <span className="gst-eyebrow">Help center</span>
+        <h1 className="gst-title">Get started with confidence</h1>
+        <p className="gst-hero-copy">
+          Everything you need to connect Topstep, prepare for the trading day,
+          and understand what the dashboard is telling you.
         </p>
+      </header>
+
+      <div className="card gst-card">
+        <div className="gst-section-heading">
+          <span className="gst-section-number">01</span>
+          <div>
+            <div className="panel-title">Setup and daily workflow</div>
+            <p className="gst-section-copy">Connect your account, learn the workspace, and prepare the bot before market open.</p>
+          </div>
+        </div>
 
         <div className="gst-subhead">Getting your ProjectX API key</div>
         <p className="gst-intro">
@@ -100,8 +112,14 @@ export default function GetStartedTab() {
         </ol>
       </div>
 
-      <div className="card gst-card">
-        <div className="panel-title">Frequently Asked Questions</div>
+      <div className="card gst-card gst-faq-card">
+        <div className="gst-section-heading">
+          <span className="gst-section-number">02</span>
+          <div>
+            <div className="panel-title">Frequently asked questions</div>
+            <p className="gst-section-copy">Clear answers to the questions that come up most often.</p>
+          </div>
+        </div>
         <div className="gst-faq-list">
           {FAQS.map(({ q, a }) => (
             <details className="gst-faq-item" key={q}>

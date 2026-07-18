@@ -31,15 +31,13 @@ class MultiStrategyFramework {
   async getStrategyConfig(strategyName, signal) {
     if (!availableStrategies.includes(strategyName)) throw new Error(`Unknown strategy: ${strategyName}`);
     const q = encodeURIComponent(strategyName);
-    const urls = [
-      `${API_ROOT}/topstep/strategy/config?name=${q}`,
-      `${API_ROOT}/topstep/risk/status?strategy=${q}`,
-      `${API_ROOT}/topstep/pnl/today?strategy=${q}`,
-      `${API_ROOT}/topstep/strategy/parameters?strategy=${q}`,
-    ];
-    const responses = await Promise.all(urls.map(url => integratedFetch(url, { signal })));
-    if (responses.some(response => !response.ok)) throw new Error('Failed to load strategy configuration');
-    const [config, risk, pnl, parameters] = await Promise.all(responses.map(response => response.json()));
+    const response = await integratedFetch(
+      `${API_ROOT}/topstep/strategy/bootstrap?strategy=${q}`,
+      { signal },
+      { startup: true },
+    );
+    if (!response.ok) throw new Error('Failed to load strategy configuration');
+    const { config, risk, pnl, parameters } = await response.json();
     return {
       ...unwrap(config, 'config'),
       risk: unwrap(risk, 'risk'),

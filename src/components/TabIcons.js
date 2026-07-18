@@ -113,6 +113,15 @@ export function IconAdmin() {
   );
 }
 
+export function IconLogout() {
+  return (
+    <svg {...BASE_PROPS}>
+      <path d="M7.2 3H4.4a1.8 1.8 0 0 0-1.8 1.8v8.4A1.8 1.8 0 0 0 4.4 15h2.8" />
+      <path d="M10.5 5.4 14.1 9l-3.6 3.6M14.1 9H6.8" />
+    </svg>
+  );
+}
+
 export function IconSun() {
   return (
     <svg {...BASE_PROPS}>

@@ -286,6 +286,10 @@ export function initializeWebSockets() {
   };
 }
 
+const LATENCY_WARNING_THRESHOLD_MS = 750;
+const STARTUP_LATENCY_GRACE_MS = 10_000;
+const moduleStartedAt = performance.now();
+
 export async function integratedFetch(pathOrUrl, options = {}, metadata = {}) {
   const started = performance.now();
   const remap = path => {
@@ -314,7 +318,10 @@ export async function integratedFetch(pathOrUrl, options = {}, metadata = {}) {
   try {
     const response = await fetch(url, fetchOptions);
     const elapsed = Math.round(performance.now() - started);
-    if (elapsed > 750) emitWarning('api_latency', `${options.method || 'GET'} ${path} took ${elapsed}ms`, { path, elapsed });
+    const warmingUp = performance.now() - moduleStartedAt < STARTUP_LATENCY_GRACE_MS;
+    if (elapsed > LATENCY_WARNING_THRESHOLD_MS && !warmingUp && !metadata.startup) {
+      emitWarning('api_latency', `${options.method || 'GET'} ${path} took ${elapsed}ms`, { path, elapsed });
+    }
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     publish({ type: 'rest:success', payload: { path, metadata, elapsed } });
     return response;

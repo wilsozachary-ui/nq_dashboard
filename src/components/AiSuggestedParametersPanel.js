@@ -33,7 +33,7 @@ export default function AiSuggestedParametersPanel() {
   const load = useCallback(() => {
     if (USE_MOCK) { setStatus('error'); return; }
     setStatus('loading');
-    integratedFetch(`${API_ROOT}/morning_strategy/ai/recommendations`)
+    integratedFetch(`${API_ROOT}/morning_strategy/ai/recommendations`, {}, { startup: true })
       .then(r => r.json())
       .then(envelope => {
         const data = envelope && envelope.data ? envelope.data : envelope;
