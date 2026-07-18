@@ -19,14 +19,17 @@ const CLOSE_H = 15; const CLOSE_M = 0;  // 15:00 CST
 const OPEN_MINS  = OPEN_H  * 60 + OPEN_M;
 const CLOSE_MINS = CLOSE_H * 60 + CLOSE_M;
 
-// NQ's weekly close: Friday 3:00pm CT through Sunday 5:00pm CT. Separate
+// NQ's weekly close: Friday 4:00pm CT through Sunday 5:00pm CT, plus the
+// regular Monday-Thursday 4:00-5:00pm CT maintenance halt. Separate
 // from the daily OPEN_MINS/CLOSE_MINS window above -- that's this bot's own
 // morning-strategy trading window (weekdays only), this is whether the
 // underlying futures market is in session at all. Conflating the two
 // previously showed "MARKET OPEN" on Saturday afternoon, since the daily
 // window's hour check never looked at the day of week.
-const FRI_CLOSE_MINS = 15 * 60;      // Friday 15:00 CT
+const FRI_CLOSE_MINS = 16 * 60;      // Friday 16:00 CT
 const SUN_OPEN_MINS  = 17 * 60;      // Sunday 17:00 CT
+const DAILY_HALT_START_MINS = 16 * 60;
+const DAILY_HALT_END_MINS   = 17 * 60;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function _getCSTParts() {
@@ -58,7 +61,7 @@ function _isFuturesMarketOpen() {
   if (weekday === 'Sat') return false;
   if (weekday === 'Fri') return mins < FRI_CLOSE_MINS;
   if (weekday === 'Sun') return mins >= SUN_OPEN_MINS;
-  return true; // Mon-Thu: always in session for this purpose
+  return mins < DAILY_HALT_START_MINS || mins >= DAILY_HALT_END_MINS;
 }
 
 function _notify() {
@@ -92,8 +95,8 @@ function _tick() {
 /** Current market-open mode state. */
 export function isMarketOpenModeActive() { return _active; }
 
-/** Whether NQ futures are in their regular weekly session right now
- * (i.e. NOT in the Friday 3pm CT - Sunday 5pm CT weekly close). Distinct
+/** Whether NQ futures are in their regular session right now
+ * (i.e. outside the weekend close and daily maintenance halt). Distinct
  * from isMarketOpenModeActive(), which is this bot's own narrower daily
  * 08:30-15:00 CT strategy window. Read directly (not just via the
  * 'nq:futures-market-mode' event) so a component can get the correct

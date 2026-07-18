@@ -49,6 +49,7 @@
 .shp-summary--ok   { background: var(--color-green-bg); color: var(--color-green-text); border-color: rgba(21,128,61,0.25); }
 .shp-summary--bad  { background: var(--color-red-bg);   color: var(--color-red-text);   border-color: rgba(185,28,28,0.25); }
 .shp-summary--warn { background: rgba(180,83,9,0.10);   color: var(--color-amber);      border-color: rgba(180,83,9,0.3); }
+.shp-summary--neutral { background: var(--color-surface-subtle); color: var(--color-text-muted); border-color: var(--color-border); }
 
 .shp-rows {
   display: flex;
@@ -78,6 +79,7 @@
 .shp-dot--bad     { background: var(--color-red);   box-shadow: 0 0 6px rgba(229,57,53,0.5); }
 .shp-dot--warn    { background: var(--color-amber); }
 .shp-dot--unknown { background: var(--color-text-dim); }
+.shp-dot--neutral { background: var(--color-text-muted); box-shadow: none; }
 
 .shp-label {
   flex: 1;
@@ -99,3 +101,4 @@
 .shp-detail--ok   { color: var(--color-green-text); }
 .shp-detail--bad  { color: var(--color-red-text); }
 .shp-detail--warn { color: var(--color-amber); }
+.shp-detail--neutral { color: var(--color-text-muted); }
