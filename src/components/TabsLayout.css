@@ -118,9 +118,7 @@
 /* Admin tab -- pushed to the very bottom, own divider, own accent color so
    it never reads as just another cockpit section. */
 .sidebar-tab--admin {
-  margin-top: auto;
-  padding-top: 13px;
-  border-top: 1px solid var(--color-border);
+  margin-top: 2px;
 }
 .sidebar-tab--admin:hover {
   color: var(--color-brand);
@@ -144,9 +142,8 @@
 
 /* ── Theme toggle — pinned to the very bottom of the sidebar ─────────────── */
 .sidebar-footer {
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid var(--color-border);
+  margin-top: 2px;
+  padding-top: 0;
   flex-shrink: 0;
 }
 

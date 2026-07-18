@@ -99,13 +99,14 @@ export default function TabsLayout({ children, isAdminInstance = false }) {
           {ACCOUNT_TABS.map(t => (
             <TabButton key={t.id} t={t} activeTab={activeTab} setActiveTab={setActiveTab} />
           ))}
-          {isAdminInstance && (
-            <TabButton t={ADMIN_TAB} activeTab={activeTab} setActiveTab={setActiveTab} extraClass="sidebar-tab--admin" />
-          )}
 
           <div className="sidebar-footer">
             <ThemeToggle />
           </div>
+
+          {isAdminInstance && (
+            <TabButton t={ADMIN_TAB} activeTab={activeTab} setActiveTab={setActiveTab} extraClass="sidebar-tab--admin" />
+          )}
         </nav>
 
         <div className="main-content">
