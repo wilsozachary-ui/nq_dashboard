@@ -237,6 +237,58 @@
 }
 .tsa-acc-balance--low { color: var(--color-amber); }
 
+/* Dismiss button on a normal account row -- lets a trader hide an account
+   Topstep's own app shows as failed/closed but whose Gateway API record
+   still reports canTrade/isVisible true. Only visible on hover/focus so it
+   doesn't compete with the balance for attention on every row. */
+.tsa-hide-btn {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-dim);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out),
+              background-color var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out);
+}
+.tsa-item:hover .tsa-hide-btn,
+.tsa-hide-btn:focus-visible {
+  opacity: 1;
+}
+.tsa-hide-btn:hover {
+  background: var(--color-red-bg, rgba(220,38,38,0.1));
+  color: var(--color-red);
+}
+
+/* ── Hidden-accounts management list ────────────────────────────────────── */
+.tsa-item--hidden-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px var(--space-md);
+  cursor: default;
+}
+.tsa-item--hidden-row + .tsa-item--hidden-row { border-top: 1px solid var(--color-border-subtle); }
+.tsa-item--hidden-row .tsa-acc-name { opacity: 0.75; }
+
+.tsa-empty-hint {
+  margin: 0;
+  padding: var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .tsa-panel-footer {
   padding: var(--space-sm) var(--space-md);

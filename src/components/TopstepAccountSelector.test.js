@@ -8,6 +8,8 @@ jest.mock('../services/botApi', () => ({
     getAccounts: jest.fn(),
     getAccountSelection: jest.fn(),
     saveAccountSelection: jest.fn(),
+    getHiddenAccounts: jest.fn(),
+    saveHiddenAccounts: jest.fn(),
   },
 }));
 
@@ -19,6 +21,8 @@ beforeEach(() => {
   ]);
   botApi.getAccountSelection.mockResolvedValue({ account_ids: [], revision: 0 });
   botApi.saveAccountSelection.mockResolvedValue({ account_ids: ['11', '22'], revision: 1 });
+  botApi.getHiddenAccounts.mockResolvedValue({ account_ids: [], revision: 0 });
+  botApi.saveHiddenAccounts.mockResolvedValue({ account_ids: [], revision: 1 });
 });
 
 afterEach(() => {
@@ -74,5 +78,50 @@ test('a stale polling response cannot overwrite a newer successful save', async 
     await Promise.resolve();
   });
   expect(window.topstepAccountsSelected).toEqual(['11', '22']);
+  unmount();
+});
+
+test('hiding an account removes it from the picker and, if selected, from the selection', async () => {
+  botApi.getAccountSelection.mockResolvedValue({ account_ids: ['11'], revision: 3 });
+  botApi.saveHiddenAccounts.mockResolvedValue({ account_ids: ['11'], revision: 1 });
+  botApi.saveAccountSelection.mockResolvedValue({ account_ids: [], revision: 4 });
+
+  const { unmount } = render(<TopstepAccountSelector />);
+  fireEvent.click(await screen.findByRole('button', { name: /Topstep Accounts/i }));
+  await screen.findByText('FUNDED-1');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Hide FUNDED-1' }));
+
+  await waitFor(() => {
+    expect(botApi.saveHiddenAccounts).toHaveBeenCalledWith(['11'], 0);
+  });
+  // Hiding a currently-selected account must also drop it from the live
+  // selection -- a dismissed account can't stay silently armed.
+  expect(botApi.saveAccountSelection).toHaveBeenCalledWith([], 3);
+  unmount();
+});
+
+test('a hidden account is excluded from the picker and listed in the manage-hidden panel', async () => {
+  botApi.getHiddenAccounts.mockResolvedValue({ account_ids: ['33'], revision: 2 });
+  // account 33 is otherwise tradeable here (unlike the LOCKED fixture) so
+  // this exercises hiding independent of canTrade/isVisible.
+  botApi.getAccounts.mockResolvedValue([
+    { account_id: 11, account_name: 'FUNDED-1', can_trade: true, is_visible: true, simulated: false },
+    { account_id: 33, account_name: 'FAILED-EVAL', can_trade: true, is_visible: true, simulated: true },
+  ]);
+
+  const { unmount } = render(<TopstepAccountSelector />);
+  fireEvent.click(await screen.findByRole('button', { name: /Topstep Accounts/i }));
+  await screen.findByText('FUNDED-1');
+  expect(screen.queryByText('FAILED-EVAL')).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Hidden (1)' }));
+  await screen.findByText('FAILED-EVAL');
+  expect(screen.queryByText('FUNDED-1')).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Unhide' }));
+  await waitFor(() => {
+    expect(botApi.saveHiddenAccounts).toHaveBeenCalledWith([], 2);
+  });
   unmount();
 });

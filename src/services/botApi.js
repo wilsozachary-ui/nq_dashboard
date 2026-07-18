@@ -244,6 +244,11 @@ const botApi = {
     account_ids: accountIds,
     expected_revision: expectedRevision,
   }, signal),
+  getHiddenAccounts: signal => get('/accounts/hidden', signal),
+  saveHiddenAccounts: (accountIds, expectedRevision, signal) => put('/accounts/hidden', {
+    account_ids: accountIds,
+    expected_revision: expectedRevision,
+  }, signal),
   getAccountSettings: signal => getFirst(['/testbot', '/strategy/parameters'], signal, {}),
   getPositions: async signal => {
     const t = await getTelemetry(signal);

@@ -16,15 +16,21 @@ function accountTypeLabel(account) {
 }
 
 export default function TopstepAccountSelector({ strategy = 'morning', pollMs = POLL_MS }) {
-  const [accounts, setAccounts] = useState([]);
+  const [allAccounts, setAllAccounts] = useState([]);
   const [open, setOpen] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
   const [selected, setSelected] = useState([]);
   const [selectionRevision, setSelectionRevision] = useState(0);
   const [selectionBusy, setSelectionBusy] = useState(false);
+  const [hiddenIds, setHiddenIds] = useState([]);
+  const [hiddenRevision, setHiddenRevision] = useState(0);
+  const [hiddenBusy, setHiddenBusy] = useState(false);
   const [accountsError, setAccountsError] = useState('');
   const rootRef = useRef(null);
   const selectionRevisionRef = useRef(0);
   const selectionBusyRef = useRef(false);
+  const hiddenRevisionRef = useRef(0);
+  const hiddenBusyRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -32,10 +38,12 @@ export default function TopstepAccountSelector({ strategy = 'morning', pollMs = 
 
     const refresh = async () => {
       const revisionWhenRequested = selectionRevisionRef.current;
+      const hiddenRevisionWhenRequested = hiddenRevisionRef.current;
       try {
-        const [data, serverSelection] = await Promise.all([
+        const [data, serverSelection, serverHidden] = await Promise.all([
           botApi.getAccounts(),
           botApi.getAccountSelection(),
+          botApi.getHiddenAccounts(),
         ]);
         if (!mounted) return;
         const normalized = Array.isArray(data) ? data.map((account, index) => {
@@ -55,9 +63,12 @@ export default function TopstepAccountSelector({ strategy = 'morning', pollMs = 
         // limit (MLL). Previously these still rendered, just grayed out
         // with a "Not tradeable" badge; hidden entirely now since an
         // account the bot can never actually use has no reason to occupy
-        // space in the picker.
+        // space in the picker. A trader-dismissed account (hiddenIds,
+        // separate state below) is filtered out the same way -- covers a
+        // Combine evaluation failure, which Topstep's own app shows but the
+        // Gateway API never exposes (canTrade/isVisible stay true).
         }).filter(account => account.isVisible && account.canTrade) : [];
-        setAccounts(normalized);
+        setAllAccounts(normalized);
         // A poll started before a successful PUT may return afterward. Do
         // not let that stale GET roll the browser back to the old account
         // set; the next poll will still pick up genuine cross-device edits.
@@ -68,6 +79,14 @@ export default function TopstepAccountSelector({ strategy = 'morning', pollMs = 
             ? serverSelection.account_ids.map(String)
             : []);
           setSelectionRevision(serverRevision);
+        }
+        if (!hiddenBusyRef.current && hiddenRevisionRef.current === hiddenRevisionWhenRequested) {
+          const serverHiddenRevision = Number(serverHidden?.revision) || 0;
+          hiddenRevisionRef.current = serverHiddenRevision;
+          setHiddenIds(Array.isArray(serverHidden?.account_ids)
+            ? serverHidden.account_ids.map(String)
+            : []);
+          setHiddenRevision(serverHiddenRevision);
         }
         setAccountsError('');
       } catch (error) {
@@ -80,6 +99,9 @@ export default function TopstepAccountSelector({ strategy = 'morning', pollMs = 
     refresh();
     return () => { mounted = false; if (timer) clearTimeout(timer); };
   }, [pollMs]);
+
+  const accounts = allAccounts.filter(account => !hiddenIds.includes(account.id));
+  const hiddenAccounts = allAccounts.filter(account => hiddenIds.includes(account.id));
 
   useEffect(() => {
     window.topstepAccountsSelected = selected;
@@ -131,6 +153,41 @@ export default function TopstepAccountSelector({ strategy = 'morning', pollMs = 
   const clearAll = () => saveSelection([]);
   const fmtBal = value => `$${value.toLocaleString('en-US')}`;
 
+  const saveHidden = useCallback(async next => {
+    if (hiddenBusy) return;
+    setHiddenBusy(true);
+    hiddenBusyRef.current = true;
+    try {
+      const saved = await botApi.saveHiddenAccounts(next, hiddenRevision);
+      setHiddenIds((saved.account_ids || []).map(String));
+      const savedRevision = Number(saved.revision) || 0;
+      hiddenRevisionRef.current = savedRevision;
+      setHiddenRevision(savedRevision);
+      setAccountsError('');
+    } catch (error) {
+      if (error.status === 409 && error.detail) {
+        setHiddenIds((error.detail.account_ids || []).map(String));
+        const currentRevision = Number(error.detail.revision) || 0;
+        hiddenRevisionRef.current = currentRevision;
+        setHiddenRevision(currentRevision);
+      }
+      setAccountsError(error.message || 'Hidden accounts could not be saved');
+    } finally {
+      hiddenBusyRef.current = false;
+      setHiddenBusy(false);
+    }
+  }, [hiddenBusy, hiddenRevision]);
+
+  const hideAccount = id => {
+    // A hidden account can't also stay selected -- nothing enforces that
+    // server-side (hiding is deliberately independent of tradeability), so
+    // drop it from the live selection here to avoid a dismissed account
+    // silently remaining armed.
+    if (selected.includes(id)) saveSelection(selected.filter(value => value !== id));
+    saveHidden([...hiddenIds, id]);
+  };
+  const unhideAccount = id => saveHidden(hiddenIds.filter(value => value !== id));
+
   return (
     <div className="tsa-root" ref={rootRef}>
       {accountsError && <span className="tsa-fetch-error" role="alert">{accountsError}</span>}
@@ -150,16 +207,51 @@ export default function TopstepAccountSelector({ strategy = 'morning', pollMs = 
       {open && (
         <div className="tsa-panel" role="dialog" aria-label="Account selection">
           <div className="tsa-panel-header">
-            <span className="tsa-panel-heading">Active Accounts</span>
+            <span className="tsa-panel-heading">{showHidden ? 'Hidden Accounts' : 'Active Accounts'}</span>
             <div className="tsa-header-actions">
-              <button className="tsa-link-btn" onClick={selectAll} disabled={selectionBusy}>All</button>
-              <span className="tsa-sep">·</span>
-              <button className="tsa-link-btn" onClick={clearAll} disabled={selectionBusy}>None</button>
+              {!showHidden && (
+                <>
+                  <button className="tsa-link-btn" onClick={selectAll} disabled={selectionBusy}>All</button>
+                  <span className="tsa-sep">·</span>
+                  <button className="tsa-link-btn" onClick={clearAll} disabled={selectionBusy}>None</button>
+                </>
+              )}
+              {hiddenAccounts.length > 0 && (
+                <>
+                  {!showHidden && <span className="tsa-sep">·</span>}
+                  <button className="tsa-link-btn" onClick={() => setShowHidden(value => !value)}>
+                    {showHidden ? 'Back' : `Hidden (${hiddenAccounts.length})`}
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="tsa-list" role="listbox" aria-multiselectable="true">
-            {accounts.map(account => {
+          <div className="tsa-list" role="listbox" aria-multiselectable={!showHidden}>
+            {showHidden ? (
+              hiddenAccounts.length === 0 ? (
+                <p className="tsa-empty-hint">No hidden accounts.</p>
+              ) : hiddenAccounts.map(account => (
+                <div key={account.id} className="tsa-item tsa-item--hidden-row">
+                  <div className="tsa-acc-info">
+                    <span className="tsa-acc-name">{account.name}</span>
+                    <span className="tsa-acc-meta">
+                      <span className={`tsa-type-badge${account.isPractice ? ' tsa-type-badge--practice' : ' tsa-type-badge--live'}`}>
+                        {accountTypeLabel(account)}
+                      </span>
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="tsa-link-btn"
+                    onClick={() => unhideAccount(account.id)}
+                    disabled={hiddenBusy}
+                  >
+                    Unhide
+                  </button>
+                </div>
+              ))
+            ) : accounts.map(account => {
               const checked = selected.includes(account.id);
               const typeLabel = accountTypeLabel(account);
               return (
@@ -192,13 +284,27 @@ export default function TopstepAccountSelector({ strategy = 'morning', pollMs = 
                   <span className={`tsa-acc-balance${account.balance < 50_000 ? ' tsa-acc-balance--low' : ''}`}>
                     {fmtBal(account.balance)}
                   </span>
+                  <button
+                    type="button"
+                    className="tsa-hide-btn"
+                    title={`Hide ${account.name} from this picker`}
+                    aria-label={`Hide ${account.name}`}
+                    onClick={event => { event.preventDefault(); event.stopPropagation(); hideAccount(account.id); }}
+                    disabled={selectionBusy || hiddenBusy}
+                  >
+                    ×
+                  </button>
                 </label>
               );
             })}
           </div>
 
           <div className="tsa-panel-footer">
-            <span className="tsa-apply-label">Selection applies to all strategies and devices</span>
+            <span className="tsa-apply-label">
+              {showHidden
+                ? 'Hidden accounts never appear in the picker or count toward selection.'
+                : 'Selection applies to all strategies and devices'}
+            </span>
           </div>
         </div>
       )}
