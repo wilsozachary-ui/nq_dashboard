@@ -1,9 +1,11 @@
 import { useState, createContext, useContext } from 'react';
 import {
   IconTrend, IconLink, IconPulse, IconCalendar, IconInsights, IconChecklist, IconHelp,
-  IconSubscription, IconSettings, IconAdmin,
+  IconSubscription, IconSettings, IconAdmin, IconLogout,
 } from './TabIcons';
 import ThemeToggle from './ThemeToggle';
+import { getDashboardConfig } from '../services/controlPlaneApi';
+import { clearSessionToken } from '../services/sessionToken';
 import logo from '../assets/logo.png';
 import './TabsLayout.css';
 
@@ -82,6 +84,12 @@ function TabButton({ t, activeTab, setActiveTab, extraClass = '' }) {
 export default function TabsLayout({ children, isAdminInstance = false }) {
   const [activeTab, setActiveTab] = useState('morning');
 
+  const logout = async () => {
+    const config = await getDashboardConfig();
+    clearSessionToken();
+    window.location.assign(config.control_plane_url || 'https://nq-cloud.com');
+  };
+
   return (
     <TabContext.Provider value={{ activeTab, setActiveTab }}>
       <div className="tbl-root">
@@ -107,6 +115,11 @@ export default function TabsLayout({ children, isAdminInstance = false }) {
           {isAdminInstance && (
             <TabButton t={ADMIN_TAB} activeTab={activeTab} setActiveTab={setActiveTab} extraClass="sidebar-tab--admin" />
           )}
+
+          <button type="button" className="sidebar-tab sidebar-tab--logout" onClick={logout}>
+            <span className="sidebar-tab-icon" aria-hidden="true"><IconLogout /></span>
+            <span className="sidebar-tab-label">Logout</span>
+          </button>
         </nav>
 
         <div className="main-content">

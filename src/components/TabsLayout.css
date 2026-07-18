@@ -127,6 +127,15 @@
   color: var(--color-brand);
 }
 
+.sidebar-tab--logout {
+  margin-top: 2px;
+}
+
+.sidebar-tab--logout:hover {
+  color: var(--color-red);
+  background: var(--color-red-bg, rgba(220, 38, 38, 0.08));
+}
+
 .sidebar-tab-badge {
   margin-left: auto;
   font-size: 9px;
