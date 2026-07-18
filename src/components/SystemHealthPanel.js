@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import botApi from '../services/botApi';
 import { getDashboardConfig } from '../services/controlPlaneApi';
 import { getSessionToken } from '../services/sessionToken';
+import { isFuturesMarketOpenNow } from '../utils/marketOpenMode';
 import './SystemHealthPanel.css';
 
 // ── System Health — a live, always-real operational status board ───────────
@@ -22,8 +23,8 @@ function fmtMs(ms) {
   return abs < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`;
 }
 
-function stateOf({ ok, warn }) {
-  return ok == null ? 'unknown' : warn ? 'warn' : ok ? 'ok' : 'bad';
+function stateOf({ ok, warn, neutral }) {
+  return neutral ? 'neutral' : ok == null ? 'unknown' : warn ? 'warn' : ok ? 'ok' : 'bad';
 }
 
 function StatusRow({ label, ok, detail, warn }) {
@@ -41,16 +42,17 @@ function StatusRow({ label, ok, detail, warn }) {
 // issue(s)") so the customer doesn't have to read every row to know
 // whether that section needs attention -- same pattern as the Admin tab's
 // "Bot containers" card badge.
-function SectionCard({ title, rows }) {
+function SectionCard({ title, rows, summaryOverride }) {
   const states = rows.map(stateOf);
   const badTotal = states.filter(s => s === 'bad').length;
   const warnTotal = states.filter(s => s === 'warn').length;
   const unknownTotal = states.filter(s => s === 'unknown').length;
-  const summary =
+  const summary = summaryOverride || (
     unknownTotal === rows.length ? { cls: '', text: 'Connecting…' }
       : badTotal > 0    ? { cls: 'shp-summary--bad',  text: `${badTotal} issue${badTotal === 1 ? '' : 's'}` }
       : warnTotal > 0   ? { cls: 'shp-summary--warn', text: `${warnTotal} warning${warnTotal === 1 ? '' : 's'}` }
-      : { cls: 'shp-summary--ok', text: 'All OK' };
+      : { cls: 'shp-summary--ok', text: 'All OK' }
+  );
 
   return (
     <div className="card shp-card">
@@ -77,9 +79,16 @@ export default function SystemHealthPanel() {
   // A captured per-login token exists only in a cloud dashboard opened
   // through NQ Cloud; /dashboard-config intentionally contains no token.
   const [isCloud, setIsCloud] = useState(false);
+  const [futuresMarketOpen, setFuturesMarketOpen] = useState(isFuturesMarketOpenNow);
 
   useEffect(() => {
     getDashboardConfig().then(() => setIsCloud(Boolean(getSessionToken()))).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const handler = event => setFuturesMarketOpen(Boolean(event.detail?.open));
+    window.addEventListener('nq:futures-market-mode', handler);
+    return () => window.removeEventListener('nq:futures-market-mode', handler);
   }, []);
 
   useEffect(() => {
@@ -149,14 +158,20 @@ export default function SystemHealthPanel() {
     },
     {
       label: 'Feed Freshness',
-      ok: telemetry != null ? !feedStale : null,
-      warn: feedStale,
-      detail: tickAgeMs != null ? (feedStale ? `Stale — ${fmtMs(tickAgeMs)}` : `Fresh — ${fmtMs(tickAgeMs)}`) : '—',
+      ok: telemetry != null ? (!futuresMarketOpen || !feedStale) : null,
+      warn: futuresMarketOpen && feedStale,
+      neutral: telemetry != null && !futuresMarketOpen,
+      detail: !futuresMarketOpen
+        ? (tickAgeMs != null ? `Market closed — last tick ${fmtMs(tickAgeMs)} ago` : 'Market closed')
+        : tickAgeMs != null ? (feedStale ? `Stale — ${fmtMs(tickAgeMs)}` : `Fresh — ${fmtMs(tickAgeMs)}`) : '—',
     },
     {
       label: 'Live Price',
       ok: price != null,
-      detail: price != null ? price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—',
+      neutral: price != null && !futuresMarketOpen,
+      detail: price != null
+        ? `${!futuresMarketOpen ? 'Cached — ' : ''}${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : '—',
     },
   ];
 
@@ -193,7 +208,11 @@ export default function SystemHealthPanel() {
   return (
     <div className="shp-grid">
       <SectionCard title="Connectivity" rows={connectivityRows} />
-      <SectionCard title="Market Feed" rows={marketFeedRows} />
+      <SectionCard
+        title="Market Feed"
+        rows={marketFeedRows}
+        summaryOverride={!futuresMarketOpen ? { cls: 'shp-summary--neutral', text: 'Market Closed' } : null}
+      />
       <SectionCard title="Risk &amp; Safeguards" rows={riskRows} />
     </div>
   );
