@@ -76,29 +76,99 @@ function confidenceLabel(c) {
   return { label: 'Low', cls: 'aic-confidence--low' };
 }
 
+// ── A single two-way split, e.g. Continuation vs Reversal or High First vs
+// Low First -- one proportional bar reads at a glance where two separate
+// percentage tiles required doing the comparison in your head. Both
+// segments are always direct-labeled (only ever 2 categories), so the
+// color pairing is identity, never the only way to tell them apart.
+function ProportionBar({ leftLabel, leftValue, rightLabel, rightValue }) {
+  if (leftValue == null && rightValue == null) return null;
+  const left = leftValue ?? 0;
+  const right = rightValue ?? 0;
+  const total = left + right;
+  const leftPct = total > 0 ? (left / total) * 100 : 50;
+  const rightPct = 100 - leftPct;
+  return (
+    <div className="aic-proportion">
+      <div className="aic-proportion-track" role="img" aria-label={`${leftLabel} ${fmtPct(leftValue)}, ${rightLabel} ${fmtPct(rightValue)}`}>
+        {leftPct > 0 && (
+          <span
+            className="aic-proportion-segment aic-proportion-segment--a"
+            style={{ width: `${leftPct}%` }}
+            title={`${leftLabel}: ${fmtPct(leftValue)}`}
+          />
+        )}
+        {rightPct > 0 && (
+          <span
+            className="aic-proportion-segment aic-proportion-segment--b"
+            style={{ width: `${rightPct}%` }}
+            title={`${rightLabel}: ${fmtPct(rightValue)}`}
+          />
+        )}
+      </div>
+      <div className="aic-proportion-legend">
+        <span className="aic-proportion-legend-item aic-proportion-legend-item--a">
+          <span className="aic-proportion-swatch aic-proportion-swatch--a" aria-hidden="true" />
+          {leftLabel} <b>{fmtPct(leftValue)}</b>
+        </span>
+        <span className="aic-proportion-legend-item aic-proportion-legend-item--b">
+          <span className="aic-proportion-swatch aic-proportion-swatch--b" aria-hidden="true" />
+          {rightLabel} <b>{fmtPct(rightValue)}</b>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── Overview: aggregate sample size/confidence/continuation-reversal rate ──
 function OverviewCard({ rec }) {
   if (!rec) return null;
+  const conf = confidenceLabel(rec.confidence);
   return (
     <div className="card aic-overview">
-      <div className="aic-overview-header">
+      <div className="aic-card-header">
         <span className="panel-title">Recommendation Evidence Overview</span>
+        <span className={`aic-confidence-badge ${conf.cls}`}>{conf.label} confidence</span>
       </div>
       {rec.summary && <p className="aic-note">{rec.summary}</p>}
       {rec.data_quality_warning && (
         <div className="aic-warning">⚠️ {rec.data_quality_warning}</div>
       )}
-      <div className="aic-overview-grid">
-        <div className="aic-stat"><span className="aic-stat-label">Confidence</span><span className="aic-stat-value">{fmtPct(rec.confidence)}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">Sample</span><span className="aic-stat-value">{fmtCount(rec.sample_count)}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">Comparable</span><span className="aic-stat-value">{fmtCount(rec.comparable_day_count)}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">10s Avg Range</span><span className="aic-stat-value">{fmtPoints(rec.avg_range_10s_points)}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">1m Avg Range</span><span className="aic-stat-value">{fmtPoints(rec.avg_range_1m_points)}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">Continuation</span><span className="aic-stat-value">{fmtPct(rec.continuation_rate)}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">Reversal</span><span className="aic-stat-value">{fmtPct(rec.reversal_rate)}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">High First</span><span className="aic-stat-value">{rec.high_first_count ?? '—'}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">Low First</span><span className="aic-stat-value">{rec.low_first_count ?? '—'}</span></div>
+
+      <div className="aic-meta-row">
+        <span className="aic-meta-item"><span className="aic-meta-label">Confidence</span> {fmtPct(rec.confidence)}</span>
+        <span className="aic-meta-item"><span className="aic-meta-label">Sample</span> {fmtCount(rec.sample_count)}</span>
+        <span className="aic-meta-item"><span className="aic-meta-label">Comparable</span> {fmtCount(rec.comparable_day_count)}</span>
       </div>
+
+      <div className="aic-pair-stats">
+        <div className="aic-stat">
+          <span className="aic-stat-label">10s Avg Range</span>
+          <span className="aic-stat-value">{fmtPoints(rec.avg_range_10s_points)}</span>
+        </div>
+        <div className="aic-stat">
+          <span className="aic-stat-label">1m Avg Range</span>
+          <span className="aic-stat-value">{fmtPoints(rec.avg_range_1m_points)}</span>
+        </div>
+      </div>
+
+      <div className="aic-section">
+        <span className="aic-section-label">Continuation vs. Reversal</span>
+        <ProportionBar
+          leftLabel="Continuation" leftValue={rec.continuation_rate}
+          rightLabel="Reversal" rightValue={rec.reversal_rate}
+        />
+      </div>
+
+      {(rec.high_first_count != null || rec.low_first_count != null) && (
+        <div className="aic-section">
+          <span className="aic-section-label">High First vs. Low First</span>
+          <div className="aic-count-split">
+            <span><b>{rec.high_first_count ?? '—'}</b> days high first</span>
+            <span><b>{rec.low_first_count ?? '—'}</b> days low first</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -110,7 +180,7 @@ function TodayCandleCard({ summary, status }) {
 
   return (
     <div className="card aic-today-candle">
-      <div className="aic-overview-header">
+      <div className="aic-card-header">
         <span className="panel-title">Today's Opening Candle</span>
       </div>
 
@@ -126,9 +196,18 @@ function TodayCandleCard({ summary, status }) {
             <div className="aic-warning">⚠️ Recording was incomplete for today's window — figures below are partial.</div>
           )}
 
-          <div className="aic-today-section">
-            <span className="aic-today-section-label">First 10 Seconds (Decision Window)</span>
-            <div className="aic-overview-grid">
+          {oneMinute && (
+            <div className="aic-headline">
+              <span className="aic-headline-value">{fmtPoints(oneMinute.range_points)}</span>
+              <span className="aic-headline-label">
+                08:30 candle range · body {fmtPoints(oneMinute.body_points)} · closed {fmtPct(oneMinute.close_location_pct)} up its range
+              </span>
+            </div>
+          )}
+
+          <div className="aic-section">
+            <span className="aic-section-label">First 10 Seconds (Decision Window)</span>
+            <div className="aic-pair-stats aic-pair-stats--wrap">
               <div className="aic-stat"><span className="aic-stat-label">Range</span><span className="aic-stat-value">{fmtPoints(candle.range_points)}</span></div>
               <div className="aic-stat"><span className="aic-stat-label">Move</span><span className="aic-stat-value">{fmtSignedPoints(candle.signed_move_points)}</span></div>
               <div className="aic-stat"><span className="aic-stat-label">Extreme First</span><span className="aic-stat-value">{candle.extreme_first ?? '—'}</span></div>
@@ -137,23 +216,20 @@ function TodayCandleCard({ summary, status }) {
           </div>
 
           {oneMinute && (
-            <div className="aic-today-section">
-              <span className="aic-today-section-label">Completed 08:30 Candle (One Minute)</span>
-              <div className="aic-overview-grid">
-                <div className="aic-stat"><span className="aic-stat-label">Range</span><span className="aic-stat-value">{fmtPoints(oneMinute.range_points)}</span></div>
-                <div className="aic-stat"><span className="aic-stat-label">Body</span><span className="aic-stat-value">{fmtPoints(oneMinute.body_points)}</span></div>
+            <div className="aic-section">
+              <span className="aic-section-label">Completed 08:30 Candle (One Minute)</span>
+              <div className="aic-pair-stats aic-pair-stats--wrap">
                 <div className="aic-stat"><span className="aic-stat-label">Upper Wick</span><span className="aic-stat-value">{fmtPoints(oneMinute.upper_wick_points)}</span></div>
                 <div className="aic-stat"><span className="aic-stat-label">Lower Wick</span><span className="aic-stat-value">{fmtPoints(oneMinute.lower_wick_points)}</span></div>
-                <div className="aic-stat"><span className="aic-stat-label">Close Location</span><span className="aic-stat-value">{fmtPct(oneMinute.close_location_pct)}</span></div>
                 <div className="aic-stat"><span className="aic-stat-label">Tick Count</span><span className="aic-stat-value">{oneMinute.tick_count ?? '—'}</span></div>
               </div>
             </div>
           )}
 
           {summary?.trade && (
-            <div className="aic-today-section">
-              <span className="aic-today-section-label">Today's Trade</span>
-              <div className="aic-overview-grid">
+            <div className="aic-section">
+              <span className="aic-section-label">Today's Trade</span>
+              <div className="aic-pair-stats aic-pair-stats--wrap">
                 <div className="aic-stat"><span className="aic-stat-label">Entry</span><span className="aic-stat-value">{summary.trade.entry_price ?? '—'}</span></div>
                 <div className="aic-stat"><span className="aic-stat-label">Exit</span><span className="aic-stat-value">{summary.trade.exit_price ?? '—'}</span></div>
                 <div className="aic-stat"><span className="aic-stat-label">Realized P&amp;L</span><span className="aic-stat-value">{fmtDollars(summary.realized_pnl)}</span></div>
@@ -162,6 +238,48 @@ function TodayCandleCard({ summary, status }) {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+// ── At-a-glance comparison of avg opening range across the 5 trading
+// weekdays -- previously this comparison only existed in your head, by
+// scanning five separate card headlines scattered across a grid. One hue
+// (range is a magnitude, not an identity); today's bar is the one
+// identity worth calling out, so it alone gets the accent treatment.
+function WeekdayRangeChart({ cards }) {
+  const withRange = cards.filter(c => c.avg_range_points != null);
+  if (withRange.length === 0) return null;
+  const max = Math.max(...withRange.map(c => c.avg_range_points), 0.01);
+  const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+  return (
+    <div className="card aic-range-chart">
+      <div className="aic-card-header">
+        <span className="panel-title">Avg Opening Range by Weekday</span>
+      </div>
+      <div className="aic-range-chart-body">
+        {cards.map(card => {
+          const value = card.avg_range_points;
+          const isToday = card.weekday === todayName;
+          const pct = value != null ? Math.max((value / max) * 100, 4) : 0;
+          return (
+            <div key={card.weekday} className="aic-range-chart-row">
+              <span className="aic-range-chart-label">{card.weekday.slice(0, 3)}</span>
+              <span className="aic-range-chart-track">
+                {value != null && (
+                  <span
+                    className={`aic-range-chart-bar${isToday ? ' aic-range-chart-bar--today' : ''}`}
+                    style={{ width: `${pct}%` }}
+                    title={`${card.weekday}: ${fmtPoints(value)} avg range`}
+                  />
+                )}
+              </span>
+              <span className="aic-range-chart-value">{value != null ? fmtPoints(value) : '—'}</span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -184,14 +302,23 @@ function WeekdayCard({ card }) {
 
       <p className="aic-note">{card.note}</p>
 
-      <div className="aic-grid">
-        <div className="aic-stat"><span className="aic-stat-label">Spread</span><span className="aic-stat-value">{fmtPoints(card.recommended_spread_points)}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">Take Profit</span><span className="aic-stat-value">{fmtDollars(card.recommended_tp_dollars)}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">Stop Loss</span><span className="aic-stat-value">{fmtDollars(card.recommended_sl_dollars)}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">Trailing</span><span className="aic-stat-value">{fmtPoints(card.recommended_trailing_points)}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">Contract Size</span><span className="aic-stat-value">{card.recommended_contract_size ?? '—'}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">Win Rate</span><span className="aic-stat-value">{fmtPct(card.win_rate)}</span></div>
-        <div className="aic-stat"><span className="aic-stat-label">Avg VIX</span><span className="aic-stat-value">{fmtVix(card.avg_vix)}</span></div>
+      <div className="aic-section">
+        <span className="aic-section-label">Suggested Parameters</span>
+        <div className="aic-grid">
+          <div className="aic-stat"><span className="aic-stat-label">Spread</span><span className="aic-stat-value">{fmtPoints(card.recommended_spread_points)}</span></div>
+          <div className="aic-stat"><span className="aic-stat-label">Take Profit</span><span className="aic-stat-value">{fmtDollars(card.recommended_tp_dollars)}</span></div>
+          <div className="aic-stat"><span className="aic-stat-label">Stop Loss</span><span className="aic-stat-value">{fmtDollars(card.recommended_sl_dollars)}</span></div>
+          <div className="aic-stat"><span className="aic-stat-label">Trailing</span><span className="aic-stat-value">{fmtPoints(card.recommended_trailing_points)}</span></div>
+          <div className="aic-stat"><span className="aic-stat-label">Contract Size</span><span className="aic-stat-value">{card.recommended_contract_size ?? '—'}</span></div>
+        </div>
+      </div>
+
+      <div className="aic-section aic-section--muted">
+        <span className="aic-section-label">Context</span>
+        <div className="aic-grid">
+          <div className="aic-stat"><span className="aic-stat-label">Win Rate</span><span className="aic-stat-value">{fmtPct(card.win_rate)}</span></div>
+          <div className="aic-stat"><span className="aic-stat-label">Avg VIX</span><span className="aic-stat-value">{fmtVix(card.avg_vix)}</span></div>
+        </div>
       </div>
 
       {card.avg_vix_wins != null && card.avg_vix_losses != null && (
@@ -283,6 +410,12 @@ export default function AiInsightsTab() {
       )}
       {status === 'error' && !cards && (
         <div className="aic-empty aic-empty--error">AI Insights unavailable right now.</div>
+      )}
+
+      {cards && cards.length > 0 && (
+        <div className="aic-chart-row">
+          <WeekdayRangeChart cards={cards} />
+        </div>
       )}
 
       {cards && (

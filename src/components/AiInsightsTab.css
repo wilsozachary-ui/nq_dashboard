@@ -48,30 +48,65 @@
   gap: var(--space-sm);
 }
 
-.aic-overview-header {
+/* ── Card header (reused by weekday cards, Overview, Today's Candle) ────── */
+.aic-card-header {
   display: flex;
   align-items: center;
+  gap: var(--space-sm);
 }
 
-.aic-overview-grid {
+/* ── Confidence badge (Overview) vs. plain confidence text (weekday cards) ── */
+.aic-confidence-badge {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.aic-confidence-badge.aic-confidence--high   { color: var(--color-green-text); background: rgba(76,175,80,0.12); border-color: rgba(76,175,80,0.3); }
+.aic-confidence-badge.aic-confidence--medium { color: var(--color-amber);      background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); }
+.aic-confidence-badge.aic-confidence--low    { color: var(--color-text-dim);   background: var(--color-bg-raised); border-color: var(--color-border-subtle); }
+
+/* ── Meta row (sample/comparable counts — supporting text, not stat tiles) ── */
+.aic-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+.aic-meta-label {
+  color: var(--color-text-muted);
+  margin-right: 3px;
+}
+
+/* ── Paired/wrapped stat rows ─────────────────────────────────────────────── */
+.aic-pair-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-sm) var(--space-md);
 }
+.aic-pair-stats--wrap {
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+}
 
-.aic-today-section {
+/* ── Named sub-section within a card ─────────────────────────────────────── */
+.aic-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   padding-top: var(--space-sm);
   border-top: 1px solid var(--color-border-subtle);
 }
-.aic-today-section:first-of-type {
+.aic-section:first-of-type {
   border-top: none;
   padding-top: 0;
 }
+.aic-section--muted { opacity: 0.82; }
 
-.aic-today-section-label {
+.aic-section-label {
   font-size: var(--text-xs);
   font-weight: var(--fw-semibold);
   letter-spacing: 0.03em;
@@ -85,6 +120,7 @@
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: var(--space-lg);
   padding: var(--space-lg);
+  padding-top: 0;
 }
 
 .aic-card {
@@ -96,12 +132,6 @@
 .aic-card--today {
   border-color: rgba(76,175,80,0.4);
   box-shadow: var(--shadow-card), 0 0 0 1px rgba(76,175,80,0.12);
-}
-
-.aic-card-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
 }
 
 .aic-weekday {
@@ -160,8 +190,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-sm) var(--space-md);
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--color-border-subtle);
 }
 
 .aic-stat {
@@ -193,3 +221,114 @@
 }
 .aic-vix-split-item--win  { color: var(--color-green-text); }
 .aic-vix-split-item--loss { color: var(--color-red-text); }
+
+/* ── Two-way proportion bar (Continuation vs Reversal) ───────────────────── */
+.aic-proportion {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.aic-proportion-track {
+  display: flex;
+  width: 100%;
+  height: 8px;
+  gap: 2px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--color-bg-raised);
+}
+
+.aic-proportion-segment {
+  height: 100%;
+  min-width: 3px;
+}
+.aic-proportion-segment--a { background: var(--color-blue); }
+.aic-proportion-segment--b { background: var(--color-amber); }
+
+.aic-proportion-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+.aic-proportion-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.aic-proportion-legend-item b { color: var(--color-text); font-weight: var(--fw-semibold); }
+
+.aic-proportion-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.aic-proportion-swatch--a { background: var(--color-blue); }
+.aic-proportion-swatch--b { background: var(--color-amber); }
+
+.aic-count-split {
+  display: flex;
+  gap: var(--space-md);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+.aic-count-split b { color: var(--color-text); font-weight: var(--fw-semibold); }
+
+/* ── Weekday avg-range comparison chart ──────────────────────────────────── */
+.aic-chart-row {
+  padding: 0 var(--space-lg) var(--space-lg);
+}
+
+.aic-range-chart-body {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.aic-range-chart-row {
+  display: grid;
+  grid-template-columns: 34px 1fr 64px;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.aic-range-chart-label {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.aic-range-chart-track {
+  display: block;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--color-bg-raised);
+  overflow: hidden;
+}
+
+.aic-range-chart-bar {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: rgba(76,175,80,0.45);
+  transition: width 0.2s ease-out;
+}
+.aic-range-chart-bar--today {
+  background: var(--color-green);
+}
+
+.aic-range-chart-value {
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  text-align: right;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 520px) {
+  .aic-range-chart-row { grid-template-columns: 30px 1fr 56px; }
+  .aic-pair-stats,
+  .aic-grid { grid-template-columns: 1fr 1fr; }
+}

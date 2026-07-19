@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import AiInsightsTab from './AiInsightsTab';
 import botApi from '../services/botApi';
 
@@ -62,8 +62,8 @@ test('shows todays completed candle once available, including one-minute body/wi
   render(<AiInsightsTab />);
   await screen.findByText('Completed 08:30 Candle (One Minute)');
 
-  expect(screen.getByText('17.25 pts')).toBeInTheDocument(); // one-minute range
-  expect(screen.getByText('7.75 pts')).toBeInTheDocument(); // body
+  expect(screen.getByText('17.25 pts')).toBeInTheDocument(); // one-minute range (headline)
+  expect(screen.getByText(/body 7\.75 pts/)).toBeInTheDocument(); // body, in the headline sentence
   expect(screen.getByText('First 10 Seconds (Decision Window)')).toBeInTheDocument();
 });
 
@@ -97,4 +97,35 @@ test('still renders the weekday cards section alongside the new overview', async
   });
   render(<AiInsightsTab />);
   await waitFor(() => expect(screen.getByText('Monday')).toBeInTheDocument());
+});
+
+test('renders the avg-opening-range comparison chart across weekdays', async () => {
+  botApi.getWeekdayInsights.mockResolvedValue({
+    weekdays: [
+      { weekday: 'Monday', sample_days: 3, confidence: 0.5, note: 'n', avg_range_points: 18.4 },
+      { weekday: 'Tuesday', sample_days: 2, confidence: 0.4, note: 'n', avg_range_points: 12.1 },
+    ],
+  });
+  render(<AiInsightsTab />);
+  const heading = await screen.findByText('Avg Opening Range by Weekday');
+  const chart = within(heading.closest('.aic-range-chart'));
+  expect(chart.getByText('Mon')).toBeInTheDocument();
+  expect(chart.getByText('Tue')).toBeInTheDocument();
+  expect(chart.getByText('18.40 pts')).toBeInTheDocument();
+  expect(chart.getByText('12.10 pts')).toBeInTheDocument();
+});
+
+test('does not render the range chart when no weekday has a recorded avg range', async () => {
+  botApi.getWeekdayInsights.mockResolvedValue({
+    weekdays: [{ weekday: 'Monday', sample_days: 0, confidence: 0, note: 'no data yet' }],
+  });
+  render(<AiInsightsTab />);
+  await waitFor(() => expect(screen.getByText('Monday')).toBeInTheDocument());
+  expect(screen.queryByText('Avg Opening Range by Weekday')).not.toBeInTheDocument();
+});
+
+test('the continuation/reversal proportion bar exposes both values in one accessible label', async () => {
+  render(<AiInsightsTab />);
+  await screen.findByText('Recommendation Evidence Overview');
+  expect(screen.getByRole('img', { name: 'Continuation 75%, Reversal 25%' })).toBeInTheDocument();
 });

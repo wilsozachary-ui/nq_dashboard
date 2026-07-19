@@ -11,6 +11,7 @@ import MarketOpenBanner from './components/MarketOpenBanner';
 import TopstepConnectionWarning from './components/TopstepConnectionWarning';
 import ErrorWarningSystem from './components/ErrorWarningSystem';
 import TradeExecutionVisualizer from './components/TradeExecutionVisualizer';
+import BootLoadingScreen from './components/BootLoadingScreen';
 
 // ── Tab shell ─────────────────────────────────────────────────────────────────
 import TabsLayout, { TabPanel } from './components/TabsLayout';
@@ -48,6 +49,12 @@ function App() {
   const [integration, setIntegration] = useState(() => getCockpitStatus());
   const [isAdminInstance, setIsAdminInstance] = useState(false);
   const [hasSession] = useState(() => BYPASS_AUTH_GATE || Boolean(getSessionToken()));
+  // Manual override for BootLoadingScreen's "Continue to dashboard anyway"
+  // escape hatch -- once set, the boot screen never comes back for this
+  // session even if integration.ready flickers false again later (that
+  // ongoing case is already covered by the small "Backend connecting"
+  // banner below, not a reason to re-block the whole cockpit).
+  const [bootDismissed, setBootDismissed] = useState(false);
 
   useEffect(() => {
     // One-time check, not part of the live WS/telemetry integration above --
@@ -95,6 +102,21 @@ function App() {
             <a className="auth-gate-link" href="https://nq-cloud.com">Go to NQ Cloud →</a>
           </div>
         </div>
+      </ThemeProvider>
+    );
+  }
+
+  if (!integration.ready && !bootDismissed) {
+    // Covers the window right after "Open my bot dashboard" in NQ Cloud --
+    // the container's API and its live WS/heartbeat connection are still
+    // catching up. initializeCockpit()'s readiness promise (driving
+    // integration.ready) already retries this with backoff; this just
+    // makes the wait a real screen instead of a sliver of banner text
+    // above an otherwise-empty cockpit. Never a permanent trap -- the
+    // screen's own escape hatch lets the user past it after a while.
+    return (
+      <ThemeProvider>
+        <BootLoadingScreen missing={missing} onContinueAnyway={() => setBootDismissed(true)} />
       </ThemeProvider>
     );
   }
