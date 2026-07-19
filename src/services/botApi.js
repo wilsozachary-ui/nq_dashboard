@@ -312,6 +312,12 @@ const botApi = {
     return get(`/morning_strategy/ai/weekday_insights${params}`, signal);
   },
 
+  // AI Insights tab overview -- same full recommendation payload
+  // AiSuggestedParametersPanel.js shows on the Topstep tab (suggested
+  // parameters, per-parameter reasons, sample/comparable-day counts,
+  // continuation/reversal rate). See app/morning_strategy_ai.py.
+  getMorningStrategyAiRecommendations: signal => get('/morning_strategy/ai/recommendations', signal),
+
   getSignals: signal => getFirst(['/signals'], signal, {}),
   getOrbState: signal => getFirst(['/orb', '/orb/health'], signal, {}),
   getOrbTrades: async signal => {
