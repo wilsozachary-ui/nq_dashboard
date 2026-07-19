@@ -38,8 +38,24 @@ function useInsightsAccountFilter() {
   return accountId;
 }
 
+// Chicago-local "today," matching MorningCandleRecorder's own date-key
+// convention (window_start.astimezone(CHICAGO).strftime("%Y-%m-%d")) --
+// used to look up today's own candle once it's recorded.
+function chicagoToday() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Chicago', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date());
+  const get = type => parts.find(p => p.type === type)?.value ?? '00';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
 function fmtPoints(v) {
-  return v != null ? `${Number(v).toFixed(0)} pts` : '—';
+  return v != null ? `${Number(v).toFixed(2)} pts` : '—';
+}
+function fmtSignedPoints(v) {
+  if (v == null) return '—';
+  const n = Number(v);
+  return `${n >= 0 ? '+' : '−'}${Math.abs(n).toFixed(2)} pts`;
 }
 function fmtDollars(v) {
   return v != null ? `$${Math.round(v)}` : '—';
@@ -50,11 +66,104 @@ function fmtPct(v) {
 function fmtVix(v) {
   return v != null ? Number(v).toFixed(1) : '—';
 }
+function fmtCount(v) {
+  return Number.isFinite(v) ? `${v} day${v === 1 ? '' : 's'}` : '—';
+}
 
 function confidenceLabel(c) {
   if (c >= 0.7) return { label: 'High', cls: 'aic-confidence--high' };
   if (c >= 0.4) return { label: 'Medium', cls: 'aic-confidence--medium' };
   return { label: 'Low', cls: 'aic-confidence--low' };
+}
+
+// ── Overview: aggregate sample size/confidence/continuation-reversal rate ──
+function OverviewCard({ rec }) {
+  if (!rec) return null;
+  return (
+    <div className="card aic-overview">
+      <div className="aic-overview-header">
+        <span className="panel-title">Recommendation Evidence Overview</span>
+      </div>
+      {rec.summary && <p className="aic-note">{rec.summary}</p>}
+      {rec.data_quality_warning && (
+        <div className="aic-warning">⚠️ {rec.data_quality_warning}</div>
+      )}
+      <div className="aic-overview-grid">
+        <div className="aic-stat"><span className="aic-stat-label">Confidence</span><span className="aic-stat-value">{fmtPct(rec.confidence)}</span></div>
+        <div className="aic-stat"><span className="aic-stat-label">Sample</span><span className="aic-stat-value">{fmtCount(rec.sample_count)}</span></div>
+        <div className="aic-stat"><span className="aic-stat-label">Comparable</span><span className="aic-stat-value">{fmtCount(rec.comparable_day_count)}</span></div>
+        <div className="aic-stat"><span className="aic-stat-label">10s Avg Range</span><span className="aic-stat-value">{fmtPoints(rec.avg_range_10s_points)}</span></div>
+        <div className="aic-stat"><span className="aic-stat-label">1m Avg Range</span><span className="aic-stat-value">{fmtPoints(rec.avg_range_1m_points)}</span></div>
+        <div className="aic-stat"><span className="aic-stat-label">Continuation</span><span className="aic-stat-value">{fmtPct(rec.continuation_rate)}</span></div>
+        <div className="aic-stat"><span className="aic-stat-label">Reversal</span><span className="aic-stat-value">{fmtPct(rec.reversal_rate)}</span></div>
+        <div className="aic-stat"><span className="aic-stat-label">High First</span><span className="aic-stat-value">{rec.high_first_count ?? '—'}</span></div>
+        <div className="aic-stat"><span className="aic-stat-label">Low First</span><span className="aic-stat-value">{rec.low_first_count ?? '—'}</span></div>
+      </div>
+    </div>
+  );
+}
+
+// ── Today's completed opening candle, once recorded ─────────────────────
+function TodayCandleCard({ summary, status }) {
+  const candle = summary?.candle;
+  const oneMinute = candle?.one_minute;
+
+  return (
+    <div className="card aic-today-candle">
+      <div className="aic-overview-header">
+        <span className="panel-title">Today's Opening Candle</span>
+      </div>
+
+      {status === 'loading' && <p className="aic-note">Loading…</p>}
+
+      {status !== 'loading' && !candle && (
+        <p className="aic-note">Not recorded yet — the opening candle is built live during the 08:30–08:31 CT window.</p>
+      )}
+
+      {candle && (
+        <>
+          {candle.feed_quality && !candle.feed_quality.recording_complete && (
+            <div className="aic-warning">⚠️ Recording was incomplete for today's window — figures below are partial.</div>
+          )}
+
+          <div className="aic-today-section">
+            <span className="aic-today-section-label">First 10 Seconds (Decision Window)</span>
+            <div className="aic-overview-grid">
+              <div className="aic-stat"><span className="aic-stat-label">Range</span><span className="aic-stat-value">{fmtPoints(candle.range_points)}</span></div>
+              <div className="aic-stat"><span className="aic-stat-label">Move</span><span className="aic-stat-value">{fmtSignedPoints(candle.signed_move_points)}</span></div>
+              <div className="aic-stat"><span className="aic-stat-label">Extreme First</span><span className="aic-stat-value">{candle.extreme_first ?? '—'}</span></div>
+              <div className="aic-stat"><span className="aic-stat-label">Direction Changes</span><span className="aic-stat-value">{candle.direction_changes_first_10s ?? '—'}</span></div>
+            </div>
+          </div>
+
+          {oneMinute && (
+            <div className="aic-today-section">
+              <span className="aic-today-section-label">Completed 08:30 Candle (One Minute)</span>
+              <div className="aic-overview-grid">
+                <div className="aic-stat"><span className="aic-stat-label">Range</span><span className="aic-stat-value">{fmtPoints(oneMinute.range_points)}</span></div>
+                <div className="aic-stat"><span className="aic-stat-label">Body</span><span className="aic-stat-value">{fmtPoints(oneMinute.body_points)}</span></div>
+                <div className="aic-stat"><span className="aic-stat-label">Upper Wick</span><span className="aic-stat-value">{fmtPoints(oneMinute.upper_wick_points)}</span></div>
+                <div className="aic-stat"><span className="aic-stat-label">Lower Wick</span><span className="aic-stat-value">{fmtPoints(oneMinute.lower_wick_points)}</span></div>
+                <div className="aic-stat"><span className="aic-stat-label">Close Location</span><span className="aic-stat-value">{fmtPct(oneMinute.close_location_pct)}</span></div>
+                <div className="aic-stat"><span className="aic-stat-label">Tick Count</span><span className="aic-stat-value">{oneMinute.tick_count ?? '—'}</span></div>
+              </div>
+            </div>
+          )}
+
+          {summary?.trade && (
+            <div className="aic-today-section">
+              <span className="aic-today-section-label">Today's Trade</span>
+              <div className="aic-overview-grid">
+                <div className="aic-stat"><span className="aic-stat-label">Entry</span><span className="aic-stat-value">{summary.trade.entry_price ?? '—'}</span></div>
+                <div className="aic-stat"><span className="aic-stat-label">Exit</span><span className="aic-stat-value">{summary.trade.exit_price ?? '—'}</span></div>
+                <div className="aic-stat"><span className="aic-stat-label">Realized P&amp;L</span><span className="aic-stat-value">{fmtDollars(summary.realized_pnl)}</span></div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 
 function WeekdayCard({ card }) {
@@ -99,6 +208,9 @@ export default function AiInsightsTab() {
   const accountId = useInsightsAccountFilter();
   const [cards, setCards] = useState(null);
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
+  const [rec, setRec] = useState(null);
+  const [todaySummary, setTodaySummary] = useState(null);
+  const [todayStatus, setTodayStatus] = useState('loading');
 
   const load = useCallback(() => {
     setStatus('loading');
@@ -122,6 +234,30 @@ export default function AiInsightsTab() {
     return () => controller && controller.abort();
   }, [load]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    botApi.getMorningStrategyAiRecommendations(controller.signal)
+      .then(setRec)
+      .catch(err => { if (err.name !== 'AbortError') setRec(null); });
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setTodayStatus('loading');
+    botApi.getMorningStrategyDailySummary(chicagoToday(), controller.signal)
+      .then(summary => { setTodaySummary(summary); setTodayStatus('ready'); })
+      .catch(err => {
+        if (err.name === 'AbortError') return;
+        // A 404 (no candle recorded yet, e.g. before the market opens) is
+        // an expected, normal state here -- not a fetch failure worth
+        // showing an error banner for.
+        setTodaySummary(null);
+        setTodayStatus('ready');
+      });
+    return () => controller.abort();
+  }, []);
+
   return (
     <div className="ai-insights-tab">
       <div className="tab-topbar">
@@ -130,13 +266,16 @@ export default function AiInsightsTab() {
       </div>
 
       <div className="aic-intro">
-        Read-only analysis of how each weekday's opening NQ candle has actually behaved, and what that implies for
-        Morning Strategy parameters — now also tracking VIX at the moment each trade fired, split by win/loss, to
-        help surface whether volatility regime actually correlates with outcome. Candle data reflects the whole
-        market; win rate and VIX reflect{' '}
+        Read-only analysis of how the NQ opening candle has actually behaved, and what that implies for Morning
+        Strategy parameters. Candle data reflects the whole market; win rate and VIX reflect{' '}
         {accountId ? 'the single selected account' : 'all selected accounts combined'} — narrow the account selector
         above to one account to scope it further. Nothing here is applied automatically — review and adjust Trade
         Parameters by hand.
+      </div>
+
+      <div className="aic-top-cards">
+        <TodayCandleCard summary={todaySummary} status={todayStatus} />
+        <OverviewCard rec={rec} />
       </div>
 
       {status === 'loading' && !cards && (
