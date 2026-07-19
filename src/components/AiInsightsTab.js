@@ -3,10 +3,11 @@ import botApi from '../services/botApi';
 import TopstepAccountSelector from './TopstepAccountSelector';
 import {
   AI_PARAMETERS,
-  applyToTradeParameters,
+  useApplyRecommendationFlow,
   fmtPoints as fmtParamPoints,
   fmtDollars as fmtParamDollars,
 } from './morningStrategyShared';
+import ApplyConfirmationDialog from './ApplyConfirmationDialog';
 import './AiInsightsTab.css';
 
 // Read-only analysis of how the NQ opening candle has actually behaved, and
@@ -89,6 +90,22 @@ function fmtDollars(v) {
 function fmtPct(v) {
   return v != null ? `${Math.round(v * 100)}%` : '—';
 }
+function fmtRatio(v) {
+  return Number.isFinite(v) ? `${v.toFixed(2)}:1` : '—';
+}
+
+// Client-side backstop only -- the backend (morning_strategy_ai.py's
+// _evaluate_spread_candidate) is what actually guarantees SL/TP can never
+// violate these by construction. This just makes a violation impossible to
+// miss in the UI if one ever slipped through, per the spec's explicit
+// "visually flag any recommendation that violates constraints" requirement.
+const MINIMUM_REWARD_RISK = 1.5;
+function violatesRiskConstraints(rec) {
+  if (!rec || rec.action === 'skip') return false;
+  const { recommended_sl_dollars: sl, recommended_tp_dollars: tp, reward_risk_ratio: rr } = rec;
+  if (!Number.isFinite(sl) || !Number.isFinite(tp)) return false;
+  return tp < sl || (Number.isFinite(rr) && rr < MINIMUM_REWARD_RISK);
+}
 function fmtVix(v) {
   return v != null ? Number(v).toFixed(1) : '—';
 }
@@ -108,7 +125,7 @@ function confidenceLabel(c) {
 // ── Hero card: "What should I use? Why? How much should I trust it?" ────
 function RecommendedSetupCard({ rec }) {
   const [showReasoning, setShowReasoning] = useState(false);
-  const [applied, setApplied] = useState(false);
+  const applyFlow = useApplyRecommendationFlow(rec);
 
   if (!rec) {
     return (
@@ -120,16 +137,16 @@ function RecommendedSetupCard({ rec }) {
   }
 
   const conf = confidenceLabel(rec.confidence);
-  const handleApply = () => {
-    applyToTradeParameters(rec);
-    setApplied(true);
-    setTimeout(() => setApplied(false), 2500);
-  };
+  const isSkip = rec.action === 'skip';
+  const constraintViolation = violatesRiskConstraints(rec);
 
   return (
     <div className="card aic-hero">
       <div className="aic-hero-head">
         <span className="panel-title">Recommended Setup for Next Session</span>
+        <span className={`aic-action-badge aic-action-badge--${isSkip ? 'skip' : 'trade'}`}>
+          {isSkip ? 'SKIP' : 'TRADE'}
+        </span>
         <span className={`aic-confidence-badge ${conf.cls}`}>{conf.label} confidence</span>
       </div>
 
@@ -138,32 +155,76 @@ function RecommendedSetupCard({ rec }) {
           used elsewhere in this file, which shows 2-decimal precision for
           genuinely fractional tick-derived figures; these are already
           rounded to whole points/dollars server-side. */}
-      <div className="aic-hero-headline">
-        Spread {fmtParamPoints(rec.recommended_spread_points)} · TP {fmtParamDollars(rec.recommended_tp_dollars)} · SL{' '}
-        {fmtParamDollars(rec.recommended_sl_dollars)} · Trail {fmtParamPoints(rec.recommended_trailing_points)} ·{' '}
-        {rec.recommended_contract_size} contract{rec.recommended_contract_size === 1 ? '' : 's'}
-      </div>
+      {isSkip ? (
+        <div className="aic-hero-headline aic-hero-headline--skip">Skip this setup</div>
+      ) : (
+        <div className="aic-hero-headline">
+          Spread {fmtParamPoints(rec.recommended_spread_points)} · TP {fmtParamDollars(rec.recommended_tp_dollars)} · SL{' '}
+          {fmtParamDollars(rec.recommended_sl_dollars)} · Trail {fmtParamPoints(rec.recommended_trailing_points)} ·{' '}
+          {rec.recommended_contract_size} contract{rec.recommended_contract_size === 1 ? '' : 's'}
+        </div>
+      )}
 
-      <div className="aic-hero-confidence-line">
-        {conf.label} confidence — based on {fmtSessionCount(rec.sample_count)} recorded, {' '}
-        {fmtSessionCount(rec.comparable_day_count)} usable for parameter evidence.
-      </div>
+      {isSkip ? (
+        <div className="aic-hero-confidence-line">
+          {rec.skip_reason || 'Recent comparable openings did not produce positive expectancy within the configured risk limits.'}
+        </div>
+      ) : (
+        <div className="aic-hero-confidence-line">
+          {conf.label} confidence — based on {fmtSessionCount(rec.sample_count)} recorded, {' '}
+          {fmtSessionCount(rec.comparable_day_count)} usable for parameter evidence.
+        </div>
+      )}
+
+      {!isSkip && (
+        <div className="aic-hero-stats-row">
+          <span className="aic-hero-stat">Reward:Risk <b>{fmtRatio(rec.reward_risk_ratio)}</b></span>
+          <span className="aic-hero-stat">Both-Sides-Crossed <b>{fmtPct(rec.both_sides_triggered_rate)}</b></span>
+          <span className="aic-hero-stat">Continuation <b>{fmtPct(rec.continuation_rate)}</b></span>
+        </div>
+      )}
 
       {rec.data_quality_warning && (
         <div className="aic-warning">⚠️ {rec.data_quality_warning}</div>
+      )}
+      {constraintViolation && (
+        <div className="aic-warning aic-warning--critical">
+          ⚠️ This recommendation appears to violate the configured risk constraints (stop-loss/take-profit or
+          minimum reward-to-risk) — do not apply until reviewed.
+        </div>
       )}
 
       <div className="aic-hero-actions">
         <button type="button" className="aic-btn aic-btn--secondary" onClick={() => setShowReasoning(v => !v)}>
           {showReasoning ? 'Hide reasoning' : 'View reasoning'}
         </button>
-        <button type="button" className={`aic-btn aic-btn--primary${applied ? ' aic-btn--applied' : ''}`} onClick={handleApply}>
-          {applied ? '✓ Copied to Trade Parameters' : 'Copy to Trade Parameters'}
+        <button
+          type="button"
+          className={`aic-btn aic-btn--primary${applyFlow.applied ? ' aic-btn--applied' : ''}`}
+          onClick={applyFlow.openDialog}
+          disabled={isSkip}
+          aria-label="Apply to Morning Strategy"
+          title={isSkip ? 'No trade is recommended this session — nothing to apply' : undefined}
+        >
+          {isSkip ? 'Apply disabled — no trade recommended' : (applyFlow.applied ? '✓ Saved' : 'Apply to Morning Strategy')}
         </button>
       </div>
       <p className="aic-hero-disclaimer">
-        Copies values into Trade Parameters for review — never saves, arms, or trades automatically.
+        Saved parameters only change after you review and confirm the diff — never saves, arms, or trades
+        automatically on its own.
       </p>
+
+      {applyFlow.dialog && (
+        <ApplyConfirmationDialog
+          diff={applyFlow.dialog.diff}
+          isArmed={applyFlow.isArmed}
+          confirming={applyFlow.confirming}
+          error={applyFlow.error}
+          loadFailed={applyFlow.dialog.loadFailed}
+          onConfirm={applyFlow.confirmApply}
+          onCancel={applyFlow.closeDialog}
+        />
+      )}
 
       {showReasoning && (
         <div className="aic-reasoning">

@@ -1,0 +1,137 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ApplyConfirmationDialog.css — prefix: acd-
+   Matches TopstepAccountSelector.css's .tsa-confirm-* modal pattern.
+═══════════════════════════════════════════════════════════════════════════ */
+
+.acd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+}
+
+.acd-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.acd-title {
+  margin: 0;
+  font-size: var(--text-title);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+}
+
+.acd-diff-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+  background: var(--color-bg-raised);
+}
+
+.acd-diff-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  font-size: var(--text-sm);
+}
+
+.acd-diff-label {
+  color: var(--color-text-secondary);
+}
+
+.acd-diff-values {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.acd-diff-from { color: var(--color-text-muted); font-weight: var(--fw-normal); }
+.acd-diff-arrow { color: var(--color-text-dim); }
+.acd-diff-to { color: var(--color-text-primary); }
+
+.acd-note {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.acd-disclaimer {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.acd-armed-warning {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-amber);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+  line-height: 1.45;
+}
+
+.acd-error {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: #ffffff;
+  background: rgba(220, 38, 38, 0.85);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+  line-height: 1.45;
+}
+
+.acd-actions {
+  margin-top: var(--space-sm);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+.acd-btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: filter var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+.acd-btn:disabled { cursor: not-allowed; opacity: 0.55; }
+.acd-btn--secondary {
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+.acd-btn--secondary:hover:not(:disabled) { background: var(--color-bg-raised); color: var(--color-text-primary); }
+.acd-btn--primary {
+  border: 1px solid var(--color-green);
+  background: var(--color-green);
+  color: #ffffff;
+}
+.acd-btn--primary:hover:not(:disabled) { filter: brightness(1.06); }

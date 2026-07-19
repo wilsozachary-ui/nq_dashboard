@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from 'react';
 import botApi from '../services/botApi';
+import { normalizeParameterDraft } from './parameterDraft';
 
 // ── Shared helpers/hooks for MorningStrategyLiveControl and
 // MorningStrategyPracticeBotControl -- both drive the same real
@@ -232,26 +233,119 @@ export const AI_PARAMETERS = [
   { key: 'contract_size',          currentKey: 'contractSize',        label: 'Contract Size',       fmt: fmtContracts },
 ];
 
-// Advisory only -- never talks to the bot directly. Dispatches the same
-// nq:strategy-params-sync event TradeParameterPanel.js already listens for
-// (its "sync from StrategyControlBar quick-adjustments" handler), so the
-// AI's numbers land in the exact editable inputs the user arms/fires from
-// -- they can still change any value by hand afterward, and nothing here
-// ever saves or arms on its own.
-export function applyToTradeParameters(rec) {
-  window.dispatchEvent(new CustomEvent('nq:strategy-params-sync', {
-    detail: {
-      spreadPoints:        rec.recommended_spread_points,
-      takeProfit:          rec.recommended_tp_dollars,
-      stopLoss:            rec.recommended_sl_dollars,
-      trailingDistance:    rec.recommended_trailing_points,
-      trailingStop:        rec.recommended_trailing_enabled,
-      contractSize:        rec.recommended_contract_size,
-      breakevenTrigger:    rec.recommended_breakeven_dollars,
-      profitLockTrigger:   rec.recommended_profit_lock_dollars,
-      profitLockRetainPct: rec.recommended_profit_lock_retain_pct,
-    },
-  }));
+// Maps a recommendation's recommended_* fields onto TradeParameterPanel's
+// own draft field names (see parameterDraft.js's PARAMETER_DEFAULTS) --
+// the single source of truth for that mapping, used both to build the
+// diff shown in the confirmation dialog and the merged draft actually
+// persisted.
+export function recommendationToDraftPatch(rec) {
+  return {
+    spreadPoints:        rec.recommended_spread_points,
+    takeProfit:          rec.recommended_tp_dollars,
+    stopLoss:            rec.recommended_sl_dollars,
+    trailingDistance:    rec.recommended_trailing_points,
+    trailingStop:        rec.recommended_trailing_enabled,
+    contractSize:        rec.recommended_contract_size,
+    breakevenTrigger:    rec.recommended_breakeven_dollars,
+    profitLockTrigger:   rec.recommended_profit_lock_dollars,
+    profitLockRetainPct: rec.recommended_profit_lock_retain_pct,
+  };
+}
+
+// Per-parameter {label, from, to, changed} rows for the confirmation
+// dialog -- computed against the CURRENT server-saved draft (fetched fresh
+// when the dialog opens), never against whatever TradeParameterPanel
+// happens to have in memory, so the diff always reflects what Confirm
+// would actually change.
+export function computeParameterDiff(rec, currentDraft) {
+  const patch = recommendationToDraftPatch(rec);
+  return AI_PARAMETERS.map(config => {
+    const from = currentDraft ? currentDraft[config.currentKey] : undefined;
+    const to = patch[config.currentKey];
+    return { key: config.key, label: config.label, fmt: config.fmt, from, to, changed: from !== to };
+  });
+}
+
+// Broadcasts the same nq:strategy-params-sync event TradeParameterPanel.js
+// already listens for (its "sync from StrategyControlBar quick-
+// adjustments" handler) -- called ONLY after a recommendation's values
+// have actually been persisted through the server-authoritative parameter
+// endpoint (see useApplyRecommendationFlow below), so any mounted
+// TradeParameterPanel's displayed "already saved" state stays truthful.
+// Never call this directly from a click handler -- it performs no
+// confirmation or persistence of its own.
+function broadcastAppliedParameters(rec) {
+  window.dispatchEvent(new CustomEvent('nq:strategy-params-sync', { detail: recommendationToDraftPatch(rec) }));
+}
+
+const ARMED_STATUSES = new Set(['ARMED', 'ACTIVE']);
+
+// The one AI-panel action permitted to touch saved Morning Strategy
+// parameters: opening the dialog only reads the current saved draft (a
+// GET), and nothing is persisted until the user clicks "Confirm Changes"
+// inside it. User-saved parameters remain authoritative at every other
+// moment -- loading, refreshing, changing accounts, expanding reasoning,
+// or displaying TRADE/SKIP must never call anything in this hook. Shared
+// by AiSuggestedParametersPanel.js and AiInsightsTab.js's Recommended
+// Setup card so both behave identically rather than maintaining two
+// copies that could drift.
+export function useApplyRecommendationFlow(rec) {
+  const [dialog, setDialog] = useState(null); // null | { diff, revision, currentDraft, loadFailed }
+  const [confirming, setConfirming] = useState(false);
+  const [applied, setApplied] = useState(false);
+  const [error, setError] = useState('');
+
+  const liveSnapshot = useTestBotSnapshot('live');
+  const practiceSnapshot = useTestBotSnapshot('practice');
+  const isArmed = ARMED_STATUSES.has(liveSnapshot.status) || ARMED_STATUSES.has(practiceSnapshot.status);
+  const isSkip = rec?.action === 'skip';
+
+  const openDialog = useCallback(async () => {
+    if (!rec || isSkip) return;
+    setError('');
+    try {
+      const saved = await botApi.getMorningStrategyParameters();
+      const currentDraft = normalizeParameterDraft(saved?.draft);
+      setDialog({ diff: computeParameterDiff(rec, currentDraft), revision: saved?.revision ?? 0, currentDraft });
+    } catch (err) {
+      // Still show the dialog (with defaults as the "from" side) rather
+      // than silently doing nothing -- but flag that the diff may not
+      // reflect the true current draft, and that Confirm could be
+      // rejected by a stale revision.
+      const currentDraft = normalizeParameterDraft(null);
+      setDialog({ diff: computeParameterDiff(rec, currentDraft), revision: 0, currentDraft, loadFailed: true });
+      setError(`Could not load the current saved parameters (${err.message}).`);
+    }
+  }, [rec, isSkip]);
+
+  const closeDialog = useCallback(() => {
+    setDialog(null);
+    setError('');
+  }, []);
+
+  const confirmApply = useCallback(async () => {
+    if (!dialog || !rec) return;
+    setConfirming(true);
+    setError('');
+    try {
+      const merged = { ...dialog.currentDraft, ...recommendationToDraftPatch(rec) };
+      await botApi.saveMorningStrategyParameters(merged, dialog.revision);
+      // Only now, after a durably confirmed successful save, tell the rest
+      // of the UI the saved parameters actually changed.
+      broadcastAppliedParameters(rec);
+      setDialog(null);
+      setApplied(true);
+      setTimeout(() => setApplied(false), 2500);
+    } catch (err) {
+      // Never partially update: nothing above touched the broadcast, so a
+      // failed save leaves saved parameters exactly as they were.
+      setError(err.message || 'Save failed');
+    } finally {
+      setConfirming(false);
+    }
+  }, [dialog, rec]);
+
+  return { isArmed, isSkip, dialog, openDialog, closeDialog, confirmApply, confirming, applied, error };
 }
 
 // Restores a removed account to the picker, retrying once on a 409

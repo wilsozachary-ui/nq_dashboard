@@ -3,11 +3,28 @@ import { API_ROOT, USE_MOCK } from '../api/pnlApi';
 import { integratedFetch } from '../CockpitIntegrator';
 import {
   AI_PARAMETERS as PARAMETERS,
-  applyToTradeParameters,
+  useApplyRecommendationFlow,
   fmtPct,
   fmtSamples,
 } from './morningStrategyShared';
+import ApplyConfirmationDialog from './ApplyConfirmationDialog';
 import './AiSuggestedParametersPanel.css';
+
+function fmtRatio(n) {
+  return Number.isFinite(n) ? `${n.toFixed(2)}:1` : '—';
+}
+
+// Client-side backstop only -- morning_strategy_ai.py's
+// _evaluate_spread_candidate is what actually guarantees SL/TP can never
+// violate these by construction. This just makes a violation impossible to
+// miss in the UI if one ever slipped through.
+const MINIMUM_REWARD_RISK = 1.5;
+function violatesRiskConstraints(rec) {
+  if (!rec || rec.action === 'skip') return false;
+  const { recommended_sl_dollars: sl, recommended_tp_dollars: tp, reward_risk_ratio: rr } = rec;
+  if (!Number.isFinite(sl) || !Number.isFinite(tp)) return false;
+  return tp < sl || (Number.isFinite(rr) && rr < MINIMUM_REWARD_RISK);
+}
 
 // window.nqMorningStrategyParams (set by TradeParameterPanel.js) is the
 // single existing source of "what's currently configured" -- reading it
@@ -72,7 +89,6 @@ function ParameterRow({ config, rec, current }) {
 export default function AiSuggestedParametersPanel() {
   const [rec, setRec]       = useState(null);
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
-  const [applied, setApplied] = useState(false);
   const current = useCurrentTradeParameters();
 
   const load = useCallback(() => {
@@ -94,12 +110,9 @@ export default function AiSuggestedParametersPanel() {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleApply = () => {
-    if (!rec) return;
-    applyToTradeParameters(rec);
-    setApplied(true);
-    setTimeout(() => setApplied(false), 2500);
-  };
+  const isSkip = rec?.action === 'skip';
+  const constraintViolation = violatesRiskConstraints(rec);
+  const applyFlow = useApplyRecommendationFlow(rec);
 
   return (
     <div className="card ai-panel">
@@ -123,16 +136,31 @@ export default function AiSuggestedParametersPanel() {
 
       {rec && (
         <>
-          {rec.summary && <p className="ai-summary">{rec.summary}</p>}
-
           <div className="ai-meta-row">
+            <span className={`ai-action-badge ai-action-badge--${isSkip ? 'skip' : 'trade'}`}>
+              {isSkip ? 'SKIP' : 'TRADE'}
+            </span>
             <span className="ai-meta-item">Confidence: <strong>{fmtPct(rec.confidence)}</strong></span>
             <span className="ai-meta-item">Sample: <strong>{fmtSamples(rec.sample_count)}</strong></span>
             <span className="ai-meta-item">Comparable: <strong>{fmtSamples(rec.comparable_day_count)}</strong></span>
+            {!isSkip && (
+              <>
+                <span className="ai-meta-item">R:R: <strong>{fmtRatio(rec.reward_risk_ratio)}</strong></span>
+                <span className="ai-meta-item">Both-Sides-Crossed: <strong>{fmtPct(rec.both_sides_triggered_rate)}</strong></span>
+                <span className="ai-meta-item">Continuation: <strong>{fmtPct(rec.continuation_rate)}</strong></span>
+              </>
+            )}
           </div>
+
+          {rec.summary && <p className="ai-summary">{rec.summary}</p>}
 
           {rec.data_quality_warning && (
             <div className="ai-warning">⚠️ {rec.data_quality_warning}</div>
+          )}
+          {constraintViolation && (
+            <div className="ai-warning ai-warning--critical">
+              ⚠️ This recommendation appears to violate the configured risk constraints — do not apply until reviewed.
+            </div>
           )}
 
           <div className="ai-param-list">
@@ -142,16 +170,31 @@ export default function AiSuggestedParametersPanel() {
           </div>
 
           <button
-            className={`ai-apply${applied ? ' ai-apply--applied' : ''}`}
-            onClick={handleApply}
-            aria-label="Apply AI-suggested values to Trade Parameters"
+            className={`ai-apply${applyFlow.applied ? ' ai-apply--applied' : ''}`}
+            onClick={applyFlow.openDialog}
+            disabled={isSkip}
+            aria-label="Apply to Morning Strategy"
+            title={isSkip ? 'No trade is recommended this session — nothing to apply' : undefined}
           >
-            {applied ? '✓ Applied to Trade Parameters' : 'Apply to Morning Strategy Settings'}
+            {isSkip ? 'Apply disabled — no trade recommended' : (applyFlow.applied ? '✓ Saved' : 'Apply to Morning Strategy')}
           </button>
           <div className="ai-disclaimer">
-            Advisory only — copies values into Trade Parameters below for review. Nothing is placed or armed automatically; review, save, and arm by hand afterward.
+            Advisory only — saved parameters only change after you review and confirm the diff below. Nothing is
+            placed, armed, or modified on an active trade automatically.
           </div>
         </>
+      )}
+
+      {applyFlow.dialog && (
+        <ApplyConfirmationDialog
+          diff={applyFlow.dialog.diff}
+          isArmed={applyFlow.isArmed}
+          confirming={applyFlow.confirming}
+          error={applyFlow.error}
+          loadFailed={applyFlow.dialog.loadFailed}
+          onConfirm={applyFlow.confirmApply}
+          onCancel={applyFlow.closeDialog}
+        />
       )}
     </div>
   );

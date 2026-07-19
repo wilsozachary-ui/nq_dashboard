@@ -9,8 +9,20 @@ jest.mock('../services/botApi', () => ({
     getWeekdayInsights: jest.fn(),
     getMorningStrategyAiRecommendations: jest.fn(),
     getMorningStrategyDailySummary: jest.fn(),
+    getLiveBot: jest.fn(),
+    getPracticeBot: jest.fn(),
+    getMorningStrategyParameters: jest.fn(),
+    saveMorningStrategyParameters: jest.fn(),
+    armLiveBot: jest.fn(),
+    offLiveBot: jest.fn(),
   },
 }));
+
+const SAVED_DRAFT = {
+  contractSize: 3, takeProfit: 900, stopLoss: 450, trailingStop: true,
+  trailingDistance: 7, spreadPoints: 15, breakevenTrigger: 100,
+  profitLockTrigger: 150, profitLockRetainPct: 50,
+};
 
 const RECOMMENDATION = {
   model_version: 'heuristic-v1',
@@ -39,6 +51,9 @@ const RECOMMENDATION = {
   recommended_breakeven_dollars: 250,
   recommended_profit_lock_dollars: 550,
   recommended_profit_lock_retain_pct: 65,
+  action: 'trade',
+  reward_risk_ratio: 2.0,
+  both_sides_triggered_rate: 0.2,
   parameter_reasons: {
     spread_points: 'Baseline retained; only three comparable days.',
     tp_dollars: 'Recent favorable movement is insufficient to justify widening.',
@@ -67,6 +82,12 @@ beforeEach(() => {
   botApi.getMorningStrategyDailySummary.mockResolvedValue({
     date: '2026-07-18', candle: TODAY_CANDLE, trade: null, realized_pnl: null,
   });
+  botApi.getLiveBot.mockResolvedValue({ status: 'OFF' });
+  botApi.getPracticeBot.mockResolvedValue({ status: 'OFF' });
+  botApi.getMorningStrategyParameters.mockResolvedValue({ draft: SAVED_DRAFT, revision: 4 });
+  botApi.saveMorningStrategyParameters.mockResolvedValue({ draft: SAVED_DRAFT, revision: 5 });
+  botApi.armLiveBot.mockReset();
+  botApi.offLiveBot.mockReset();
 });
 
 afterEach(() => {
@@ -110,7 +131,7 @@ describe('Recommended Setup — the hero card', () => {
     expect(terms).toContain('Spread 15 pts:');
   });
 
-  test('Copy to Trade Parameters dispatches the sync event and never arms/saves anything', async () => {
+  test('Apply to Morning Strategy opens a diff dialog; only Confirm Changes persists and dispatches the sync event', async () => {
     render(<AiInsightsTab />);
     await screen.findByText('Medium confidence');
 
@@ -118,11 +139,23 @@ describe('Recommended Setup — the hero card', () => {
     const listener = e => events.push(e.detail);
     window.addEventListener('nq:strategy-params-sync', listener);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Copy to Trade Parameters' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Apply to Morning Strategy' }));
+    });
+    const dialog = await screen.findByRole('dialog', { name: 'Apply to Morning Strategy' });
+    // Opening the dialog only reads the current saved draft -- never writes.
+    expect(botApi.getMorningStrategyParameters).toHaveBeenCalledTimes(1);
+    expect(botApi.saveMorningStrategyParameters).not.toHaveBeenCalled();
+    expect(events).toHaveLength(0);
+    expect(within(dialog).getByText(/This updates your saved Morning Strategy parameters/)).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm Changes' }));
+    });
     window.removeEventListener('nq:strategy-params-sync', listener);
 
-    expect(events).toHaveLength(1);
-    expect(events[0]).toEqual({
+    expect(botApi.saveMorningStrategyParameters).toHaveBeenCalledTimes(1);
+    expect(botApi.saveMorningStrategyParameters.mock.calls[0][0]).toEqual({
       spreadPoints: 15,
       takeProfit: 900,
       stopLoss: 450,
@@ -133,7 +166,69 @@ describe('Recommended Setup — the hero card', () => {
       profitLockTrigger: 550,
       profitLockRetainPct: 65,
     });
-    expect(await screen.findByText('✓ Copied to Trade Parameters')).toBeInTheDocument();
+    expect(events).toHaveLength(1);
+    expect(await screen.findByText('✓ Saved')).toBeInTheDocument();
+  });
+
+  test('Apply while armed shows the re-arm warning and confirming never arms/disarms', async () => {
+    botApi.getLiveBot.mockResolvedValue({ status: 'ARMED' });
+    render(<AiInsightsTab />);
+    await screen.findByText('Medium confidence');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Apply to Morning Strategy' }));
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/Disarm and re-arm to use the new settings/)).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Confirm Changes' }));
+    });
+    expect(botApi.armLiveBot).not.toHaveBeenCalled();
+    expect(botApi.offLiveBot).not.toHaveBeenCalled();
+  });
+
+  test('shows a TRADE badge and reward-to-risk/both-sides-crossed/continuation stats', async () => {
+    render(<AiInsightsTab />);
+    const badge = await screen.findByText('Medium confidence');
+    const hero = badge.closest('.aic-hero');
+    expect(within(hero).getByText('TRADE')).toBeInTheDocument();
+    expect(within(hero).getByText('2.00:1')).toBeInTheDocument();
+    expect(within(hero).getByText('20%')).toBeInTheDocument();
+    expect(within(hero).getByText('75%')).toBeInTheDocument();
+  });
+
+  test('shows a SKIP badge, skip reason, and disables Apply to Morning Strategy', async () => {
+    botApi.getMorningStrategyAiRecommendations.mockResolvedValue({
+      ...RECOMMENDATION,
+      action: 'skip',
+      skip_reason: 'No candidate preserved the required reward-to-risk and positive expectancy.',
+    });
+    render(<AiInsightsTab />);
+    await screen.findByText('SKIP');
+
+    expect(screen.getByText('Skip this setup')).toBeInTheDocument();
+    expect(screen.getByText(/No candidate preserved the required reward-to-risk/)).toBeInTheDocument();
+
+    const applyButton = screen.getByRole('button', { name: 'Apply to Morning Strategy' });
+    expect(applyButton).toBeDisabled();
+    fireEvent.click(applyButton);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(botApi.getMorningStrategyParameters).not.toHaveBeenCalled();
+    expect(botApi.saveMorningStrategyParameters).not.toHaveBeenCalled();
+  });
+
+  test('flags a recommendation that violates the reward-to-risk constraint', async () => {
+    botApi.getMorningStrategyAiRecommendations.mockResolvedValue({
+      ...RECOMMENDATION,
+      recommended_sl_dollars: 750,
+      recommended_tp_dollars: 625,
+      reward_risk_ratio: 625 / 750,
+    });
+    render(<AiInsightsTab />);
+    await screen.findByText('Medium confidence');
+    expect(screen.getByText(/violate the configured risk constraints/)).toBeInTheDocument();
   });
 });
 

@@ -93,6 +93,19 @@
 .aic-confidence-badge.aic-confidence--medium { color: var(--color-amber);      background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); }
 .aic-confidence-badge.aic-confidence--low    { color: var(--color-text-secondary); background: var(--color-bg-raised); border-color: var(--color-border-strong); }
 
+/* ── Action badge: TRADE vs. SKIP ─────────────────────────────────────────── */
+.aic-action-badge {
+  font-size: var(--text-body);
+  font-weight: var(--fw-bold);
+  letter-spacing: 0.03em;
+  padding: 3px 11px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.aic-action-badge--trade { color: var(--color-green-text); background: rgba(76,175,80,0.12); border-color: rgba(76,175,80,0.3); }
+.aic-action-badge--skip  { color: var(--color-amber);      background: rgba(245,158,11,0.14); border-color: rgba(245,158,11,0.35); }
+
 .aic-confidence {
   margin-left: auto;
   font-size: var(--text-body);
@@ -125,10 +138,28 @@
   line-height: 1.35;
 }
 
+.aic-hero-headline--skip { color: var(--color-amber); }
+
 .aic-hero-confidence-line {
   font-size: var(--text-body);
   color: var(--color-text-secondary);
   line-height: 1.5;
+}
+
+.aic-hero-stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  font-size: var(--text-body);
+  color: var(--color-text-secondary);
+}
+.aic-hero-stat b { color: var(--color-text-primary); }
+
+.aic-warning--critical {
+  color: #ffffff;
+  background: rgba(220, 38, 38, 0.85);
+  border-color: rgba(220, 38, 38, 1);
+  font-weight: var(--fw-semibold);
 }
 
 .aic-hero-actions {
@@ -159,6 +190,9 @@
 }
 .aic-btn--primary:hover { filter: brightness(1.06); }
 .aic-btn--applied { background: var(--color-green-dim); border-color: var(--color-green-dim); }
+.aic-btn:disabled { cursor: not-allowed; opacity: 0.55; filter: none; }
+.aic-btn--primary:disabled { background: var(--color-bg-raised); border-color: var(--color-border-strong); color: var(--color-text-secondary); }
+.aic-btn--primary:disabled:hover { filter: none; }
 
 .aic-hero-disclaimer {
   margin: 0;

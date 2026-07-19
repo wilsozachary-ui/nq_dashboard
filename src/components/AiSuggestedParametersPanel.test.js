@@ -1,5 +1,6 @@
-import { act, render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { act, render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import AiSuggestedParametersPanel from './AiSuggestedParametersPanel';
+import botApi from '../services/botApi';
 
 jest.mock('../CockpitIntegrator', () => ({
   __esModule: true,
@@ -9,6 +10,21 @@ jest.mock('../api/pnlApi', () => ({
   __esModule: true,
   API_ROOT: 'http://test-api',
   USE_MOCK: false,
+}));
+jest.mock('../services/botApi', () => ({
+  __esModule: true,
+  default: {
+    getLiveBot: jest.fn(),
+    getPracticeBot: jest.fn(),
+    getMorningStrategyParameters: jest.fn(),
+    saveMorningStrategyParameters: jest.fn(),
+    armLiveBot: jest.fn(),
+    offLiveBot: jest.fn(),
+    flattenLiveBot: jest.fn(),
+    startPracticeBot: jest.fn(),
+    stopPracticeBot: jest.fn(),
+    flattenPracticeBot: jest.fn(),
+  },
 }));
 
 const { integratedFetch } = require('../CockpitIntegrator');
@@ -40,6 +56,27 @@ const FULL_RECOMMENDATION = {
   sample_count: 5,
   comparable_day_count: 5,
   data_quality_warning: null,
+  action: 'trade',
+  reward_risk_ratio: 2.0,
+  both_sides_triggered_rate: 0.2,
+  continuation_rate: 0.75,
+};
+
+const SKIP_RECOMMENDATION = {
+  ...FULL_RECOMMENDATION,
+  action: 'skip',
+  skip_reason: 'No candidate preserved the required reward-to-risk and positive expectancy.',
+  recommended_spread_points: 15,
+  recommended_tp_dollars: 900,
+  recommended_sl_dollars: 450,
+  reward_risk_ratio: 2.0,
+  summary: 'No candidate preserved the required reward-to-risk and positive expectancy.',
+};
+
+const SAVED_DRAFT = {
+  contractSize: 3, takeProfit: 900, stopLoss: 450, trailingStop: true,
+  trailingDistance: 7, spreadPoints: 15, breakevenTrigger: 100,
+  profitLockTrigger: 150, profitLockRetainPct: 50,
 };
 
 function mockFetchResponse(data) {
@@ -51,11 +88,30 @@ function mockFetchResponse(data) {
 beforeEach(() => {
   integratedFetch.mockReset();
   delete window.nqMorningStrategyParams;
+  botApi.getLiveBot.mockReset().mockResolvedValue({ status: 'OFF' });
+  botApi.getPracticeBot.mockReset().mockResolvedValue({ status: 'OFF' });
+  botApi.getMorningStrategyParameters.mockReset().mockResolvedValue({ draft: SAVED_DRAFT, revision: 4 });
+  botApi.saveMorningStrategyParameters.mockReset().mockResolvedValue({ draft: SAVED_DRAFT, revision: 5 });
+  botApi.armLiveBot.mockReset();
+  botApi.offLiveBot.mockReset();
+  botApi.flattenLiveBot.mockReset();
+  botApi.startPracticeBot.mockReset();
+  botApi.stopPracticeBot.mockReset();
+  botApi.flattenPracticeBot.mockReset();
 });
 
 afterEach(() => {
   jest.clearAllMocks();
 });
+
+function noArmDisarmCallsMade() {
+  expect(botApi.armLiveBot).not.toHaveBeenCalled();
+  expect(botApi.offLiveBot).not.toHaveBeenCalled();
+  expect(botApi.flattenLiveBot).not.toHaveBeenCalled();
+  expect(botApi.startPracticeBot).not.toHaveBeenCalled();
+  expect(botApi.stopPracticeBot).not.toHaveBeenCalled();
+  expect(botApi.flattenPracticeBot).not.toHaveBeenCalled();
+}
 
 test('renders every recommended parameter with a suggested value and a reason', async () => {
   mockFetchResponse(FULL_RECOMMENDATION);
@@ -65,7 +121,6 @@ test('renders every recommended parameter with a suggested value and a reason', 
   expect(screen.getByText('$950')).toBeInTheDocument();
   expect(screen.getByText(/median favorable move was 15\.83 points/)).toBeInTheDocument();
 
-  // Every one of the 9 parameters this panel must surface.
   for (const label of [
     'Spread', 'Take Profit', 'Stop Loss', 'Trailing Enabled', 'Trailing Distance',
     'Breakeven Trigger', 'Profit Lock Trigger', 'Profit Lock Retain', 'Contract Size',
@@ -82,10 +137,7 @@ test('labels simulated evidence distinctly from actual-outcome evidence', async 
   const simBadges = screen.getAllByText('Simulated');
   const actualBadges = screen.getAllByText('Actual');
   expect(simBadges.length).toBeGreaterThan(0);
-  expect(actualBadges.length).toBe(1); // only contract_size is actual-outcome based
-  // trailing_enabled's reason is neither simulated-replay nor actual-
-  // outcome evidence (a static default-on note) -- it must show no badge,
-  // not be misclassified into either bucket.
+  expect(actualBadges.length).toBe(1);
   expect(simBadges.length + actualBadges.length).toBeLessThan(9);
 });
 
@@ -109,47 +161,201 @@ test('shows the data quality warning when present', async () => {
   await screen.findByText(/Only 1 comparable day/);
 });
 
-test('Apply copies every parameter (including trailing/breakeven/profit-lock) and never calls an arm/save endpoint', async () => {
-  mockFetchResponse(FULL_RECOMMENDATION);
-  const events = [];
-  const listener = e => events.push(e.detail);
-  window.addEventListener('nq:strategy-params-sync', listener);
-
-  render(<AiSuggestedParametersPanel />);
-  await screen.findByText('Take Profit');
-
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: /Apply AI-suggested values/i }));
-  });
-
-  window.removeEventListener('nq:strategy-params-sync', listener);
-
-  expect(events).toHaveLength(1);
-  expect(events[0]).toEqual({
-    spreadPoints: 18,
-    takeProfit: 950,
-    stopLoss: 475,
-    trailingDistance: 8,
-    trailingStop: true,
-    contractSize: 2,
-    breakevenTrigger: 250,
-    profitLockTrigger: 550,
-    profitLockRetainPct: 65,
-  });
-
-  // The only network call this whole component ever makes is the GET for
-  // recommendations -- Apply must never itself call fetch/integratedFetch
-  // again (no arm, no save, no order placement).
-  expect(integratedFetch).toHaveBeenCalledTimes(1);
-  expect(integratedFetch.mock.calls[0][0]).toContain('/morning_strategy/ai/recommendations');
-
-  await waitFor(() => {
-    expect(screen.getByText('✓ Applied to Trade Parameters')).toBeInTheDocument();
-  });
-});
-
 test('shows an error state when the recommendation fetch fails', async () => {
   integratedFetch.mockRejectedValue(new Error('network down'));
   render(<AiSuggestedParametersPanel />);
   await screen.findByText(/AI recommendations unavailable right now/);
+});
+
+test('shows a TRADE badge and reward-to-risk/both-sides-crossed/continuation stats for a normal recommendation', async () => {
+  mockFetchResponse(FULL_RECOMMENDATION);
+  render(<AiSuggestedParametersPanel />);
+  await screen.findByText('Take Profit');
+
+  expect(screen.getByText('TRADE')).toBeInTheDocument();
+  expect(screen.getByText('2.00:1')).toBeInTheDocument();
+  expect(screen.getByText('20%')).toBeInTheDocument();
+  expect(screen.getByText('75%')).toBeInTheDocument();
+});
+
+test('flags a recommendation that violates the reward-to-risk constraint', async () => {
+  mockFetchResponse({
+    ...FULL_RECOMMENDATION,
+    recommended_sl_dollars: 750,
+    recommended_tp_dollars: 625,
+    reward_risk_ratio: 625 / 750,
+  });
+  render(<AiSuggestedParametersPanel />);
+  await screen.findByText('Take Profit');
+  expect(screen.getByText(/violate the configured risk constraints/)).toBeInTheDocument();
+});
+
+describe('Apply to Morning Strategy — consent flow', () => {
+  test('mount, refresh, and account changes never write parameters', async () => {
+    mockFetchResponse(FULL_RECOMMENDATION);
+    render(<AiSuggestedParametersPanel />);
+    await screen.findByText('Take Profit');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /Refresh AI recommendation/i }));
+    });
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('nq:accounts-changed', { detail: { selected: ['acc-2'] } }));
+    });
+
+    expect(botApi.getMorningStrategyParameters).not.toHaveBeenCalled();
+    expect(botApi.saveMorningStrategyParameters).not.toHaveBeenCalled();
+  });
+
+  test('clicking Apply opens a confirmation dialog with the diff but does not persist yet', async () => {
+    mockFetchResponse(FULL_RECOMMENDATION);
+    render(<AiSuggestedParametersPanel />);
+    await screen.findByText('Take Profit');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Apply to Morning Strategy' }));
+    });
+
+    const dialog = await screen.findByRole('dialog', { name: 'Apply to Morning Strategy' });
+    // Reads the current saved draft to build the diff, but never writes.
+    expect(botApi.getMorningStrategyParameters).toHaveBeenCalledTimes(1);
+    expect(botApi.saveMorningStrategyParameters).not.toHaveBeenCalled();
+
+    expect(within(dialog).getByText('Take Profit')).toBeInTheDocument();
+    expect(within(dialog).getByText('$900')).toBeInTheDocument(); // from (saved)
+    expect(within(dialog).getByText('$950')).toBeInTheDocument(); // to (recommended)
+    expect(within(dialog).getByText('Stop Loss')).toBeInTheDocument();
+    expect(within(dialog).getByText('$450')).toBeInTheDocument(); // saved SL, unchanged so far
+    expect(within(dialog).getByText('$475')).toBeInTheDocument(); // recommended SL
+    expect(within(dialog).getByText(/This updates your saved Morning Strategy parameters/)).toBeInTheDocument();
+
+    // The $450 saved SL is still $450 -- nothing has been persisted by
+    // merely opening the dialog.
+    expect(botApi.saveMorningStrategyParameters).not.toHaveBeenCalled();
+  });
+
+  test('only Confirm Changes persists the complete draft, exactly once, through the parameter endpoint', async () => {
+    mockFetchResponse(FULL_RECOMMENDATION);
+    const events = [];
+    const listener = e => events.push(e.detail);
+    window.addEventListener('nq:strategy-params-sync', listener);
+
+    render(<AiSuggestedParametersPanel />);
+    await screen.findByText('Take Profit');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Apply to Morning Strategy' }));
+    });
+    await screen.findByRole('dialog', { name: 'Apply to Morning Strategy' });
+    expect(events).toHaveLength(0); // no sync before Confirm
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Confirm Changes' }));
+    });
+
+    window.removeEventListener('nq:strategy-params-sync', listener);
+
+    expect(botApi.saveMorningStrategyParameters).toHaveBeenCalledTimes(1);
+    const [savedDraft, expectedRevision] = botApi.saveMorningStrategyParameters.mock.calls[0];
+    expect(expectedRevision).toBe(4); // the revision read when the dialog opened
+    expect(savedDraft).toEqual({
+      contractSize: 2, takeProfit: 950, stopLoss: 475, trailingStop: true,
+      trailingDistance: 8, spreadPoints: 18, breakevenTrigger: 250,
+      profitLockTrigger: 550, profitLockRetainPct: 65,
+    });
+
+    // The sync/broadcast only happens AFTER the persisted save succeeds.
+    expect(events).toHaveLength(1);
+    expect(events[0].stopLoss).toBe(475);
+
+    noArmDisarmCallsMade();
+    await waitFor(() => expect(screen.getByText('✓ Saved')).toBeInTheDocument());
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  test('Apply while armed shows the stale-snapshot/re-arm warning and does not auto re-arm', async () => {
+    botApi.getLiveBot.mockResolvedValue({ status: 'ARMED' });
+    mockFetchResponse(FULL_RECOMMENDATION);
+    render(<AiSuggestedParametersPanel />);
+    await screen.findByText('Take Profit');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Apply to Morning Strategy' }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/currently armed strategy will continue using its existing snapshot/)).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Disarm and re-arm to use the new settings/)).toBeInTheDocument();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Confirm Changes' }));
+    });
+
+    // Confirming saves the draft only -- it must never itself arm/disarm.
+    expect(botApi.saveMorningStrategyParameters).toHaveBeenCalledTimes(1);
+    noArmDisarmCallsMade();
+  });
+
+  test('Apply failure leaves saved parameters unchanged and reports the error', async () => {
+    botApi.saveMorningStrategyParameters.mockRejectedValue(new Error('Revision conflict'));
+    mockFetchResponse(FULL_RECOMMENDATION);
+    const events = [];
+    const listener = e => events.push(e.detail);
+    window.addEventListener('nq:strategy-params-sync', listener);
+
+    render(<AiSuggestedParametersPanel />);
+    await screen.findByText('Take Profit');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Apply to Morning Strategy' }));
+    });
+    await screen.findByRole('dialog', { name: 'Apply to Morning Strategy' });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Confirm Changes' }));
+    });
+
+    window.removeEventListener('nq:strategy-params-sync', listener);
+
+    await screen.findByText('Revision conflict');
+    // A failed save must never broadcast as if it had succeeded, and the
+    // dialog stays open so the user isn't left thinking it worked.
+    expect(events).toHaveLength(0);
+    expect(screen.getByRole('dialog', { name: 'Apply to Morning Strategy' })).toBeInTheDocument();
+    expect(screen.queryByText('✓ Saved')).not.toBeInTheDocument();
+  });
+
+  test('SKIP disables Apply -- the dialog can never even be opened', async () => {
+    mockFetchResponse(SKIP_RECOMMENDATION);
+    render(<AiSuggestedParametersPanel />);
+    await screen.findByText('SKIP');
+
+    const applyButton = screen.getByRole('button', { name: 'Apply to Morning Strategy' });
+    expect(applyButton).toBeDisabled();
+    expect(screen.getByText(/Apply disabled — no trade recommended/)).toBeInTheDocument();
+
+    fireEvent.click(applyButton);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(botApi.getMorningStrategyParameters).not.toHaveBeenCalled();
+    expect(botApi.saveMorningStrategyParameters).not.toHaveBeenCalled();
+  });
+
+  test('Cancel closes the dialog without saving', async () => {
+    mockFetchResponse(FULL_RECOMMENDATION);
+    render(<AiSuggestedParametersPanel />);
+    await screen.findByText('Take Profit');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Apply to Morning Strategy' }));
+    });
+    await screen.findByRole('dialog', { name: 'Apply to Morning Strategy' });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    });
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(botApi.saveMorningStrategyParameters).not.toHaveBeenCalled();
+  });
 });
