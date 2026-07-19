@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import botApi from '../services/botApi';
 import {
-  StatusPill, PowerToggle, fmtPrice, fmtPnl,
+  StatusPill, PowerToggle, Spinner, fmtPrice, fmtPnl,
   useTestBotSnapshot, useSelectedAccounts,
 } from './morningStrategyShared';
 import './MorningStrategyLiveControl.css';
@@ -39,6 +39,23 @@ export default function MorningStrategyLiveControl() {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Before the first successful /testbot/live fetch lands (e.g. right
+  // after a hard refresh), the snapshot is empty -- rendering the normal
+  // toggle here would show a confident OFF regardless of the real,
+  // unchanged backend state. Wait for real data instead of guessing.
+  if (!snapshot._snapshotMeta?.loaded) {
+    return (
+      <div className="card mstb-panel mstb-panel--live">
+        <div className="mstb-header">
+          <h3 className="panel-title">Morning Strategy — Live</h3>
+        </div>
+        <div className="mstb-loading">
+          <Spinner /> Checking bot status…
+        </div>
+      </div>
+    );
+  }
 
   const status = snapshot.status || 'OFF';
   const armed = !!snapshot.armed;

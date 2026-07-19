@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import botApi from '../services/botApi';
 import {
-  StatusPill, PowerToggle, fmtPrice, fmtPnl,
+  StatusPill, PowerToggle, Spinner, fmtPrice, fmtPnl,
   useTestBotSnapshot, useMorningStrategyParams, useSelectedAccounts, resolveSinglePracticeAccount,
 } from './morningStrategyShared';
 import './MorningStrategyLiveControl.css';
@@ -19,6 +19,21 @@ export default function MorningStrategyPracticeBotControl() {
     : null;
   const isPractice = accountId != null;
   const firingRef = useRef(false);
+
+  // Same reasoning as MorningStrategyLiveControl: don't render a confident
+  // OFF/inactive state before the first real fetch has actually landed.
+  if (!snapshot._snapshotMeta?.loaded) {
+    return (
+      <div className="card mstb-panel mstb-panel--practice">
+        <div className="mstb-header">
+          <h3 className="panel-title">Morning Strategy — Practice</h3>
+        </div>
+        <div className="mstb-loading">
+          <Spinner /> Checking bot status…
+        </div>
+      </div>
+    );
+  }
 
   const status = snapshot.status || 'OFF';
   const position = snapshot.position || null;

@@ -78,14 +78,25 @@ function createSnapshotStore(mode) {
   const listeners = new Set();
   let timer = null;
   let requestInFlight = false;
+  let hasLoadedOnce = false;
   let value = {};
 
   const publish = (data, error = null) => {
+    // A fresh mount (e.g. a hard refresh) always starts from value = {},
+    // which reads as armed: false / status: 'OFF' to any consumer that
+    // doesn't check for this -- a real customer read that as "my hard
+    // refresh disarmed the bot," when the backend's actual state (the only
+    // thing that matters for a live standing order) never changed. `loaded`
+    // stays false until the first successful fetch actually lands, so
+    // consumers can render a neutral "checking status" state instead of a
+    // confident, and possibly wrong, OFF.
+    if (!error) hasLoadedOnce = true;
     value = {
       ...(data || {}),
       _snapshotMeta: {
         error: error ? String(error.message || error) : null,
         stale: Boolean(error),
+        loaded: hasLoadedOnce,
         updatedAt: error ? value._snapshotMeta?.updatedAt || null : new Date().toISOString(),
       },
     };

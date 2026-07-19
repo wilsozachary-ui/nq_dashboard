@@ -31,6 +31,20 @@
   justify-content: space-between;
 }
 
+/* Shown before the first real status fetch lands (e.g. right after a hard
+   refresh) instead of a default ON/OFF guess -- see morningStrategyShared's
+   createSnapshotStore `loaded` flag. */
+.mstb-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 12px var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-raised);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
 /* ── Status pill -- prominent, color-coded, fixed footprint so it never
    shifts layout as status text changes length ─────────────────────────── */
 .mstb-status-pill {
