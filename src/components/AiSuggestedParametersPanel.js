@@ -1,54 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { API_ROOT, USE_MOCK } from '../api/pnlApi';
 import { integratedFetch } from '../CockpitIntegrator';
+import {
+  AI_PARAMETERS as PARAMETERS,
+  applyToTradeParameters,
+  fmtPct,
+  fmtSamples,
+} from './morningStrategyShared';
 import './AiSuggestedParametersPanel.css';
-
-const fmtPoints     = n => Number.isFinite(n) ? `${n} pt${n === 1 ? '' : 's'}` : '—';
-const fmtDollars    = n => Number.isFinite(n) ? `$${Math.round(n)}` : '—';
-const fmtContracts  = n => Number.isFinite(n) ? `${n}` : '—';
-const fmtPct        = n => Number.isFinite(n) ? `${Math.round(n * 100)}%` : '—';
-const fmtRetainPct  = n => Number.isFinite(n) ? `${Math.round(n)}%` : '—';
-const fmtBool       = v => v == null ? '—' : (v ? 'On' : 'Off');
-const fmtSamples    = n => Number.isFinite(n) ? `${n} day${n === 1 ? '' : 's'}` : '—';
-
-// Every recommended parameter this panel can show, in display order.
-// `key` matches the API's "recommended_<key>" / parameter_reasons key;
-// `currentKey` matches window.nqMorningStrategyParams' own field name
-// (see parameterDraft.js's PARAMETER_DEFAULTS) so "current value" reads
-// from the exact same source TradeParameterPanel.js itself uses.
-const PARAMETERS = [
-  { key: 'spread_points',          currentKey: 'spreadPoints',        label: 'Spread',              fmt: fmtPoints },
-  { key: 'tp_dollars',             currentKey: 'takeProfit',          label: 'Take Profit',         fmt: fmtDollars },
-  { key: 'sl_dollars',             currentKey: 'stopLoss',            label: 'Stop Loss',           fmt: fmtDollars },
-  { key: 'trailing_enabled',       currentKey: 'trailingStop',        label: 'Trailing Enabled',    fmt: fmtBool },
-  { key: 'trailing_points',        currentKey: 'trailingDistance',    label: 'Trailing Distance',   fmt: fmtPoints },
-  { key: 'breakeven_dollars',      currentKey: 'breakevenTrigger',    label: 'Breakeven Trigger',   fmt: fmtDollars },
-  { key: 'profit_lock_dollars',    currentKey: 'profitLockTrigger',   label: 'Profit Lock Trigger', fmt: fmtDollars },
-  { key: 'profit_lock_retain_pct', currentKey: 'profitLockRetainPct', label: 'Profit Lock Retain',  fmt: fmtRetainPct },
-  { key: 'contract_size',          currentKey: 'contractSize',        label: 'Contract Size',       fmt: fmtContracts },
-];
-
-// Advisory only -- this panel never talks to the bot directly. "Apply"
-// dispatches the same nq:strategy-params-sync event TradeParameterPanel.js
-// already listens for (its "sync from StrategyControlBar quick-adjustments"
-// handler), so the AI's numbers land in the exact editable inputs the user
-// arms/fires from -- they can still change any value by hand afterward, and
-// nothing here ever saves or arms on its own.
-function applyToTradeParameters(rec) {
-  window.dispatchEvent(new CustomEvent('nq:strategy-params-sync', {
-    detail: {
-      spreadPoints:        rec.recommended_spread_points,
-      takeProfit:          rec.recommended_tp_dollars,
-      stopLoss:            rec.recommended_sl_dollars,
-      trailingDistance:    rec.recommended_trailing_points,
-      trailingStop:        rec.recommended_trailing_enabled,
-      contractSize:        rec.recommended_contract_size,
-      breakevenTrigger:    rec.recommended_breakeven_dollars,
-      profitLockTrigger:   rec.recommended_profit_lock_dollars,
-      profitLockRetainPct: rec.recommended_profit_lock_retain_pct,
-    },
-  }));
-}
 
 // window.nqMorningStrategyParams (set by TradeParameterPanel.js) is the
 // single existing source of "what's currently configured" -- reading it
