@@ -237,49 +237,114 @@
 }
 .tsa-acc-balance--low { color: var(--color-amber); }
 
-/* Dismiss button on a normal account row -- lets a trader hide an account
+/* Remove button on a normal account row -- lets a trader remove an account
    Topstep's own app shows as failed/closed but whose Gateway API record
-   still reports canTrade/isVisible true. Only visible on hover/focus so it
-   doesn't compete with the balance for attention on every row. */
-.tsa-hide-btn {
+   still reports canTrade/isVisible true, or one they simply don't want in
+   the picker right now. Only fully visible on hover/focus so it doesn't
+   compete with the balance for attention on every row; the armed
+   (confirm-again) state stays visible regardless so its own timeout is
+   never hidden from the user. */
+.tsa-remove-btn {
   flex-shrink: 0;
-  width: 20px;
+  min-width: 20px;
   height: 20px;
+  padding: 0 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   background: none;
   border: none;
   border-radius: var(--radius-sm);
   color: var(--color-text-dim);
   cursor: pointer;
-  font-size: 15px;
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
   line-height: 1;
   opacity: 0;
   transition: opacity var(--dur-fast) var(--ease-out),
               background-color var(--dur-fast) var(--ease-out),
               color var(--dur-fast) var(--ease-out);
 }
-.tsa-item:hover .tsa-hide-btn,
-.tsa-hide-btn:focus-visible {
+.tsa-item:hover .tsa-remove-btn,
+.tsa-remove-btn:focus-visible {
   opacity: 1;
 }
-.tsa-hide-btn:hover {
+.tsa-remove-btn:hover {
   background: var(--color-red-bg, rgba(220,38,38,0.1));
   color: var(--color-red);
 }
+.tsa-remove-btn--armed {
+  opacity: 1;
+  background: var(--color-red-bg, rgba(220,38,38,0.12));
+  color: var(--color-red);
+  padding: 0 8px;
+}
 
-/* ── Hidden-accounts management list ────────────────────────────────────── */
-.tsa-item--hidden-row {
+.tsa-removed-link {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--text-xs);
+  color: var(--color-text-dim);
+}
+
+/* ── Strong (selected-account) remove confirmation ──────────────────────── */
+.tsa-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0,0,0,0.4);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px var(--space-md);
-  cursor: default;
+  justify-content: center;
 }
-.tsa-item--hidden-row + .tsa-item--hidden-row { border-top: 1px solid var(--color-border-subtle); }
-.tsa-item--hidden-row .tsa-acc-name { opacity: 0.75; }
+
+.tsa-confirm-dialog {
+  width: min(360px, calc(100vw - 32px));
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.tsa-confirm-title {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+}
+
+.tsa-confirm-body {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--lh-base);
+}
+
+.tsa-confirm-actions {
+  margin-top: var(--space-sm);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+.tsa-confirm-remove-btn {
+  background: var(--color-red);
+  border: 1px solid var(--color-red);
+  color: #ffffff;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.tsa-confirm-remove-btn:hover { opacity: 0.9; }
+.tsa-confirm-remove-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .tsa-empty-hint {
   margin: 0;

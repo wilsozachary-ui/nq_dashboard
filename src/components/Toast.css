@@ -58,6 +58,25 @@
   word-break: break-word;
 }
 
+/* ── Action button (e.g. "Undo") ─────────────────────────────────────────── */
+.toast-action {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  background: none;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out),
+              border-color     var(--dur-fast) var(--ease-out);
+}
+.toast-action:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-text-primary);
+}
+
 /* ── Dismiss button ───────────────────────────────────────────────────────── */
 .toast-close {
   flex-shrink: 0;

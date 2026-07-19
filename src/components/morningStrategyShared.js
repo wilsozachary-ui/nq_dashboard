@@ -202,6 +202,39 @@ export function resolveSinglePracticeAccount(accounts) {
   return { account: practiceAccounts[0], count: 1 };
 }
 
+// Restores a removed account to the picker, retrying once on a 409
+// revision conflict against freshly-read server state. Shared between the
+// account selector's Undo toast and the Settings "Recently Removed
+// Accounts" card's Restore button so both handle the exact same
+// conflict/already-restored cases identically rather than drifting.
+//
+// Returns { status: 'restored' | 'already_restored' | 'error', message? }.
+// 'already_restored' means someone else (another device, or a second click
+// racing this one) already restored it -- the desired end state already
+// holds, so this is reported distinctly from 'error' rather than as a
+// failure the caller should show as one.
+export async function restoreAccountToPicker(accountId, expectedHiddenRevision) {
+  try {
+    const result = await botApi.restoreAccountToPicker(accountId, expectedHiddenRevision);
+    return { status: 'restored', hidden: result.hidden };
+  } catch (error) {
+    if (error.status !== 409 || !error.detail) {
+      return { status: 'error', message: error.message || 'Account could not be restored' };
+    }
+    const currentIds = (error.detail.account_ids || []).map(String);
+    const currentRevision = Number(error.detail.revision) || 0;
+    if (!currentIds.includes(String(accountId))) {
+      return { status: 'already_restored', hidden: { account_ids: currentIds, revision: currentRevision } };
+    }
+    try {
+      const retried = await botApi.restoreAccountToPicker(accountId, currentRevision);
+      return { status: 'restored', hidden: retried.hidden };
+    } catch (retryError) {
+      return { status: 'error', message: retryError.message || 'Account could not be restored' };
+    }
+  }
+}
+
 // Single-account compatibility for Practice, recap, and view filters.
 export function useSelectedAccount() {
   const { accountIds, accounts } = useSelectedAccounts();

@@ -249,6 +249,16 @@ const botApi = {
     account_ids: accountIds,
     expected_revision: expectedRevision,
   }, signal),
+  getRemovedAccounts: signal => get('/accounts/removed', signal),
+  removeAccountFromPicker: (accountId, expectedHiddenRevision, expectedSelectionRevision, signal) =>
+    post(`/accounts/${encodeURIComponent(accountId)}/remove-from-picker`, {
+      expected_hidden_revision: expectedHiddenRevision,
+      expected_selection_revision: expectedSelectionRevision,
+    }, signal),
+  restoreAccountToPicker: (accountId, expectedHiddenRevision, signal) =>
+    post(`/accounts/${encodeURIComponent(accountId)}/restore-to-picker`, {
+      expected_hidden_revision: expectedHiddenRevision,
+    }, signal),
   getAccountSettings: signal => getFirst(['/testbot', '/strategy/parameters'], signal, {}),
   getPositions: async signal => {
     const t = await getTelemetry(signal);

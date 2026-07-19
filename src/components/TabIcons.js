@@ -113,6 +113,29 @@ export function IconAdmin() {
   );
 }
 
+// Minus-in-a-circle -- "remove from this list," deliberately distinct from
+// an "x"/close glyph or a trash can (removal here is reversible, not a
+// delete). Used on the account selector's per-row remove button.
+export function IconRemove() {
+  return (
+    <svg {...BASE_PROPS}>
+      <circle cx="9" cy="9" r="6.4" />
+      <path d="M6 9h6" />
+    </svg>
+  );
+}
+
+// Counter-clockwise arrow -- "restore/undo," used for the Settings
+// "Recently Removed Accounts" card and the account selector's Undo affordance.
+export function IconRestore() {
+  return (
+    <svg {...BASE_PROPS}>
+      <path d="M4 6.5A6 6 0 1 1 3.4 11" />
+      <path d="M4 2.6v3.9h3.9" />
+    </svg>
+  );
+}
+
 export function IconLogout() {
   return (
     <svg {...BASE_PROPS}>

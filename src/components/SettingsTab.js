@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { cpGet, cpPost } from '../services/controlPlaneApi';
 import { IconAdmin, IconLink, IconPulse } from './TabIcons';
+import RemovedAccountsCard from './RemovedAccountsCard';
 import './SettingsTab.css';
 
 export default function SettingsTab() {
@@ -335,6 +336,8 @@ export default function SettingsTab() {
         </div>
         {emailAlertsError && <p className="set-error">{emailAlertsError}</p>}
       </section>
+
+      <RemovedAccountsCard />
       </div>
     </div>
   );

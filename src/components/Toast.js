@@ -21,7 +21,7 @@ export function ToastContainer() {
 
   return (
     <div className="toast-container" role="region" aria-label="Notifications" aria-live="polite">
-      {toasts.map(({ id, message, type, exiting }) => (
+      {toasts.map(({ id, message, type, action, exiting }) => (
         <div
           key={id}
           className={`toast toast--${type}${exiting ? ' toast--exiting' : ''}`}
@@ -29,6 +29,11 @@ export function ToastContainer() {
         >
           <span className="toast-icon" aria-hidden="true">{ICONS[type] ?? ICONS.info}</span>
           <span className="toast-message">{message}</span>
+          {action && (
+            <button className="toast-action" onClick={action.onClick}>
+              {action.label}
+            </button>
+          )}
           <button
             className="toast-close"
             onClick={() => dismiss(id)}

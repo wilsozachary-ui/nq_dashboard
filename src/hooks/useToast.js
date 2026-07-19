@@ -6,8 +6,13 @@
  *   Any component or hook calls useToast() to get { show, dismiss }.
  *
  * show(message, options?) → id string
- *   options.type     'error' | 'warning' | 'info' | 'success'  (default: 'error')
- *   options.duration  total visible time in ms                  (default: 4000)
+ *   options.type      'error' | 'warning' | 'info' | 'success'  (default: 'error')
+ *   options.duration   total visible time in ms                  (default: 4000)
+ *   options.action     { label, onClick } -- optional secondary button
+ *                       (e.g. "Undo") rendered alongside the dismiss ×.
+ *                       Clicking it does not itself dismiss the toast --
+ *                       callers that want that call dismiss(id) themselves
+ *                       from inside onClick.
  *
  * dismiss(id) — removes the toast immediately (with exit animation).
  *
@@ -30,12 +35,12 @@ export function ToastProvider({ children }) {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 280);
   }, []);
 
-  const show = useCallback((message, { type = 'error', duration = 4000 } = {}) => {
+  const show = useCallback((message, { type = 'error', duration = 4000, action = null } = {}) => {
     const id = `t-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
     setToasts(prev => {
       const trimmed = prev.length >= 5 ? prev.slice(1) : prev;
-      return [...trimmed, { id, message, type, exiting: false }];
+      return [...trimmed, { id, message, type, action, exiting: false }];
     });
 
     // Start removal timer (fire the exit animation 280ms before full removal).
