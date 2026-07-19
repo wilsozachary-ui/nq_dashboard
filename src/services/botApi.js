@@ -235,6 +235,24 @@ const botApi = {
       stale: t.feed?.stale ?? false,
     };
   },
+  getBotHealthSnapshot: async signal => {
+    // The health card used to call getFeedStatus(), getFeedLatency(), and
+    // getAuthStatus() in parallel. All three helpers read the same telemetry
+    // endpoint, tripling request/auth work and making the latency sample more
+    // vulnerable to contention. Time one telemetry read and derive the whole
+    // card from that single response instead.
+    const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const t = await getTelemetry(signal);
+    const apiLatency = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0;
+    const connected = t.connection === 'Connected' || t.connection === 'connected';
+    return {
+      apiLatency,
+      strategy: true,
+      risk: true,
+      execution: connected,
+      position: connected,
+    };
+  },
   getAccounts: async signal => {
     const accounts = await getFirst(['/accounts'], signal, []);
     return Array.isArray(accounts) ? accounts : [];

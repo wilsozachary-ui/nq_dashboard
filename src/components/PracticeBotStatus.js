@@ -4,6 +4,16 @@ import './PracticeBotStatus.css';
 
 // Module-level reconnect counter shared across mounts
 let _reconnects = 0;
+const API_SAMPLE_COUNT = 5;
+const API_WARNING_THRESHOLD_MS = 750;
+
+function median(values) {
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2
+    ? sorted[middle]
+    : (sorted[middle - 1] + sorted[middle]) / 2;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -16,21 +26,22 @@ export default function PracticeBotStatus({ apiPrefix = '' }) {
   const lastHeartbeat = useRef(Date.now());
   const heartbeatTimer = useRef(null);
   const apiTimer = useRef(null);
+  const apiLatencySamples = useRef([]);
 
   const pingApi = useCallback(async () => {
     try {
-      const [statusResp, latencyResp, authResp] = await Promise.all([
-        botApi.getFeedStatus(),
-        botApi.getFeedLatency().catch(() => ({})),
-        botApi.getAuthStatus().catch(() => ({})),
-      ]);
+      const health = await botApi.getBotHealthSnapshot();
+      apiLatencySamples.current = [
+        ...apiLatencySamples.current,
+        health.apiLatency,
+      ].filter(Number.isFinite).slice(-API_SAMPLE_COUNT);
       setSt(s => ({
         ...s,
-        apiLatency:      latencyResp.apiLatency ?? latencyResp.latency ?? null,
-        strategyLoaded:  statusResp.strategy  ?? false,
-        riskLoaded:      statusResp.risk      ?? false,
-        executionActive: statusResp.execution ?? authResp.authenticated ?? false,
-        positionManager: statusResp.position  ?? false,
+        apiLatency:      apiLatencySamples.current.length ? median(apiLatencySamples.current) : null,
+        strategyLoaded:  health.strategy  ?? false,
+        riskLoaded:      health.risk      ?? false,
+        executionActive: health.execution ?? false,
+        positionManager: health.position  ?? false,
       }));
     } catch {
       setSt(s => ({ ...s, apiLatency: null }));
@@ -106,7 +117,7 @@ export default function PracticeBotStatus({ apiPrefix = '' }) {
       </div>
 
       <div className="pbs-metrics-row">
-        <Metric label="API" value={st.apiLatency != null ? Math.round(st.apiLatency) : null}   unit="ms" warn={st.apiLatency != null && st.apiLatency > 100} />
+        <Metric label="API" value={st.apiLatency != null ? Math.round(st.apiLatency) : null}   unit="ms" warn={st.apiLatency != null && st.apiLatency > API_WARNING_THRESHOLD_MS} />
         <Metric label="♥"   value={st.heartbeatAge != null ? `${st.heartbeatAge}s` : null} warn={st.heartbeatAge > 5} />
         <Metric label="⟳"  value={st.reconnects}              warn={st.reconnects  > 2} />
       </div>
