@@ -164,6 +164,11 @@
   padding: 11px 14px;
   background: transparent;
   border: none;
+  /* Matches .sidebar-tab's reserved (transparent, never colored here --
+     this row is never an active tab) left border exactly, so its icon
+     lines up in the same column as every tab icon above/below it instead
+     of sitting 3px further left. */
+  border-left: 3px solid transparent;
   border-radius: 4px;
   color: var(--color-text-muted);
   cursor: pointer;
