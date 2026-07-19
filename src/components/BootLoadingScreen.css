@@ -5,38 +5,55 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--color-bg-primary);
+  background:
+    radial-gradient(ellipse 900px 600px at 50% 20%, rgba(76, 175, 80, 0.12), transparent 60%),
+    var(--color-bg-primary);
   padding: 24px;
 }
 
 .boot-loading-card {
-  max-width: 420px;
+  max-width: 440px;
   width: 100%;
   text-align: center;
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 40px 32px;
+  padding: 44px 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  box-shadow: 0 0 0 1px rgba(76, 175, 80, 0.08), 0 20px 60px -20px rgba(0, 0, 0, 0.5);
+  animation: bootCardRise 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bootCardRise {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .boot-loading-logo {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  animation: bootLogoPulse 2.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(76, 175, 80, 0.35));
+}
+
+@keyframes bootLogoPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
 }
 
 .boot-loading-spinner {
   display: inline-block;
-  width: 26px;
-  height: 26px;
-  margin-bottom: 8px;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 10px;
   border: 3px solid var(--color-border-strong);
   border-top-color: var(--color-green, #4caf50);
+  border-right-color: var(--color-green, #4caf50);
   border-radius: 50%;
   animation: bootLoadingSpin 0.8s linear infinite;
 }
@@ -45,10 +62,72 @@
   to { transform: rotate(360deg); }
 }
 
+.boot-loading-greeting {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-green-text, var(--color-green, #4caf50));
+  margin: 0 0 2px;
+  opacity: 0;
+  animation: bootGreetingIn 0.7s ease-out 0.15s forwards;
+  letter-spacing: 0.01em;
+}
+
+@keyframes bootGreetingIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .boot-loading-title {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
+  font-weight: 700;
   color: var(--color-text-primary);
-  margin: 4px 0 0;
+  margin: 4px 0 2px;
+  opacity: 0;
+  animation: bootTitleIn 0.7s ease-out 0.35s forwards;
+}
+
+@keyframes bootTitleIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Re-keyed on every stage change (see the component's key={stageIndex}) so
+   each new line fades in fresh rather than the text just snapping to the
+   next value mid-sentence. */
+.boot-loading-stage {
+  color: var(--color-text-secondary);
+  margin: 6px 0 14px;
+  line-height: 1.5;
+  font-size: var(--text-sm);
+  min-height: 1.5em;
+  animation: bootStageIn 0.4s ease-out;
+}
+
+@keyframes bootStageIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.boot-loading-bar-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-subtle);
+  overflow: hidden;
+}
+
+.boot-loading-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--color-green-dim, #2e7d32), var(--color-green, #4caf50));
+  animation: bootBarFill 7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@keyframes bootBarFill {
+  from { width: 4%; }
+  to   { width: 96%; }
 }
 
 .boot-loading-copy {
@@ -93,4 +172,22 @@
   background: var(--color-bg-raised);
   border-color: var(--color-text-secondary);
   color: var(--color-text-primary);
+}
+
+/* Respect reduced-motion: keep the content legible and present without the
+   choreographed entrance/pulse/fill animations. */
+@media (prefers-reduced-motion: reduce) {
+  .boot-loading-card,
+  .boot-loading-logo,
+  .boot-loading-greeting,
+  .boot-loading-title,
+  .boot-loading-stage,
+  .boot-loading-bar-fill {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .boot-loading-bar-fill {
+    width: 60%;
+  }
 }

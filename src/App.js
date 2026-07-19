@@ -27,7 +27,7 @@ import GetStartedTab from './components/GetStartedTab';
 import SubscriptionTab from './components/SubscriptionTab';
 import SettingsTab from './components/SettingsTab';
 import AdminTab from './components/AdminTab';
-import { getDashboardConfig } from './services/controlPlaneApi';
+import { getDashboardConfig, cpGet } from './services/controlPlaneApi';
 import { captureSessionTokenFromUrl, getSessionToken } from './services/sessionToken';
 
 // Force full live mode — all WS + REST feeds are required.
@@ -44,6 +44,15 @@ captureSessionTokenFromUrl();
 // gate below would otherwise block every test that renders <App />.
 const BYPASS_AUTH_GATE = process.env.NODE_ENV === 'test';
 
+// BootLoadingScreen's own staged reveal (greeting, cycling status lines,
+// progress fill) is choreographed to land around 7s -- held here rather
+// than in that component so the same "don't cut the moment short" gate
+// also covers a from-scratch page load, not just a state transition
+// inside it. If the backend answers ready sooner, the screen still holds
+// until this elapses; if it's slower, this alone never forces the
+// dashboard open early -- integration.ready below still gates that.
+const MIN_BOOT_DISPLAY_MS = 7_000;
+
 function App() {
   const [isLive, setIsLive] = useState(false);
   const [integration, setIntegration] = useState(() => getCockpitStatus());
@@ -55,6 +64,17 @@ function App() {
   // ongoing case is already covered by the small "Backend connecting"
   // banner below, not a reason to re-block the whole cockpit).
   const [bootDismissed, setBootDismissed] = useState(false);
+  const [firstName, setFirstName] = useState(null);
+  // Same BYPASS_AUTH_GATE reasoning: a real 7s wait inside every test that
+  // renders <App /> (most of them, transitively) would make the suite
+  // both slow and reliant on fake timers it doesn't otherwise need.
+  const [minBootTimeElapsed, setMinBootTimeElapsed] = useState(BYPASS_AUTH_GATE);
+
+  useEffect(() => {
+    if (BYPASS_AUTH_GATE) return undefined;
+    const timer = setTimeout(() => setMinBootTimeElapsed(true), MIN_BOOT_DISPLAY_MS);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // One-time check, not part of the live WS/telemetry integration above --
@@ -62,6 +82,14 @@ function App() {
     // Admin tab is gated purely by whether NQ_IS_ADMIN_INSTANCE was set on
     // this specific container at provision time (see nq_control_plane).
     getDashboardConfig().then(config => setIsAdminInstance(Boolean(config.is_admin_instance)));
+  }, []);
+
+  useEffect(() => {
+    // Only for BootLoadingScreen's greeting -- best-effort, so a failed or
+    // slow /me call (or an old account with no name on file, see the User
+    // model's nullable first_name) just means no greeting is shown, never
+    // a broken boot screen.
+    cpGet('/me').then(data => setFirstName(data?.first_name || null)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -106,7 +134,7 @@ function App() {
     );
   }
 
-  if (!integration.ready && !bootDismissed) {
+  if ((!integration.ready || !minBootTimeElapsed) && !bootDismissed) {
     // Covers the window right after "Open my bot dashboard" in NQ Cloud --
     // the container's API and its live WS/heartbeat connection are still
     // catching up. initializeCockpit()'s readiness promise (driving
@@ -116,7 +144,7 @@ function App() {
     // screen's own escape hatch lets the user past it after a while.
     return (
       <ThemeProvider>
-        <BootLoadingScreen missing={missing} onContinueAnyway={() => setBootDismissed(true)} />
+        <BootLoadingScreen missing={missing} onContinueAnyway={() => setBootDismissed(true)} name={firstName} />
       </ThemeProvider>
     );
   }
