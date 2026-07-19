@@ -90,12 +90,28 @@
   font-weight: var(--fw-semibold);
 }
 
-/* ── Per-parameter rows ──────────────────────────────────────────────────── */
+/* ── Per-parameter rows, grouped into sections (Entry/Risk/Trailing,
+   matching TradeParameterPanel's own grouping) so 9 rows read as three
+   short groups instead of one long undifferentiated list. ────────────── */
 .ai-param-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   margin-bottom: var(--space-md);
+}
+
+.ai-param-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.ai-param-section-label {
+  font-size: 11px;
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
 }
 
 .ai-param-row {
@@ -103,6 +119,16 @@
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-sm);
   background: var(--color-bg-raised);
+}
+
+/* Baseline-only rows (no real evidence yet) are the majority early on and
+   read almost identically to each other -- muting them lets rows with an
+   actual Simulated/Actual-backed suggestion stand out at a glance. */
+.ai-param-row--muted {
+  opacity: 0.6;
+}
+.ai-param-row--muted .ai-param-reason {
+  font-size: 10px;
 }
 
 .ai-param-row-top {

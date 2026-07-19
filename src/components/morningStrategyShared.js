@@ -220,17 +220,20 @@ export const fmtSamples    = n => Number.isFinite(n) ? `${n} day${n === 1 ? '' :
 // matches the API's "recommended_<key>" / parameter_reasons key;
 // `currentKey` matches window.nqMorningStrategyParams' own field name (see
 // parameterDraft.js's PARAMETER_DEFAULTS) so "current value" reads from the
-// exact same source TradeParameterPanel.js itself uses.
+// exact same source TradeParameterPanel.js itself uses. `section` matches
+// TradeParameterPanel.js's own Entry/Risk/Trailing grouping, so the AI
+// panel's parameter list reads as the same three familiar groups instead
+// of one long undifferentiated list.
 export const AI_PARAMETERS = [
-  { key: 'spread_points',          currentKey: 'spreadPoints',        label: 'Spread',              fmt: fmtPoints },
-  { key: 'tp_dollars',             currentKey: 'takeProfit',          label: 'Take Profit',         fmt: fmtDollars },
-  { key: 'sl_dollars',             currentKey: 'stopLoss',            label: 'Stop Loss',           fmt: fmtDollars },
-  { key: 'trailing_enabled',       currentKey: 'trailingStop',        label: 'Trailing Enabled',    fmt: fmtBool },
-  { key: 'trailing_points',        currentKey: 'trailingDistance',    label: 'Trailing Distance',   fmt: fmtPoints },
-  { key: 'breakeven_dollars',      currentKey: 'breakevenTrigger',    label: 'Breakeven Trigger',   fmt: fmtDollars },
-  { key: 'profit_lock_dollars',    currentKey: 'profitLockTrigger',   label: 'Profit Lock Trigger', fmt: fmtDollars },
-  { key: 'profit_lock_retain_pct', currentKey: 'profitLockRetainPct', label: 'Profit Lock Retain',  fmt: fmtRetainPct },
-  { key: 'contract_size',          currentKey: 'contractSize',        label: 'Contract Size',       fmt: fmtContracts },
+  { key: 'contract_size',          currentKey: 'contractSize',        label: 'Contract Size',       fmt: fmtContracts, section: 'Entry' },
+  { key: 'spread_points',          currentKey: 'spreadPoints',        label: 'Spread',              fmt: fmtPoints,    section: 'Entry' },
+  { key: 'tp_dollars',             currentKey: 'takeProfit',          label: 'Take Profit',         fmt: fmtDollars,   section: 'Risk' },
+  { key: 'sl_dollars',             currentKey: 'stopLoss',            label: 'Stop Loss',           fmt: fmtDollars,   section: 'Risk' },
+  { key: 'trailing_enabled',       currentKey: 'trailingStop',        label: 'Trailing Enabled',    fmt: fmtBool,      section: 'Trailing' },
+  { key: 'trailing_points',        currentKey: 'trailingDistance',    label: 'Trailing Distance',   fmt: fmtPoints,    section: 'Trailing' },
+  { key: 'breakeven_dollars',      currentKey: 'breakevenTrigger',    label: 'Breakeven Trigger',   fmt: fmtDollars,   section: 'Trailing' },
+  { key: 'profit_lock_dollars',    currentKey: 'profitLockTrigger',   label: 'Profit Lock Trigger', fmt: fmtDollars,   section: 'Trailing' },
+  { key: 'profit_lock_retain_pct', currentKey: 'profitLockRetainPct', label: 'Profit Lock Retain',  fmt: fmtRetainPct, section: 'Trailing' },
 ];
 
 // Maps a recommendation's recommended_* fields onto TradeParameterPanel's

@@ -41,6 +41,11 @@ function useCurrentTradeParameters() {
   return current;
 }
 
+// Section order, matching TradeParameterPanel.js's own Entry/Risk/Trailing
+// grouping -- driven from AI_PARAMETERS' own `section` field so the two
+// stay in sync automatically rather than duplicating an order here.
+const SECTION_ORDER = ['Entry', 'Risk', 'Trailing'];
+
 function ParameterRow({ config, rec, current }) {
   const suggested = rec[`recommended_${config.key}`];
   const currentValue = current ? current[config.currentKey] : undefined;
@@ -53,9 +58,13 @@ function ParameterRow({ config, rec, current }) {
   // rather than being misclassified as "Actual."
   const isSimulated = typeof reason === 'string' && reason.toLowerCase().startsWith('simulated replay');
   const isActual = typeof reason === 'string' && reason.toLowerCase().startsWith('based on actual closed trades');
+  // Still-on-baseline rows (no real evidence yet) are the majority early on
+  // and read nearly identically to each other -- muting them visually lets
+  // the eye land on rows that carry an actual suggestion first.
+  const isInsufficientEvidence = typeof reason === 'string' && reason.toLowerCase().startsWith('insufficient evidence');
 
   return (
-    <div className="ai-param-row">
+    <div className={`ai-param-row${isInsufficientEvidence ? ' ai-param-row--muted' : ''}`}>
       <div className="ai-param-row-top">
         <span className="ai-param-label">{config.label}</span>
         {isSimulated && (
@@ -143,12 +152,14 @@ export default function AiSuggestedParametersPanel() {
             <span className="ai-meta-item">Confidence: <strong>{fmtPct(rec.confidence)}</strong></span>
             <span className="ai-meta-item">Sample: <strong>{fmtSamples(rec.sample_count)}</strong></span>
             <span className="ai-meta-item">Comparable: <strong>{fmtSamples(rec.comparable_day_count)}</strong></span>
-            {!isSkip && (
-              <>
-                <span className="ai-meta-item">R:R: <strong>{fmtRatio(rec.reward_risk_ratio)}</strong></span>
-                <span className="ai-meta-item">Both-Sides-Crossed: <strong>{fmtPct(rec.both_sides_triggered_rate)}</strong></span>
-                <span className="ai-meta-item">Continuation: <strong>{fmtPct(rec.continuation_rate)}</strong></span>
-              </>
+            {!isSkip && Number.isFinite(rec.reward_risk_ratio) && (
+              <span className="ai-meta-item">R:R: <strong>{fmtRatio(rec.reward_risk_ratio)}</strong></span>
+            )}
+            {!isSkip && Number.isFinite(rec.both_sides_triggered_rate) && (
+              <span className="ai-meta-item">Both-Sides-Crossed: <strong>{fmtPct(rec.both_sides_triggered_rate)}</strong></span>
+            )}
+            {!isSkip && Number.isFinite(rec.continuation_rate) && (
+              <span className="ai-meta-item">Continuation: <strong>{fmtPct(rec.continuation_rate)}</strong></span>
             )}
           </div>
 
@@ -164,8 +175,13 @@ export default function AiSuggestedParametersPanel() {
           )}
 
           <div className="ai-param-list">
-            {PARAMETERS.map(config => (
-              <ParameterRow key={config.key} config={config} rec={rec} current={current} />
+            {SECTION_ORDER.map(section => (
+              <div key={section} className="ai-param-section">
+                <span className="ai-param-section-label">{section}</span>
+                {PARAMETERS.filter(config => config.section === section).map(config => (
+                  <ParameterRow key={config.key} config={config} rec={rec} current={current} />
+                ))}
+              </div>
             ))}
           </div>
 
