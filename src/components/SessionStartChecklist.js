@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import botApi, { BOT_WS_URL } from '../services/botApi';
 import { authenticatedWebSocketUrl } from '../services/websocket';
+import { computeSessionState, formatHoursMinutes, SESSION_STATES } from '../utils/marketOpenMode';
 import './SessionStartChecklist.css';
 
 // ── Pre-Flight Checklist ─────────────────────────────────────────────────────
@@ -77,20 +78,52 @@ async function checkPlatformConnection(telemetry) {
     : { status: 'fail', detail: `Connection: ${telemetry?.bot?.connection ?? 'unknown'}` };
 }
 
-function checkFeedFreshness(telemetry) {
+// Feed Freshness reads its classification from the ONE shared session-state
+// calculator in marketOpenMode.js (see computeSessionState()) rather than
+// deriving its own weekend/holiday logic -- that duplication is exactly what
+// previously made this check report "Stale -- 3642s since last tick" during
+// a routine market closure, which could push the whole Pre-Flight Checklist
+// to NOT READY for a completely benign reason. A market closure is an
+// informational/pass state: no red X, no amber warning, excluded from
+// Recommended Actions (both handled below purely by returning 'neutral'
+// instead of 'warn'/'fail' -- see the recommendations filter and the
+// overallStatus calc, neither of which look at 'neutral').
+function checkFeedFreshness(telemetry, sessionState) {
   const feed = telemetry?.feed || {};
-  if (feed.stale) {
-    return { status: 'fail', detail: `Stale -- ${Math.round((feed.last_tick_age_ms ?? 0) / 1000)}s since last tick` };
+  switch (sessionState.session_state) {
+    case SESSION_STATES.CLOSED:
+      return { status: 'neutral', detail: 'Market Closed', meta: sessionState };
+    case SESSION_STATES.OPEN_AWAITING_FIRST_TICK:
+      return { status: 'neutral', detail: 'Market Open — Awaiting first tick', meta: sessionState };
+    case SESSION_STATES.OPEN_STALE:
+      return { status: 'fail', detail: `Stale -- ${sessionState.feed_age_seconds ?? 0}s since last tick`, meta: sessionState };
+    case SESSION_STATES.OPEN_FRESH:
+      return { status: 'pass', detail: `Fresh -- last tick ${Math.round(feed.last_tick_age_ms)}ms ago`, meta: sessionState };
+    default:
+      return { status: 'warn', detail: 'No tick age reported yet', meta: sessionState };
   }
-  if (feed.last_tick_age_ms == null) return { status: 'warn', detail: 'No tick age reported yet' };
-  return { status: 'pass', detail: `Fresh -- last tick ${Math.round(feed.last_tick_age_ms)}ms ago` };
 }
 
-function checkLivePrice(telemetry) {
+// While the market is closed, the last traded price is still worth showing
+// but must not read as a live quote -- "Last Price" instead of "Live Price"
+// (same distinction SystemHealthPanel's Market Feed card makes).
+function checkLivePrice(telemetry, sessionState) {
   const price = telemetry?.market?.price;
-  return price != null
-    ? { status: 'pass', detail: `NQ @ ${Number(price).toLocaleString()}` }
-    : { status: 'warn', detail: 'No price on telemetry yet' };
+  if (price == null) return { status: 'warn', detail: 'No price on telemetry yet' };
+  const label = sessionState?.session_state === SESSION_STATES.CLOSED ? 'Last Price' : 'Live Price';
+  return { status: 'pass', detail: `${label}: ${Number(price).toLocaleString()}` };
+}
+
+// Live-ticking display text for the Feed Freshness row while the market is
+// closed, so "Reopening in Xh Ym" counts down on its own every second
+// without requiring the user to re-run the checklist. Falls back to the
+// check's own static `detail` (set at run() time) for every other state.
+function feedFreshnessLiveDetail(check, nowMs) {
+  const meta = check.meta;
+  if (!meta || meta.session_state !== SESSION_STATES.CLOSED || !meta.next_open_at) return null;
+  const secondsUntilOpen = Math.max(0, Math.round((new Date(meta.next_open_at).getTime() - nowMs) / 1000));
+  const countdownText = formatHoursMinutes(secondsUntilOpen);
+  return countdownText ? `Market Closed — Reopening in ${countdownText}` : 'Market Closed';
 }
 
 function checkAccountSelected() {
@@ -194,8 +227,8 @@ const SECTIONS = [
     label: 'Market Feed',
     checks: [
       { id: 'platform-conn', label: 'Platform Connection', run: ctx => checkPlatformConnection(ctx.telemetry) },
-      { id: 'feed-fresh',    label: 'Feed Freshness',      run: ctx => checkFeedFreshness(ctx.telemetry) },
-      { id: 'live-price',    label: 'Live Price',          run: ctx => checkLivePrice(ctx.telemetry) },
+      { id: 'feed-fresh',    label: 'Feed Freshness',      run: ctx => checkFeedFreshness(ctx.telemetry, ctx.sessionState) },
+      { id: 'live-price',    label: 'Live Price',          run: ctx => checkLivePrice(ctx.telemetry, ctx.sessionState) },
     ],
   },
   {
@@ -247,6 +280,7 @@ const INIT_STATE = () =>
 // ── Status icon helper ──────────────────────────────────────────────────────
 function StatusIcon({ status }) {
   if (status === 'pass')    return <span className="ssc-icon ssc-icon--pass">✓</span>;
+  if (status === 'neutral') return <span className="ssc-icon ssc-icon--neutral">●</span>;
   if (status === 'warn')    return <span className="ssc-icon ssc-icon--warn">⚠</span>;
   if (status === 'fail')    return <span className="ssc-icon ssc-icon--fail">✗</span>;
   if (status === 'running') return <span className="ssc-icon ssc-icon--running"><span className="ssc-pulse">●</span></span>;
@@ -276,6 +310,7 @@ export default function SessionStartChecklist() {
   const [runAt,     setRunAt]     = useState(null);
   const [hasRun,    setHasRun]    = useState(false);
   const [countdown, setCountdown] = useState(() => fmtCountdownToArm());
+  const [nowMs,     setNowMs]     = useState(() => Date.now());
 
   const activeRef = useRef(false);
   const checksRef = useRef(checks);
@@ -283,7 +318,7 @@ export default function SessionStartChecklist() {
   useEffect(() => { checksRef.current = checks; }, [checks]);
 
   useEffect(() => {
-    const id = setInterval(() => setCountdown(fmtCountdownToArm()), 1000);
+    const id = setInterval(() => { setCountdown(fmtCountdownToArm()); setNowMs(Date.now()); }, 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -303,7 +338,16 @@ export default function SessionStartChecklist() {
       botApi.getRawTelemetry().catch(() => ({})),
       botApi.getRisk().catch(() => ({})),
     ]);
-    const ctx = { telemetry, risk };
+    // Computed once per pass (same reasoning as telemetry/risk above) and
+    // shared by both feed-freshness and live-price checks, so there's a
+    // single classification per run rather than each check re-deriving it.
+    const feed = telemetry?.feed || {};
+    const sessionState = computeSessionState({
+      tickAgeMs: feed.last_tick_age_ms ?? null,
+      feedStale: feed.stale === true,
+      telemetryAvailable: telemetry != null && 'feed' in telemetry,
+    });
+    const ctx = { telemetry, risk, sessionState };
 
     for (const def of ALL_CHECKS) {
       if (!activeRef.current) break;
@@ -334,6 +378,7 @@ export default function SessionStartChecklist() {
   }, [strategy, runChecks]);
 
   const passCount    = checks.filter(c => c.status === 'pass').length;
+  const neutralCount = checks.filter(c => c.status === 'neutral').length;
   const warnCount    = checks.filter(c => c.status === 'warn').length;
   const failCount    = checks.filter(c => c.status === 'fail').length;
   const pendingCount = checks.filter(c => c.status === 'idle' || c.status === 'running').length;
@@ -407,15 +452,20 @@ export default function SessionStartChecklist() {
           {/* ── Check sections (card grid) ─────────────────────────────── */}
           <div className="ssc-sections">
             {SECTIONS.map(section => {
-              const sChecks = checks.filter(c => c.sectionId === section.id);
-              const sPass   = sChecks.filter(c => c.status === 'pass').length;
-              const sWarn   = sChecks.filter(c => c.status === 'warn').length;
-              const sFail   = sChecks.filter(c => c.status === 'fail').length;
-              const isRun   = sChecks.some(c => c.status === 'running');
+              const sChecks  = checks.filter(c => c.sectionId === section.id);
+              const sPass    = sChecks.filter(c => c.status === 'pass').length;
+              const sNeutral = sChecks.filter(c => c.status === 'neutral').length;
+              const sWarn    = sChecks.filter(c => c.status === 'warn').length;
+              const sFail    = sChecks.filter(c => c.status === 'fail').length;
+              const isRun    = sChecks.some(c => c.status === 'running');
+              // A closed-market row reports 'neutral', not 'pass' -- but it's
+              // still an all-clear section (nothing here is actually broken),
+              // so it counts toward the section reading 'pass' the same way
+              // an actual pass would.
               const sStatus = sFail > 0 ? 'fail'
                 : isRun                 ? 'running'
                 : sWarn > 0             ? 'warn'
-                : sPass === sChecks.length ? 'pass'
+                : sChecks.length > 0 && sPass + sNeutral === sChecks.length ? 'pass'
                 : 'idle';
 
               return (
@@ -438,8 +488,7 @@ export default function SessionStartChecklist() {
                         <span className={`ssc-check-detail ssc-check-detail--${check.status}`}>
                           {check.status === 'running' ? 'Checking…'
                           : check.status === 'idle'   ? 'Pending'
-                          : check.detail              ? check.detail
-                          : '—'}
+                          : feedFreshnessLiveDetail(check, nowMs) || check.detail || '—'}
                         </span>
                         {check.latency != null && <span className="ssc-check-lat">{check.latency}ms</span>}
                       </div>
@@ -457,12 +506,18 @@ export default function SessionStartChecklist() {
 
               <div className="ssc-summary-counts">
                 <span className="ssc-sc ssc-sc--pass"><b>{passCount}</b> passed</span>
+                {neutralCount > 0 && (
+                  <>
+                    <span className="ssc-sc-sep">·</span>
+                    <span className="ssc-sc ssc-sc--neutral"><b>{neutralCount}</b> informational</span>
+                  </>
+                )}
                 <span className="ssc-sc-sep">·</span>
                 <span className="ssc-sc ssc-sc--warn"><b>{warnCount}</b> warnings</span>
                 <span className="ssc-sc-sep">·</span>
                 <span className="ssc-sc ssc-sc--fail"><b>{failCount}</b> failed</span>
                 <span className="ssc-sc-sep">·</span>
-                <span className="ssc-sc">{passCount + warnCount + failCount} total</span>
+                <span className="ssc-sc">{passCount + neutralCount + warnCount + failCount} total</span>
               </div>
 
               <div className="ssc-countdown-row">

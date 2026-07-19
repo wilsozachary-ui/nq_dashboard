@@ -303,6 +303,7 @@
 .ssc-icon--idle    { color: var(--color-text-dim); }
 .ssc-icon--running { color: var(--color-blue); }
 .ssc-icon--pass    { color: var(--color-green); }
+.ssc-icon--neutral { color: var(--color-text-muted); }
 .ssc-icon--warn    { color: var(--color-amber); }
 .ssc-icon--fail    { color: var(--color-red); }
 
@@ -323,6 +324,7 @@
 }
 
 .ssc-check--pass .ssc-check-label  { color: var(--color-text-primary); }
+.ssc-check--neutral .ssc-check-label { color: var(--color-text-secondary); }
 .ssc-check--fail .ssc-check-label  { color: var(--color-red-text); }
 
 /* Detail text */
@@ -339,6 +341,7 @@
 .ssc-check-detail--idle    { color: var(--color-text-dim); }
 .ssc-check-detail--running { color: var(--color-blue); }
 .ssc-check-detail--pass    { color: var(--color-green-text); }
+.ssc-check-detail--neutral { color: var(--color-text-muted); }
 .ssc-check-detail--warn    { color: var(--color-amber); }
 .ssc-check-detail--fail    { color: var(--color-red-text); }
 
@@ -398,9 +401,10 @@
 }
 
 .ssc-sc b { font-size: 1.2em; font-weight: var(--fw-bold); }
-.ssc-sc--pass { color: var(--color-green-text); }
-.ssc-sc--warn { color: var(--color-amber); }
-.ssc-sc--fail { color: var(--color-red-text); }
+.ssc-sc--pass    { color: var(--color-green-text); }
+.ssc-sc--neutral { color: var(--color-text-muted); }
+.ssc-sc--warn    { color: var(--color-amber); }
+.ssc-sc--fail    { color: var(--color-red-text); }
 
 /* Countdown */
 .ssc-countdown-row {

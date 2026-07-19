@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import botApi from '../services/botApi';
 import { getDashboardConfig } from '../services/controlPlaneApi';
 import { getSessionToken } from '../services/sessionToken';
-import { isFuturesMarketOpenNow } from '../utils/marketOpenMode';
+import { computeSessionState, formatHoursMinutes, SESSION_STATES } from '../utils/marketOpenMode';
 import './SystemHealthPanel.css';
 
 // ── System Health — a live, always-real operational status board ───────────
@@ -27,8 +27,8 @@ function stateOf({ ok, warn, neutral }) {
   return neutral ? 'neutral' : ok == null ? 'unknown' : warn ? 'warn' : ok ? 'ok' : 'bad';
 }
 
-function StatusRow({ label, ok, detail, warn }) {
-  const state = stateOf({ ok, warn });
+function StatusRow({ label, ok, detail, warn, neutral }) {
+  const state = stateOf({ ok, warn, neutral });
   return (
     <div className={`shp-row shp-row--${state}`}>
       <span className={`shp-dot shp-dot--${state}`} aria-hidden="true" />
@@ -79,16 +79,19 @@ export default function SystemHealthPanel() {
   // A captured per-login token exists only in a cloud dashboard opened
   // through NQ Cloud; /dashboard-config intentionally contains no token.
   const [isCloud, setIsCloud] = useState(false);
-  const [futuresMarketOpen, setFuturesMarketOpen] = useState(isFuturesMarketOpenNow);
+  // Ticks once a second purely to force a re-render so the "Reopening in
+  // Xh Ym" countdown (computed fresh from computeSessionState() below on
+  // every render) keeps moving between the 5s telemetry polls, without
+  // needing its own subscription or a rerun of anything.
+  const [, setNowTick] = useState(0);
 
   useEffect(() => {
     getDashboardConfig().then(() => setIsCloud(Boolean(getSessionToken()))).catch(() => {});
   }, []);
 
   useEffect(() => {
-    const handler = event => setFuturesMarketOpen(Boolean(event.detail?.open));
-    window.addEventListener('nq:futures-market-mode', handler);
-    return () => window.removeEventListener('nq:futures-market-mode', handler);
+    const id = setInterval(() => setNowTick(n => n + 1), 1000);
+    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -118,10 +121,50 @@ export default function SystemHealthPanel() {
   const clockOffsetMs = health?.clock_offset_ms;
   const clockDrifted = clockOffsetMs != null && Math.abs(clockOffsetMs) > CLOCK_DRIFT_WARN_MS;
 
+  // Platform Connection is deliberately independent of feed freshness below
+  // -- a "Connected" SignalR socket does not by itself prove a current-
+  // session market tick has arrived, so freshness is never inferred from it.
   const connected = telemetry?.bot?.connection === 'Connected';
-  const feedStale = telemetry?.feed?.stale === true;
   const tickAgeMs = telemetry?.feed?.last_tick_age_ms;
   const price = telemetry?.market?.price;
+
+  // The ONE shared session-state calculation (marketOpenMode.js) -- also
+  // used by SessionStartChecklist's Feed Freshness check, so a market
+  // closure or a normal post-reopen startup lag reads identically in both
+  // places instead of each re-deriving its own weekend-awareness logic.
+  const sessionState = computeSessionState({
+    tickAgeMs: tickAgeMs ?? null,
+    feedStale: telemetry?.feed?.stale === true,
+    telemetryAvailable: telemetry != null && 'feed' in telemetry,
+  });
+  // computeSessionState() runs fresh on every render (it's not memoized),
+  // and this component re-renders once a second via the nowTick above, so
+  // seconds_until_open is already live -- no separate ticking math needed.
+  const reopenCountdown = sessionState.session_state === SESSION_STATES.CLOSED
+    ? formatHoursMinutes(sessionState.seconds_until_open)
+    : null;
+  const feedFreshnessDetail = {
+    [SESSION_STATES.CLOSED]: reopenCountdown ? `Market Closed — Reopening in ${reopenCountdown}` : 'Market Closed',
+    [SESSION_STATES.OPEN_AWAITING_FIRST_TICK]: 'Market Open — Awaiting first tick',
+    [SESSION_STATES.OPEN_STALE]: `Stale — ${sessionState.feed_age_seconds ?? 0}s since last tick`,
+    [SESSION_STATES.OPEN_FRESH]: tickAgeMs != null ? `Fresh — ${fmtMs(tickAgeMs)}` : 'Fresh',
+    [SESSION_STATES.UNKNOWN]: '—',
+  }[sessionState.session_state];
+  // Feed Freshness row state: fresh -> ok (green), a genuinely stale feed
+  // during an open session -> bad (red, a real problem worth acting on),
+  // closed market or the post-reopen first-tick grace window -> neutral
+  // (informational, never amber/red, never counted as a failure).
+  const feedRowFlags = sessionState.session_state === SESSION_STATES.OPEN_FRESH
+    ? { ok: true }
+    : sessionState.session_state === SESSION_STATES.OPEN_STALE
+      ? { ok: false }
+      : sessionState.session_state === SESSION_STATES.UNKNOWN
+        ? { ok: null }
+        : { ok: null, neutral: true }; // CLOSED or OPEN_AWAITING_FIRST_TICK
+  // A price is only presented as "live" once a genuine current-session tick
+  // has actually arrived -- otherwise it's the last known price, labeled as
+  // such rather than implied to be updating right now.
+  const priceIsLive = sessionState.session_state === SESSION_STATES.OPEN_FRESH;
 
   const flatten = risk?.flatten || {};
   const fatalErrors = risk?.fatal_errors || {};
@@ -158,19 +201,16 @@ export default function SystemHealthPanel() {
     },
     {
       label: 'Feed Freshness',
-      ok: telemetry != null ? (!futuresMarketOpen || !feedStale) : null,
-      warn: futuresMarketOpen && feedStale,
-      neutral: telemetry != null && !futuresMarketOpen,
-      detail: !futuresMarketOpen
-        ? (tickAgeMs != null ? `Market closed — last tick ${fmtMs(tickAgeMs)} ago` : 'Market closed')
-        : tickAgeMs != null ? (feedStale ? `Stale — ${fmtMs(tickAgeMs)}` : `Fresh — ${fmtMs(tickAgeMs)}`) : '—',
+      ok: telemetry != null ? feedRowFlags.ok : null,
+      neutral: telemetry != null && Boolean(feedRowFlags.neutral),
+      detail: telemetry == null ? 'Unreachable' : feedFreshnessDetail,
     },
     {
-      label: 'Live Price',
+      label: priceIsLive ? 'Live Price' : 'Last Price',
       ok: price != null,
-      neutral: price != null && !futuresMarketOpen,
+      neutral: price != null && !priceIsLive,
       detail: price != null
-        ? `${!futuresMarketOpen ? 'Cached — ' : ''}${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        ? price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
         : '—',
     },
   ];
@@ -211,7 +251,11 @@ export default function SystemHealthPanel() {
       <SectionCard
         title="Market Feed"
         rows={marketFeedRows}
-        summaryOverride={!futuresMarketOpen ? { cls: 'shp-summary--neutral', text: 'Market Closed' } : null}
+        summaryOverride={
+          sessionState.session_state === SESSION_STATES.CLOSED ? { cls: 'shp-summary--neutral', text: 'Market Closed' }
+            : sessionState.session_state === SESSION_STATES.OPEN_AWAITING_FIRST_TICK ? { cls: 'shp-summary--neutral', text: 'Awaiting First Tick' }
+            : null
+        }
       />
       <SectionCard title="Risk &amp; Safeguards" rows={riskRows} />
     </div>
