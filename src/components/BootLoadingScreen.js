@@ -54,10 +54,10 @@ export default function BootLoadingScreen({ missing = [], onContinueAnyway, name
       <div className="boot-loading-card">
         <img src={logo} alt="" className="boot-loading-logo" aria-hidden="true" />
         <span className="boot-loading-spinner" aria-hidden="true" />
-        {/* Omitted entirely (not "Hello, ") while the name hasn't loaded yet
-            or the account has none on file (nullable -- see User model) --
-            never render a placeholder/undefined greeting. */}
-        {name && <p className="boot-loading-greeting">Hello, {name}</p>}
+        {/* Omitted entirely (not "Welcome, ") while the name hasn't loaded
+            yet or the account has none on file (nullable -- see User
+            model) -- never render a placeholder/undefined greeting. */}
+        {name && <p className="boot-loading-greeting">Welcome, {name}</p>}
         <h1 className="boot-loading-title">Your trading day is about to begin.</h1>
         <p className="boot-loading-stage" key={stageIndex}>{STAGES[stageIndex]}</p>
         <div className="boot-loading-bar-track" role="img" aria-label="Loading">

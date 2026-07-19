@@ -17,12 +17,12 @@ test('shows the opening stage message and no escape hatch immediately', () => {
 
 test('omits the greeting entirely when no name is available yet', () => {
   render(<BootLoadingScreen missing={[]} onContinueAnyway={() => {}} />);
-  expect(screen.queryByText(/^Hello,/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/^Welcome,/)).not.toBeInTheDocument();
 });
 
-test('shows "Hello, <name>" when a first name is provided', () => {
+test('shows "Welcome, <name>" above the tagline when a first name is provided', () => {
   render(<BootLoadingScreen missing={[]} onContinueAnyway={() => {}} name="Zachary" />);
-  expect(screen.getByText('Hello, Zachary')).toBeInTheDocument();
+  expect(screen.getByText('Welcome, Zachary')).toBeInTheDocument();
 });
 
 test('advances through the staged status messages over time and holds on the last one', () => {
