@@ -7,6 +7,16 @@ import './SettingsTab.css';
 export default function SettingsTab() {
   const [email, setEmail] = useState(null);
 
+  // Nullable on the account (see the User model) -- accounts created
+  // before this field existed, or that never filled it in, have nothing
+  // here until saved once. This is also what the boot loading screen's
+  // "Welcome, <name>" greeting reads from (App.js's own GET /me call).
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [profileError, setProfileError] = useState(null);
+  const [profileSuccess, setProfileSuccess] = useState(false);
+  const [profileBusy, setProfileBusy] = useState(false);
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -35,7 +45,11 @@ export default function SettingsTab() {
   const [emailAlertsBusy, setEmailAlertsBusy] = useState(false);
 
   useEffect(() => {
-    cpGet('/me').then(me => setEmail(me.email)).catch(() => {});
+    cpGet('/me').then(me => {
+      setEmail(me.email);
+      setFirstName(me.first_name || '');
+      setLastName(me.last_name || '');
+    }).catch(() => {});
     cpGet('/credentials')
       .then(res => {
         setWebhookUrl(res.discord_webhook_url || '');
@@ -48,6 +62,21 @@ export default function SettingsTab() {
         setEmailAlertsLoading(false);
       });
   }, []);
+
+  async function handleSaveProfile(e) {
+    e.preventDefault();
+    setProfileError(null);
+    setProfileSuccess(false);
+    setProfileBusy(true);
+    try {
+      await cpPost('/auth/update-profile', { first_name: firstName.trim(), last_name: lastName.trim() });
+      setProfileSuccess(true);
+    } catch (err) {
+      setProfileError(err.message);
+    } finally {
+      setProfileBusy(false);
+    }
+  }
 
   async function handleChangePassword(e) {
     e.preventDefault();
@@ -145,6 +174,48 @@ export default function SettingsTab() {
       </header>
 
       <div className="set-grid">
+      <section className="card set-card set-card--profile">
+        <div className="set-card-head">
+          <span className="set-card-icon"><IconAdmin /></span>
+          <div>
+            <div className="panel-title">Your name</div>
+            <p className="set-card-copy">Used to greet you by name while your dashboard is connecting.</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSaveProfile} className="set-form">
+          <label className="set-label">
+            First name
+            <input
+              type="text"
+              className="set-input"
+              value={firstName}
+              onChange={e => { setFirstName(e.target.value); setProfileSuccess(false); }}
+              autoComplete="given-name"
+              maxLength={100}
+              required
+            />
+          </label>
+          <label className="set-label">
+            Last name
+            <input
+              type="text"
+              className="set-input"
+              value={lastName}
+              onChange={e => { setLastName(e.target.value); setProfileSuccess(false); }}
+              autoComplete="family-name"
+              maxLength={100}
+              required
+            />
+          </label>
+          {profileError && <p className="set-error">{profileError}</p>}
+          {profileSuccess && <p className="set-success">Saved.</p>}
+          <button type="submit" className="set-btn" disabled={profileBusy}>
+            {profileBusy ? 'Saving…' : 'Save name'}
+          </button>
+        </form>
+      </section>
+
       <section className="card set-card set-card--login">
         <div className="set-card-head">
           <span className="set-card-icon"><IconAdmin /></span>
