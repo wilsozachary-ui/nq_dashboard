@@ -6,6 +6,8 @@ import {
   useApplyRecommendationFlow,
   fmtPct,
   fmtSamples,
+  fmtPoints,
+  fmtDollars,
 } from './morningStrategyShared';
 import ApplyConfirmationDialog from './ApplyConfirmationDialog';
 import './AiSuggestedParametersPanel.css';
@@ -98,6 +100,7 @@ function ParameterRow({ config, rec, current }) {
 export default function AiSuggestedParametersPanel() {
   const [rec, setRec]       = useState(null);
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
+  const [showDetails, setShowDetails] = useState(false);
   const current = useCurrentTradeParameters();
 
   const load = useCallback(() => {
@@ -150,20 +153,26 @@ export default function AiSuggestedParametersPanel() {
               {isSkip ? 'SKIP' : 'TRADE'}
             </span>
             <span className="ai-meta-item">Confidence: <strong>{fmtPct(rec.confidence)}</strong></span>
-            <span className="ai-meta-item">Sample: <strong>{fmtSamples(rec.sample_count)}</strong></span>
-            <span className="ai-meta-item">Comparable: <strong>{fmtSamples(rec.comparable_day_count)}</strong></span>
-            {!isSkip && Number.isFinite(rec.reward_risk_ratio) && (
-              <span className="ai-meta-item">R:R: <strong>{fmtRatio(rec.reward_risk_ratio)}</strong></span>
-            )}
-            {!isSkip && Number.isFinite(rec.both_sides_triggered_rate) && (
-              <span className="ai-meta-item">Both-Sides-Crossed: <strong>{fmtPct(rec.both_sides_triggered_rate)}</strong></span>
-            )}
-            {!isSkip && Number.isFinite(rec.continuation_rate) && (
-              <span className="ai-meta-item">Continuation: <strong>{fmtPct(rec.continuation_rate)}</strong></span>
-            )}
           </div>
 
-          {rec.summary && <p className="ai-summary">{rec.summary}</p>}
+          {/* The primary view: just the recommended numbers and one line of
+              why. Everything else (per-parameter current-vs-suggested,
+              evidence badges, sample counts) is real but secondary --
+              tucked behind "View details" rather than forced on every
+              reader every time. */}
+          {isSkip ? (
+            <div className="ai-headline ai-headline--skip">Skip this setup</div>
+          ) : (
+            <div className="ai-headline">
+              Spread {fmtPoints(rec.recommended_spread_points)} · TP {fmtDollars(rec.recommended_tp_dollars)} · SL{' '}
+              {fmtDollars(rec.recommended_sl_dollars)} · Trail {fmtPoints(rec.recommended_trailing_points)} ·{' '}
+              {rec.recommended_contract_size} contract{rec.recommended_contract_size === 1 ? '' : 's'}
+            </div>
+          )}
+
+          {(rec.summary || rec.skip_reason) && (
+            <p className="ai-summary">{isSkip ? rec.skip_reason : rec.summary}</p>
+          )}
 
           {rec.data_quality_warning && (
             <div className="ai-warning">⚠️ {rec.data_quality_warning}</div>
@@ -174,16 +183,43 @@ export default function AiSuggestedParametersPanel() {
             </div>
           )}
 
-          <div className="ai-param-list">
-            {SECTION_ORDER.map(section => (
-              <div key={section} className="ai-param-section">
-                <span className="ai-param-section-label">{section}</span>
-                {PARAMETERS.filter(config => config.section === section).map(config => (
-                  <ParameterRow key={config.key} config={config} rec={rec} current={current} />
+          <button
+            type="button"
+            className="ai-details-toggle"
+            onClick={() => setShowDetails(v => !v)}
+            aria-expanded={showDetails}
+          >
+            {showDetails ? 'Hide details' : 'View details'}
+          </button>
+
+          {showDetails && (
+            <>
+              <div className="ai-meta-row ai-meta-row--details">
+                <span className="ai-meta-item">Sample: <strong>{fmtSamples(rec.sample_count)}</strong></span>
+                <span className="ai-meta-item">Comparable: <strong>{fmtSamples(rec.comparable_day_count)}</strong></span>
+                {!isSkip && Number.isFinite(rec.reward_risk_ratio) && (
+                  <span className="ai-meta-item">R:R: <strong>{fmtRatio(rec.reward_risk_ratio)}</strong></span>
+                )}
+                {!isSkip && Number.isFinite(rec.both_sides_triggered_rate) && (
+                  <span className="ai-meta-item">Both-Sides-Crossed: <strong>{fmtPct(rec.both_sides_triggered_rate)}</strong></span>
+                )}
+                {!isSkip && Number.isFinite(rec.continuation_rate) && (
+                  <span className="ai-meta-item">Continuation: <strong>{fmtPct(rec.continuation_rate)}</strong></span>
+                )}
+              </div>
+
+              <div className="ai-param-list">
+                {SECTION_ORDER.map(section => (
+                  <div key={section} className="ai-param-section">
+                    <span className="ai-param-section-label">{section}</span>
+                    {PARAMETERS.filter(config => config.section === section).map(config => (
+                      <ParameterRow key={config.key} config={config} rec={rec} current={current} />
+                    ))}
+                  </div>
                 ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
 
           <button
             className={`ai-apply${applyFlow.applied ? ' ai-apply--applied' : ''}`}

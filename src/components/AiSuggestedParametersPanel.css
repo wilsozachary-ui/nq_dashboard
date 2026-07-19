@@ -73,6 +73,38 @@
 .ai-action-badge--trade { color: var(--color-green-text); background: rgba(76,175,80,0.12); border-color: rgba(76,175,80,0.3); }
 .ai-action-badge--skip  { color: var(--color-amber);      background: rgba(245,158,11,0.14); border-color: rgba(245,158,11,0.35); }
 
+/* ── Primary view: just the numbers and one line of why. ─────────────────── */
+.ai-headline {
+  font-size: var(--text-title);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-primary);
+  line-height: 1.35;
+  margin-bottom: 4px;
+}
+.ai-headline--skip {
+  color: var(--color-amber);
+}
+
+.ai-details-toggle {
+  display: block;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin: 0 0 var(--space-sm);
+}
+.ai-details-toggle:hover {
+  color: var(--color-text-secondary);
+}
+
+.ai-meta-row--details {
+  margin-top: calc(-1 * var(--space-xs));
+}
+
 .ai-warning {
   font-size: var(--text-xs);
   color: var(--color-amber);

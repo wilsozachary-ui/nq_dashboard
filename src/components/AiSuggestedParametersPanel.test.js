@@ -113,11 +113,30 @@ function noArmDisarmCallsMade() {
   expect(botApi.flattenPracticeBot).not.toHaveBeenCalled();
 }
 
-test('renders every recommended parameter with a suggested value and a reason', async () => {
+async function openDetails() {
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'View details' }));
+  });
+}
+
+test('shows a compact headline of just the recommended numbers and a one-line summary by default', async () => {
   mockFetchResponse(FULL_RECOMMENDATION);
   render(<AiSuggestedParametersPanel />);
 
-  await screen.findByText('Take Profit');
+  await screen.findByRole('button', { name: 'View details' });
+  expect(screen.getByText('Spread 18 pts · TP $950 · SL $475 · Trail 8 pts · 2 contracts')).toBeInTheDocument();
+  expect(screen.getByText('Based on 5 recent day(s) of opening-candle history.')).toBeInTheDocument();
+
+  // The full per-parameter breakdown is not forced on the reader by default.
+  expect(screen.queryByText('Take Profit')).not.toBeInTheDocument();
+});
+
+test('View details reveals every recommended parameter with a suggested value and a reason', async () => {
+  mockFetchResponse(FULL_RECOMMENDATION);
+  render(<AiSuggestedParametersPanel />);
+  await screen.findByRole('button', { name: 'View details' });
+  await openDetails();
+
   expect(screen.getByText('$950')).toBeInTheDocument();
   expect(screen.getByText(/median favorable move was 15\.83 points/)).toBeInTheDocument();
 
@@ -127,12 +146,19 @@ test('renders every recommended parameter with a suggested value and a reason', 
   ]) {
     expect(screen.getByText(label)).toBeInTheDocument();
   }
+
+  // Hide details toggles it back off.
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Hide details' }));
+  });
+  expect(screen.queryByText('Take Profit')).not.toBeInTheDocument();
 });
 
 test('labels simulated evidence distinctly from actual-outcome evidence', async () => {
   mockFetchResponse(FULL_RECOMMENDATION);
   render(<AiSuggestedParametersPanel />);
-  await screen.findByText('Take Profit');
+  await screen.findByRole('button', { name: 'View details' });
+  await openDetails();
 
   const simBadges = screen.getAllByText('Simulated');
   const actualBadges = screen.getAllByText('Actual');
@@ -149,7 +175,8 @@ test('shows the current value read from window.nqMorningStrategyParams', async (
   };
   mockFetchResponse(FULL_RECOMMENDATION);
   render(<AiSuggestedParametersPanel />);
-  await screen.findByText('Take Profit');
+  await screen.findByRole('button', { name: 'View details' });
+  await openDetails();
 
   expect(screen.getByText('$900')).toBeInTheDocument(); // current TP
   expect(screen.getByText('$950')).toBeInTheDocument(); // suggested TP
@@ -167,12 +194,15 @@ test('shows an error state when the recommendation fetch fails', async () => {
   await screen.findByText(/AI recommendations unavailable right now/);
 });
 
-test('shows a TRADE badge and reward-to-risk/both-sides-crossed/continuation stats for a normal recommendation', async () => {
+test('shows a TRADE badge always, and reward-to-risk/both-sides-crossed/continuation stats behind View details', async () => {
   mockFetchResponse(FULL_RECOMMENDATION);
   render(<AiSuggestedParametersPanel />);
-  await screen.findByText('Take Profit');
+  await screen.findByRole('button', { name: 'View details' });
 
   expect(screen.getByText('TRADE')).toBeInTheDocument();
+  expect(screen.queryByText('2.00:1')).not.toBeInTheDocument();
+
+  await openDetails();
   expect(screen.getByText('2.00:1')).toBeInTheDocument();
   expect(screen.getByText('20%')).toBeInTheDocument();
   expect(screen.getByText('75%')).toBeInTheDocument();
@@ -186,7 +216,7 @@ test('flags a recommendation that violates the reward-to-risk constraint', async
     reward_risk_ratio: 625 / 750,
   });
   render(<AiSuggestedParametersPanel />);
-  await screen.findByText('Take Profit');
+  await screen.findByRole('button', { name: 'View details' });
   expect(screen.getByText(/violate the configured risk constraints/)).toBeInTheDocument();
 });
 
@@ -194,7 +224,7 @@ describe('Apply to Morning Strategy — consent flow', () => {
   test('mount, refresh, and account changes never write parameters', async () => {
     mockFetchResponse(FULL_RECOMMENDATION);
     render(<AiSuggestedParametersPanel />);
-    await screen.findByText('Take Profit');
+    await screen.findByRole('button', { name: 'View details' });
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /Refresh AI recommendation/i }));
@@ -210,7 +240,7 @@ describe('Apply to Morning Strategy — consent flow', () => {
   test('clicking Apply opens a confirmation dialog with the diff but does not persist yet', async () => {
     mockFetchResponse(FULL_RECOMMENDATION);
     render(<AiSuggestedParametersPanel />);
-    await screen.findByText('Take Profit');
+    await screen.findByRole('button', { name: 'View details' });
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Apply to Morning Strategy' }));
@@ -241,7 +271,7 @@ describe('Apply to Morning Strategy — consent flow', () => {
     window.addEventListener('nq:strategy-params-sync', listener);
 
     render(<AiSuggestedParametersPanel />);
-    await screen.findByText('Take Profit');
+    await screen.findByRole('button', { name: 'View details' });
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Apply to Morning Strategy' }));
@@ -277,7 +307,7 @@ describe('Apply to Morning Strategy — consent flow', () => {
     botApi.getLiveBot.mockResolvedValue({ status: 'ARMED' });
     mockFetchResponse(FULL_RECOMMENDATION);
     render(<AiSuggestedParametersPanel />);
-    await screen.findByText('Take Profit');
+    await screen.findByRole('button', { name: 'View details' });
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Apply to Morning Strategy' }));
@@ -305,7 +335,7 @@ describe('Apply to Morning Strategy — consent flow', () => {
     window.addEventListener('nq:strategy-params-sync', listener);
 
     render(<AiSuggestedParametersPanel />);
-    await screen.findByText('Take Profit');
+    await screen.findByRole('button', { name: 'View details' });
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Apply to Morning Strategy' }));
@@ -326,6 +356,15 @@ describe('Apply to Morning Strategy — consent flow', () => {
     expect(screen.queryByText('✓ Saved')).not.toBeInTheDocument();
   });
 
+  test('SKIP shows "Skip this setup" and the skip reason as the compact summary, not the numbers', async () => {
+    mockFetchResponse(SKIP_RECOMMENDATION);
+    render(<AiSuggestedParametersPanel />);
+    await screen.findByText('SKIP');
+
+    expect(screen.getByText('Skip this setup')).toBeInTheDocument();
+    expect(screen.getByText(SKIP_RECOMMENDATION.skip_reason)).toBeInTheDocument();
+  });
+
   test('SKIP disables Apply -- the dialog can never even be opened', async () => {
     mockFetchResponse(SKIP_RECOMMENDATION);
     render(<AiSuggestedParametersPanel />);
@@ -344,7 +383,7 @@ describe('Apply to Morning Strategy — consent flow', () => {
   test('Cancel closes the dialog without saving', async () => {
     mockFetchResponse(FULL_RECOMMENDATION);
     render(<AiSuggestedParametersPanel />);
-    await screen.findByText('Take Profit');
+    await screen.findByRole('button', { name: 'View details' });
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Apply to Morning Strategy' }));
