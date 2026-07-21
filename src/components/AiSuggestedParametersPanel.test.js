@@ -289,7 +289,7 @@ describe('Apply to Morning Strategy — consent flow', () => {
     const [savedDraft, expectedRevision] = botApi.saveMorningStrategyParameters.mock.calls[0];
     expect(expectedRevision).toBe(4); // the revision read when the dialog opened
     expect(savedDraft).toEqual({
-      contractSize: 2, takeProfit: 950, stopLoss: 475, trailingStop: true,
+      contractSize: 2, takeProfit: 950, stopLoss: 475, trailingStop: true, secureBE: false,
       trailingDistance: 8, spreadPoints: 18, breakevenTrigger: 250,
       profitLockTrigger: 550, profitLockRetainPct: 65,
     });

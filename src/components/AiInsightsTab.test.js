@@ -161,6 +161,7 @@ describe('Recommended Setup — the hero card', () => {
       stopLoss: 450,
       trailingDistance: 7,
       trailingStop: true,
+      secureBE: false,
       contractSize: 1,
       breakevenTrigger: 250,
       profitLockTrigger: 550,

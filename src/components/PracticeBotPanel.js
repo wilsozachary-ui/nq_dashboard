@@ -4,6 +4,7 @@ import {
   StatusPill, Spinner, useTestBotSnapshot, useMorningStrategyParams,
   useSelectedAccounts, resolveSinglePracticeAccount,
 } from './morningStrategyShared';
+import { armPayloadFromDraft } from './parameterDraft';
 import './PracticeBotPanel.css';
 
 // Diagnostic-only panel: fires the Morning Strategy's exact currently-set
@@ -47,17 +48,18 @@ export default function PracticeBotPanel() {
     setMessage(null);
     try {
       const p = paramsRef.current || {};
+      // Keep the diagnostic Practice Bot on the exact same parameter
+      // conversion path as Morning Strategy Live. This is especially
+      // important for derived settings such as Secure BE, where the
+      // first-profitable-tick dollar threshold depends on contract size.
+      const {
+        account_ids: _accountIds,
+        expected_arm_revision: _expectedArmRevision,
+        ...strategyParams
+      } = armPayloadFromDraft(p, [accountId]);
       const result = await botApi.startPracticeBot({
         account_id: accountId,
-        contract_size: p.contractSize,
-        spread_points: p.spreadPoints,
-        tp_dollars: p.takeProfit,
-        sl_dollars: p.stopLoss,
-        trailing_points: p.trailingDistance,
-        trailing_enabled: !!p.trailingStop,
-        breakeven_dollars: p.trailingStop && p.breakevenTrigger > 0 ? p.breakevenTrigger : null,
-        profit_lock_dollars: p.trailingStop && p.profitLockTrigger > 0 ? p.profitLockTrigger : null,
-        profit_lock_retain_pct: p.trailingStop ? p.profitLockRetainPct : null,
+        ...strategyParams,
       });
       setMessage(result.ok
         ? { text: `Fired at ${new Date().toLocaleTimeString()}`, kind: 'success' }

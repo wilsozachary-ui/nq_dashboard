@@ -8,7 +8,6 @@ import { PARAMETER_DEFAULTS, normalizeParameterDraft } from './parameterDraft';
 const HOLD_MS       = 120;     // hold-to-repeat interval (ms)
 const DOLLAR_STEP   = 25;      // TP/SL adjustment step, in dollars
 const TRAIL_STEP    = 1;       // trailing distance adjustment step, in points
-const PCT_STEP      = 5;       // profit-lock retain-% adjustment step
 
 // ── Defaults (used until WS/API provides real values) ────────────────────────
 // Shared by both the ORB display and the Morning Strategy live/practice
@@ -33,8 +32,6 @@ function effectiveDefaults() {
 const fmtContracts = n => Number.isFinite(n) ? `${n}` : '—';
 const fmtDist      = n => Number.isFinite(n) ? `$${Math.round(n)}` : '—';
 const fmtPoints    = n => Number.isFinite(n) ? `${n} pt${n === 1 ? '' : 's'}` : '—';
-const fmtBreakeven = n => Number.isFinite(n) ? (n <= 0 ? 'Off' : `$${Math.round(n)}`) : '—';
-const fmtPct       = n => Number.isFinite(n) ? `${Math.round(n)}%` : '—';
 
 // ── Dispatch a timeline event to ActivityDashboard via browser event ──────────
 function pushEvent(note) {
@@ -65,12 +62,6 @@ function validate(p) {
     e.stopLoss = 'Min $1';
   if (p.trailingStop && p.trailingDistance < 1)
     e.trailingDistance = 'Min 1';
-  if (p.breakevenTrigger < 0)
-    e.breakevenTrigger = 'Min $0';
-  if (p.profitLockTrigger < 0)
-    e.profitLockTrigger = 'Min $0';
-  if (p.profitLockRetainPct < 0 || p.profitLockRetainPct > 100)
-    e.profitLockRetainPct = '0–100';
   return e;
 }
 
@@ -175,6 +166,12 @@ export default function TradeParameterPanel() {
     pushEvent(`Trailing Stop → ${next ? 'Enabled' : 'Disabled'}`);
   }, []);
 
+  const toggleSecureBE = useCallback(() => {
+    const next = !paramsRef.current.secureBE;
+    setParams(p => ({ ...p, secureBE: next }));
+    pushEvent(`Secure BE → ${next ? 'Enabled' : 'Disabled'}`);
+  }, []);
+
   // ── Load initial params from backend (real mode) ──────────────────────────
   useEffect(() => {
     if (USE_MOCK) return;
@@ -234,6 +231,7 @@ export default function TradeParameterPanel() {
         stopLoss: msg.stopLoss ?? ed.stopLoss,
         takeProfit: msg.takeProfit ?? ed.takeProfit,
         trailingStop: msg.trailingStop ?? ed.trailingStop,
+        secureBE: msg.secureBE ?? ed.secureBE,
         trailingDistance: msg.trailingDistance ?? ed.trailingDistance,
         breakevenTrigger: msg.breakevenTrigger ?? ed.breakevenTrigger,
         profitLockTrigger: msg.profitLockTrigger ?? ed.profitLockTrigger,
@@ -292,9 +290,7 @@ export default function TradeParameterPanel() {
     pushEvent(`Trailing Stop → ${p.trailingStop ? 'Enabled' : 'Disabled'}`);
     if (p.trailingStop) {
       pushEvent(`Trailing Distance Updated → ${fmtPoints(p.trailingDistance)}`);
-      pushEvent(`Breakeven Trigger Updated → ${fmtBreakeven(p.breakevenTrigger)}`);
-      pushEvent(`Profit Lock Trigger Updated → ${fmtBreakeven(p.profitLockTrigger)}`);
-      pushEvent(`Profit Lock Retain Updated → ${fmtPct(p.profitLockRetainPct)}`);
+      pushEvent(`Secure BE → ${p.secureBE ? 'Enabled' : 'Disabled'}`);
     }
 
     setApplyState('success');
@@ -401,30 +397,25 @@ export default function TradeParameterPanel() {
             disabled={applying || !params.trailingStop}
             error={errors.trailingDistance}
           />
-          <ArrowControl
-            label="Breakeven Trigger ($)"
-            display={fmtBreakeven(params.breakevenTrigger)}
-            onIncrease={() => adjust('breakevenTrigger',  DOLLAR_STEP, 'Breakeven Trigger', fmtBreakeven, 0)}
-            onDecrease={() => adjust('breakevenTrigger', -DOLLAR_STEP, 'Breakeven Trigger', fmtBreakeven, 0)}
-            disabled={applying || !params.trailingStop}
-            error={errors.breakevenTrigger}
-          />
-          <ArrowControl
-            label="Profit Lock Trigger ($)"
-            display={fmtBreakeven(params.profitLockTrigger)}
-            onIncrease={() => adjust('profitLockTrigger',  DOLLAR_STEP, 'Profit Lock Trigger', fmtBreakeven, 0)}
-            onDecrease={() => adjust('profitLockTrigger', -DOLLAR_STEP, 'Profit Lock Trigger', fmtBreakeven, 0)}
-            disabled={applying || !params.trailingStop}
-            error={errors.profitLockTrigger}
-          />
-          <ArrowControl
-            label="Profit Lock Retain (%)"
-            display={fmtPct(params.profitLockRetainPct)}
-            onIncrease={() => adjust('profitLockRetainPct',  PCT_STEP, 'Profit Lock Retain', fmtPct, 0)}
-            onDecrease={() => adjust('profitLockRetainPct', -PCT_STEP, 'Profit Lock Retain', fmtPct, 0)}
-            disabled={applying || !params.trailingStop}
-            error={errors.profitLockRetainPct}
-          />
+          <div className="tp-row tp-row--toggle">
+            <div className="tp-row-top">
+              <span className="tp-label">Secure BE</span>
+            </div>
+            <button
+              className={`tp-toggle ${params.secureBE ? 'tp-toggle--on' : 'tp-toggle--off'}`}
+              onClick={toggleSecureBE}
+              disabled={applying || !params.trailingStop}
+              aria-label="Toggle Secure BE"
+              title="Move the stop to breakeven on the first profitable NQ tick, then ratchet it with the trade"
+            >
+              <span className="tp-toggle-track">
+                <span className="tp-toggle-knob" />
+              </span>
+              <span className="tp-toggle-label">
+                {params.secureBE ? 'ON' : 'OFF'}
+              </span>
+            </button>
+          </div>
         </div>
 
       </div>

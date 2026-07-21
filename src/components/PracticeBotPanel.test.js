@@ -58,11 +58,40 @@ test('FIRE sends the currently-set Morning Strategy parameters for the practice 
     sl_dollars: 450,
     trailing_points: 7,
     trailing_enabled: true,
-    breakeven_dollars: 100,
-    profit_lock_dollars: 200,
-    profit_lock_retain_pct: 50,
+    breakeven_dollars: null,
+    profit_lock_dollars: null,
+    profit_lock_retain_pct: null,
   });
   expect(await screen.findByText(/Fired at/i)).toBeInTheDocument();
+});
+
+test('FIRE derives Secure BE thresholds through the shared Morning Strategy payload path', async () => {
+  window.nqMorningStrategyParams = {
+    contractSize: 2,
+    spreadPoints: 15,
+    takeProfit: 900,
+    stopLoss: 450,
+    trailingDistance: 7,
+    trailingStop: true,
+    secureBE: true,
+    breakevenTrigger: 300,
+    profitLockTrigger: 150,
+    profitLockRetainPct: 25,
+  };
+  botApi.getPracticeBot.mockResolvedValue({ status: 'OFF' });
+  botApi.startPracticeBot.mockResolvedValue({ ok: true });
+
+  render(<PracticeBotPanel />);
+  await act(async () => {});
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: /fire/i })); });
+
+  expect(botApi.startPracticeBot).toHaveBeenCalledWith(expect.objectContaining({
+    account_id: 'practice-1',
+    contract_size: 2,
+    breakeven_dollars: 10,
+    profit_lock_dollars: null,
+    profit_lock_retain_pct: null,
+  }));
 });
 
 test('OFF is disabled when not armed/active, and enabled once ARMED', async () => {

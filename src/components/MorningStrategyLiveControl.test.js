@@ -28,6 +28,7 @@ test('arming builds the complete snapshot from server-saved parameters', async (
       takeProfit: 1250,
       stopLoss: 525,
       trailingStop: true,
+      secureBE: true,
       trailingDistance: 9,
       breakevenTrigger: 175,
       profitLockTrigger: 250,
@@ -46,9 +47,9 @@ test('arming builds the complete snapshot from server-saved parameters', async (
     sl_dollars: 525,
     trailing_points: 9,
     trailing_enabled: true,
-    breakeven_dollars: 175,
-    profit_lock_dollars: 250,
-    profit_lock_retain_pct: 65,
+    breakeven_dollars: 25,
+    profit_lock_dollars: null,
+    profit_lock_retain_pct: null,
   });
 });
 
