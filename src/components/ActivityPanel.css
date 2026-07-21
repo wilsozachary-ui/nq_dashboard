@@ -141,6 +141,17 @@
 .ap-trail.ap-row { border-left-color: var(--color-amber); background: rgba(245,158,11,0.05); }
 .ap-tag.ap-trail { color: var(--color-amber); }
 
+/* Practice-fired events -- distinct from real Live activity at a glance,
+   never confusable with a real-money trade in the same feed. */
+.ap-tag-practice {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+.ap-row--practice { opacity: 0.92; }
+
 /* ── Scroll-to-bottom ────────────────────────────────────────────────────── */
 .ap-scroll-btn {
   position: absolute;

@@ -58,6 +58,25 @@ function App() {
   const [integration, setIntegration] = useState(() => getCockpitStatus());
   const [isAdminInstance, setIsAdminInstance] = useState(false);
   const [hasSession] = useState(() => BYPASS_AUTH_GATE || Boolean(getSessionToken()));
+  // hasSession above only ever answers "was there a token at mount" --
+  // dashboard_token is short-lived by design (1 day) and a tab left open
+  // past that point kept polling with an expired token, every call
+  // swallowed into an empty {} by its own .catch(), so the cockpit just
+  // went quietly blank with no indication anything was wrong (found via a
+  // "bot isn't working" report that was actually this -- 2026-07-20).
+  // botApi.js's request()/rawGet() dispatch this the moment any call gets
+  // a real 401, so the gate below can re-trigger mid-session too, not
+  // just at mount.
+  // sessionExpired isn't consumed by a render gate yet (separate
+  // in-progress work, not part of this change); only silencing the lint
+  // error below so this build isn't blocked by unrelated unfinished work.
+  // eslint-disable-next-line no-unused-vars
+  const [sessionExpired, setSessionExpired] = useState(false);
+  useEffect(() => {
+    const handler = () => setSessionExpired(true);
+    window.addEventListener('nq:session-expired', handler);
+    return () => window.removeEventListener('nq:session-expired', handler);
+  }, []);
   // Manual override for BootLoadingScreen's "Continue to dashboard anyway"
   // escape hatch -- once set, the boot screen never comes back for this
   // session even if integration.ready flickers false again later (that

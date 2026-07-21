@@ -65,9 +65,10 @@ function ActivityRow({ item }) {
   }
 
   return (
-    <div className={`ap-row ${meta.cls}`}>
+    <div className={`ap-row ${meta.cls}${item.isPractice ? ' ap-row--practice' : ''}`}>
       <span className="ap-time">{fmtTime(item.timestamp)}</span>
       <span className={`ap-tag ${meta.cls}`}>{meta.label}</span>
+      {item.isPractice && <span className="ap-tag-practice">(Practice)</span>}
       <span className="ap-price">{fmtNum(item.price)}</span>
       {detail}
       {item.pnl != null && (

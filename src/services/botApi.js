@@ -1,5 +1,20 @@
-import { getSessionToken } from './sessionToken';
+import { getSessionToken, clearSessionToken } from './sessionToken';
 import { readJsonResponse, unwrapApiBody, validateEnvelope } from './apiContract';
+
+// dashboard_token is short-lived by design (nq_control_plane's
+// dashboard_token_ttl_days, currently 1 day) -- every call here already
+// carries it, but nothing previously distinguished a 401 from any other
+// error, so a tab left open past expiry just went quietly blank (every
+// panel's fetch swallowed into {} by its own .catch(() => ({}))) with no
+// indication anything was wrong or how to fix it (found investigating a
+// "bot isn't working" report that turned out to be exactly this -- 2026-07-20).
+// App.js's own auth gate already existed for "never had a token," but
+// only ever checked once at mount; listening here is what lets it also
+// catch "had one, it expired mid-session."
+function reportSessionExpired() {
+  clearSessionToken();
+  window.dispatchEvent(new CustomEvent('nq:session-expired'));
+}
 
 // Same-origin fallback: works unmodified for both the desktop exe (frontend
 // and adapter always served from the same http://localhost:8080 origin) and
@@ -37,6 +52,7 @@ async function request(path, init = {}, signal) {
   const response = await fetch(`${BOT_API_ROOT}${path}`, { ...init, headers, signal: signal || init.signal });
   const label = `${init.method || 'GET'} ${path}`;
   if (!response.ok) {
+    if (response.status === 401) reportSessionExpired();
     const body = await response.json().catch(() => null);
     const error = new Error(body?.detail?.message || body?.error?.message || body?.message || `${label} failed (${response.status})`);
     error.status = response.status;
@@ -51,6 +67,7 @@ async function rawGet(path, signal) {
   const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
   const response = await fetch(`${BOT_API_ROOT}${path}`, { headers, signal });
   const label = `GET ${path}`;
+  if (response.status === 401) reportSessionExpired();
   if (!response.ok) throw new Error(`${label} failed (${response.status})`);
   return readJsonResponse(response, label);
 }

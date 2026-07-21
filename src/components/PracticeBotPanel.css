@@ -1,0 +1,77 @@
+/* ── PracticeBotPanel: small diagnostic-only fire/off panel ────────────────
+   Prefix: pbp- (Practice Bot Panel). Temporary by design -- see the
+   component's own header comment. ────────────────────────────────────────── */
+
+.pbp-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.pbp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pbp-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-text-muted);
+}
+
+.pbp-sub {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.pbp-buttons {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.pbp-btn {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm, 6px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: opacity var(--dur-base) var(--ease-in-out);
+}
+
+.pbp-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pbp-btn--fire {
+  background: rgba(76,175,80,0.16);
+  border-color: rgba(76,175,80,0.5);
+  color: #2e7d32;
+}
+
+.pbp-btn--off {
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.45);
+  color: #b91c1c;
+}
+
+.pbp-message {
+  font-size: 0.85rem;
+  padding: var(--space-xs, 4px) var(--space-sm);
+  border-radius: var(--radius-sm, 6px);
+}
+
+.pbp-message--success {
+  background: rgba(76,175,80,0.12);
+  color: #2e7d32;
+}
+
+.pbp-message--error {
+  background: rgba(239,68,68,0.12);
+  color: #b91c1c;
+}

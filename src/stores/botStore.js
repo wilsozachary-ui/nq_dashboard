@@ -263,6 +263,7 @@ class BotStore {
         pnl: message.pnl,
         timestamp: message.timestamp,
         meta: message.meta || {},
+        isPractice: !!message.is_practice,
       }].slice(-200);
     }
     if (message.strategy != null || type.includes('strategy')) {

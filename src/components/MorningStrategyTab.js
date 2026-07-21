@@ -19,6 +19,7 @@ import AiSuggestedParametersPanel from './AiSuggestedParametersPanel';
 import MarketContextPanel from './MarketContextPanel';
 import LiveTicker from './LiveTicker';
 import ActivityPanel from './ActivityPanel';
+import PracticeBotPanel from './PracticeBotPanel';
 import MarketOverviewStrip from './MarketOverviewStrip';
 import TopstepAccountSelector from './TopstepAccountSelector';
 import PracticeBotStatus from './PracticeBotStatus';
@@ -56,6 +57,7 @@ export default function MorningStrategyTab() {
         </div>
 
         <div className="column column-right">
+          <PracticeBotPanel />
           <LiveTicker />
           <ActivityPanel />
         </div>
